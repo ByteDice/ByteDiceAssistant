@@ -22,7 +22,7 @@ async fn main() {
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
       commands: vec![cmds::ping()],
-      event_handler: events::event_handler, // error here
+      event_handler: events::event_handler,
       ..Default::default()
     })
     .setup(|ctx, _ready, framework| {
