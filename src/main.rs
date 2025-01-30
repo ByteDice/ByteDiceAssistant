@@ -1,15 +1,24 @@
 mod cmds;
 mod events;
 
+use std::env;
+
 use poise::serenity_prelude as serenity;
 
-struct Data {}
+struct Data {
+  dev: bool
+}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 
 #[tokio::main]
 async fn main() {
+  let args: Vec<String> = env::args().collect();
+  let data = Data {
+    dev: args.contains(&"--dev".to_string())
+  };
+
   let token = std::env::var("ASSISTANT_TOKEN").expect("missing ASSISTANT_TOKEN env var");
   let intents = serenity::GatewayIntents::all();
 
@@ -21,14 +30,18 @@ async fn main() {
 
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
-      commands: vec![cmds::ping()],
+      commands: vec![
+        cmds::ping(),
+        cmds::embed(),
+        cmds::stop()
+      ],
       event_handler: events::event_handler,
       ..Default::default()
     })
     .setup(|ctx, _ready, framework| {
       Box::pin(async move {
         poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-        Ok(Data {})
+        return Ok(data);
       })
     })
     .build();
