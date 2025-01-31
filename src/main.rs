@@ -7,7 +7,8 @@ use std::env;
 use poise::serenity_prelude::{self as serenity, Color, CreateEmbed, Timestamp};
 
 struct Data {
-  dev: bool
+  dev: bool,
+  ball_prompts: [Vec<String>; 2]
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -38,8 +39,16 @@ impl Default for EmbedOptions {
 #[tokio::main]
 async fn main() {
   let args: Vec<String> = env::args().collect();
+
+  let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
+  let ball_quirk_str = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
+
+  let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
+  let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
+
   let data = Data {
-    dev: args.contains(&"--dev".to_string())
+    dev: args.contains(&"--dev".to_string()),
+    ball_prompts: [ball_classic, ball_quirk]
   };
 
   let token = std::env::var("ASSISTANT_TOKEN").expect("missing ASSISTANT_TOKEN env var");
@@ -56,7 +65,8 @@ async fn main() {
       commands: vec![
         cmds::ping(),
         cmds::embed(),
-        cmds::stop()
+        cmds::stop(),
+        cmds::eight_ball()
       ],
       event_handler: events::event_handler,
       ..Default::default()

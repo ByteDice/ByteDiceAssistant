@@ -3,13 +3,14 @@
 
 ### Medium priority:
 - [ ] JSON -> Rules list
+  * Structure: /rules [rulename/index]
 - [ ] Postfix calculator
 - [ ] Postfic generator
 - [ ] JSON -> BPS class init
 - [ ] BPS args -> JSON
 - [ ] Random tip (from ByteDice.net/data/loadingScreenTips.json)
 - [ ] A command that just sends my socials
-- [ ] Magic 8 ball
+- [x] Magic 8 ball
 
 ### Low priority:
 - [ ] Particle of the week

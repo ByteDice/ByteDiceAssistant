@@ -9,7 +9,7 @@ pub fn event_handler<'a>(
     ctx: &'a serenity::Context,
     event: &'a serenity::FullEvent,
     _framework: poise::FrameworkContext<'a, Data, Error>,
-    _data: &'a Data,
+    data: &'a Data,
 ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
   Box::pin(async move {
     if let serenity::FullEvent::Ready { data_about_bot } = event {
@@ -18,6 +18,10 @@ pub fn event_handler<'a>(
         data_about_bot.user.name,
         data_about_bot.user.id
       );
+
+      if data.dev {
+        println!("----- DEV MODE ENABLED -----");
+      }
 
       let file_text = std::fs::read_to_string("./data/status.txt").unwrap();
       let custom_activity = ActivityData::custom(file_text);

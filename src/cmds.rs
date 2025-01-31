@@ -1,6 +1,7 @@
 use crate::{send_embed, send_msg, Context, EmbedOptions, Error};
 
 use poise::serenity_prelude::{OnlineStatus, Timestamp};
+use rand::{seq::IteratorRandom, Rng};
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -63,6 +64,26 @@ pub async fn embed(
       ts: timestamp,
       empheral: empheral.unwrap_or_else(|| false)
     }
+  ).await?;
+
+  return Ok(());
+}
+
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn eight_ball(
+  ctx: Context<'_>,
+  #[description = "Question to ask."] question: String
+) -> Result<(), Error>
+{
+  let is_quirky = rand::rng().random_bool(0.2);
+  let list = &ctx.data().ball_prompts[if is_quirky { 1 } else { 0 }];
+  let rand_item = list.iter().choose(&mut rand::rng());
+
+  send_msg(
+    ctx,
+    format!("Q: {}\nA: {}", question, rand_item.unwrap()),
+    true
   ).await?;
 
   return Ok(());
