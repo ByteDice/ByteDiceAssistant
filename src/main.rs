@@ -1,7 +1,7 @@
 mod cmds;
 mod events;
 
-use poise::CreateReply;
+use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
 use std::env;
 
 use poise::serenity_prelude::{self as serenity, Color, CreateEmbed, Timestamp};
@@ -66,7 +66,8 @@ async fn main() {
         cmds::ping(),
         cmds::embed(),
         cmds::stop(),
-        cmds::eight_ball()
+        cmds::eight_ball(),
+        cmds::write_json()
       ],
       event_handler: events::event_handler,
       ..Default::default()
@@ -97,40 +98,68 @@ fn none_to_empty(string: Option<String>) -> String {
 async fn send_msg(
   ctx: Context<'_>,
   t: String,
-  empheral: bool
-) -> Result<(), Error>
+  empheral: bool,
+  reply: bool
+) -> Option<ReplyHandle<'_>>
 {
-  let r = CreateReply {
-    content: Some(t),
-    ephemeral: Some(empheral),
-    ..Default::default()
-  };
+  if reply {
+    let r = CreateReply {
+      content: Some(t),
+      ephemeral: Some(empheral),
+      ..Default::default()
+    };
 
-  ctx.send(r).await?;
-
-  return Ok(());
+    let msg = ctx.send(r).await;
+    return Some(msg.unwrap());
+  }
+  else {
+    let _ = ctx.channel_id().say(ctx.http(), t).await;
+    return None;
+  }
 }
 
 
 async fn send_embed(
   ctx: Context<'_>,
   options: EmbedOptions,
-) -> Result<(), Error> 
+  reply: bool
+) -> Option<ReplyHandle<'_>>
 {
-  let embed = CreateEmbed::new()
+  let mut embed = CreateEmbed::new()
     .title      (none_to_empty(options.title))
     .description(options.desc)
     .colour     (Color::new(options.col.unwrap_or_else(|| 5793266)))
-    .url        (none_to_empty(options.url))
-    .timestamp  (options.ts.unwrap_or_else(|| Timestamp::now()));
+    .url        (none_to_empty(options.url));
+  
+  if options.ts.is_some() { embed = embed.timestamp(options.ts.unwrap()); }
 
+  if reply {
+    let r = CreateReply {
+      embeds: vec![embed],
+      ephemeral: Some(options.empheral),
+      ..Default::default()
+    };
+
+    let msg = ctx.send(r).await;
+    return Some(msg.unwrap());
+  }
+  else {
+    let r = CreateMessage::new().embeds(vec![embed]);
+    let _ = ctx.channel_id().send_message(ctx.http(), r).await;
+    return None;
+  }
+}
+
+
+async fn edit_msg(
+  ctx: Context<'_>,
+  msg: ReplyHandle<'_>,
+  new_text: String
+) {
   let r = CreateReply {
-    embeds: vec![embed],
-    ephemeral: Some(options.empheral),
+    content: Some(new_text),
     ..Default::default()
   };
 
-  ctx.send(r).await?;
-
-  return Ok(());
+  let _ = msg.edit(ctx, r).await;
 }
