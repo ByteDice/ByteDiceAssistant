@@ -2,8 +2,8 @@
 - [x] Embed creation tool
 
 ### Medium priority:
-- [ ] JSON -> Rules list
-  * Structure: /rules [rulename/index]
+- [x] JSON -> Rules list
+- [ ] View single rule (/rule {rulename})
 - [ ] Postfix calculator
 - [ ] Postfic generator
 - [ ] JSON -> BPS class init

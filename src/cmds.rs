@@ -129,10 +129,10 @@ pub async fn write_json(
     edit_msg(ctx, progress.unwrap(), "Deleting all messages in channel... Done!".to_string()).await;
   }
 
-  let json_str = json.unwrap_or_else(||
+  let json_str = json.clone().unwrap_or_else(||
     std::fs::read_to_string("./data/write_json.json")
-    .expect("No JSON preset file exists.")
-  );
+      .expect("No JSON preset file exists.")
+  ).to_string();
 
   let json_json: serde_json::Value = serde_json::from_str(&json_str).expect("JSON was improperly formatted");
   if !json_json.is_array() {
@@ -141,14 +141,72 @@ pub async fn write_json(
   }
 
   for i in json_json.as_array().unwrap() {
-    if !i.is_string() { continue; }
-    let i_str = i.to_string();
-    send_msg(ctx, i_str[1..i_str.len() - 1].to_string(), false, false).await;
+    if !i.is_object() { continue; }
+
+    let title = i["title"].to_string();
+    let title_str = title[1..title.len() - 1].to_string();
+
+    let desc = i["desc"].to_string();
+    let desc_str = desc[1..desc.len() - 1].to_string();
+
+    let index_str = i["index"].to_string();
+
+    let title_format = if index_str.len() > 0
+      { format!("{} - {}", index_str, title_str) }
+      else { title_str };
+
+    let embed = EmbedOptions {
+      title: Some(title_format),
+      desc: desc_str,
+      ..Default::default()
+    };
+
+    send_embed(ctx, embed, false).await;
   }
 
-  if include_cmd {
+  if include_cmd && json.is_none() {
     send_msg(ctx, "Use /rules thank you".to_string(), false, false).await;
   }
 
+  return Ok(());
+}
+
+
+async fn autocomplete_rule_list(_: Context<'_>, _partial: &str) -> Vec<String> {
+  let json_str = std::fs::read_to_string("./data/write_json.json")
+    .expect("No JSON preset file exists.");
+  let json_json: serde_json::Value = serde_json::from_str(&json_str).expect("JSON was improperly formatted");
+
+  if json_json.is_array() { 
+    let mut titles: Vec<String> = vec![];
+
+    for i in json_json.as_array().unwrap() {
+      let title = i["title"].to_string();
+      let title_str = title[1..title.len() - 1].to_string();
+      let index_str = i["index"].to_string();
+
+      let title_format = if index_str.len() > 0
+        { format!("{} - {}", index_str, title_str) }
+        else { title_str };
+
+      titles.push(title_format);
+    }
+
+    return titles;
+  }
+  else {
+    return vec!["JSON data not found".to_string()];
+  }
+}
+
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn rule(
+  _ctx: Context<'_>,
+  #[description = "The name of the rule to display"]
+  #[autocomplete = "autocomplete_rule_list"]
+  _rule: Vec<String> 
+) -> Result<(), Error>
+{
   return Ok(());
 }

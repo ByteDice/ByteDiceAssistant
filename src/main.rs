@@ -1,8 +1,11 @@
 mod cmds;
 mod events;
 
-use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
+use poise::{serenity_prelude::{Client, CreateMessage}, CreateReply, ReplyHandle};
+use core::str;
 use std::env;
+use std::process::Command;
+use std::process;
 
 use poise::serenity_prelude::{self as serenity, Color, CreateEmbed, Timestamp};
 
@@ -40,17 +43,45 @@ impl Default for EmbedOptions {
 async fn main() {
   let args: Vec<String> = env::args().collect();
 
+  if args.contains(&"--py".to_string()) {
+    let output = Command::new("python")
+      .arg("./src/python/main.py")
+      .output()
+      .expect("Failed to launch main.py");
+
+    let stdout = str::from_utf8(&output.stdout).unwrap_or("Invalid UTF-8 in stdout");
+    let stderr = str::from_utf8(&output.stderr).unwrap_or("Invalid UTF-8 in stderr");
+
+    println!("PYTHON OUTPUT:\n{}\n", stdout);
+    println!("PYTHON ERROR:\n{}", stderr);
+
+    process::exit(1);
+  }
+  else {
+    let data = gen_data(args);
+    let mut bot = gen_bot(data).await;
+
+    println!("Starting bot...");
+    bot.start().await.unwrap();
+  }
+}
+
+
+fn gen_data(args: Vec<String>) -> Data {
   let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
   let ball_quirk_str = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
 
   let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
 
-  let data = Data {
+  return Data {
     dev: args.contains(&"--dev".to_string()),
     ball_prompts: [ball_classic, ball_quirk]
   };
+}
 
+
+async fn gen_bot(data: Data) -> Client {
   let token = std::env::var("ASSISTANT_TOKEN").expect("missing ASSISTANT_TOKEN env var");
   let intents = serenity::GatewayIntents::all();
 
@@ -67,7 +98,8 @@ async fn main() {
         cmds::embed(),
         cmds::stop(),
         cmds::eight_ball(),
-        cmds::write_json()
+        cmds::write_json(),
+        cmds::rule()
       ],
       event_handler: events::event_handler,
       ..Default::default()
@@ -80,13 +112,10 @@ async fn main() {
     })
     .build();
 
-  let mut bot = serenity::ClientBuilder::new(token, intents)
+  return serenity::ClientBuilder::new(token, intents)
     .framework(framework)
     .await
     .unwrap();
-
-  println!("Starting bot...");
-  bot.start().await.unwrap();
 }
 
 
