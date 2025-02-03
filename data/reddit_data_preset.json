@@ -1,4 +1,13 @@
 {
   "file_created_correctly": true,
-  "bk_manually_added_posts": []
+  "bk_weekly_art_posts": [
+    {
+      "url": "EXAMPLE VALUE DO NOT INCLUDE",
+      "date_unix": 1738614657,
+      "added_by_human": false,
+      "added_by_bot": true,
+      "approved_by_human": true,
+      "approved_by_ris": true
+    }
+  ]
 }

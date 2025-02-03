@@ -7,5 +7,3 @@ Cargo.lock
 
 # program-created data
 data/reddit_data.json
-data/reddit_images/*
-!data/reddit_images/
