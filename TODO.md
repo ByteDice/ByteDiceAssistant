@@ -1,5 +1,6 @@
 ### High priority:
 - [x] Embed creation tool
+- [ ] Reddit bot that scrapes images with tag "Original Art" and posts them in Discord server
 
 ### Medium priority:
 - [x] JSON -> Rules list

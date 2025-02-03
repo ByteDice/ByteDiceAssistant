@@ -52,8 +52,8 @@ async fn main() {
     let stdout = str::from_utf8(&output.stdout).unwrap_or("Invalid UTF-8 in stdout");
     let stderr = str::from_utf8(&output.stderr).unwrap_or("Invalid UTF-8 in stderr");
 
-    println!("PYTHON OUTPUT:\n{}\n", stdout);
-    println!("PYTHON ERROR:\n{}", stderr);
+    println!("--- PYTHON OUTPUT:\n\n{}\n", stdout);
+    println!("--- PYTHON ERROR:\n\n{}", stderr);
 
     process::exit(1);
   }
