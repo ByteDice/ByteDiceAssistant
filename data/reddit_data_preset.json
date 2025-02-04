@@ -1,13 +1,23 @@
 {
   "file_created_correctly": true,
-  "bk_weekly_art_posts": [
-    {
-      "url": "EXAMPLE VALUE DO NOT INCLUDE",
-      "date_unix": 1738614657,
-      "added_by_human": false,
-      "added_by_bot": true,
-      "approved_by_human": true,
-      "approved_by_ris": true
+  "bk_weekly_art_posts": {
+    "EXAMPLE VALUE DO NOT INCLUDE IN FINAL": {
+      "post_data": {
+        "title": "I JUST BOUGHT THE CONTINENT OF NORTH AMERICA FOR A DOLLAR!",
+        "upvotes": 69420,
+        "date_unix": 1738614657,
+        "media_type": null,
+        "media_urls": []
+      },
+      "nominated_by_human": true,
+      "added": {
+        "by_human": false,
+        "by_bot": true
+      },
+      "approved": {
+        "by_human": true,
+        "by_ris": true
+      }
     }
-  ]
+  }
 }
