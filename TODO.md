@@ -1,6 +1,7 @@
 ### High priority:
 - [x] ~~Embed creation tool~~
 - [ ] Reddit bot that scrapes images with tag "Original Art" and posts them in Discord server
+  - [ ] Discord bot /bk_help command
   - [x] ~~Scrape the data~~
   - [x] ~~Put it in a JSON~~
   - [ ] Ship it to Discord using the Rust bot
