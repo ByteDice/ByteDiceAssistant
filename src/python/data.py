@@ -1,0 +1,102 @@
+import os
+import json
+from typing import Final
+
+import bot as botPy
+
+
+BK_WEEKLY: Final[str] = "bk_weekly_art_posts"
+
+
+class PostData:
+  def __init__(
+    self,
+    url: str,
+    title: str,
+    upvotes: int,
+    date_unix: int,
+    media_type: str,
+    media_urls: list[str],
+    nominated_by_human: bool = False,
+    added_by_human: bool = False,
+    added_by_bot: bool = False,
+    approved_by_human: bool = False,
+    approved_by_ris: bool = False
+  ):
+    self.url                = url
+    self.title              = title
+    self.upvotes            = upvotes
+    self.date_unix          = date_unix
+    self.media_type         = media_type
+    self.media_urls         = media_urls
+    self.nominated_by_human = nominated_by_human
+    self.added_by_human     = added_by_human
+    self.added_by_bot       = added_by_bot
+    self.approved_by_human  = approved_by_human
+    self.approved_by_ris    = approved_by_ris
+  
+  def to_json(self):
+    return {
+      "post_data": {
+        "title": self.title,
+        "upvotes": self.upvotes,
+        "date_unix": self.date_unix,
+        "media_type": self.media_type,
+        "media_urls": self.media_urls
+      },
+      "nominated_by_human": self.nominated_by_human,
+      "added": {
+        "by_human": self.added_by_human,
+        "by_bot": self.added_by_bot
+      },
+      "approved": {
+        "by_human": self.approved_by_human,
+        "by_ris": self.approved_by_ris
+      }
+    }
+  
+
+def read_data(bot: botPy.Bot):
+  # Intentionally unreadable >:]
+  data_path = os.path.abspath(os.path.join(os.path.join(os.getcwd(), "data")))
+
+  try: 
+    bot.data_f = open(data_path + "\\reddit_data.json", "r+")
+
+  except FileNotFoundError:
+    print("reddit_data.json not found, creating new from preset...")
+    with open(data_path + "\\reddit_data.json", "w") as f:
+      f.write(open(data_path + "\\reddit_data_preset.json", "r").read())
+
+    bot.data_f = open(data_path + "\\reddit_data.json", "r+")
+
+  data_str = bot.data_f.read()
+  bot.data = json.loads(data_str)
+
+  if not bot.data["file_created_correctly"]:
+    raise Exception("reddit_data.json file wasn't created properly. Delete the file and retry.")
+
+
+def write_data(bot: botPy.Bot):
+  bot.data_f.seek(0)
+  json.dump(bot.data, bot.data_f, indent=2)
+  bot.data_f.truncate()
+
+
+def update_post_in_data(bot: botPy.Bot, new_data: PostData):
+  if new_data.url not in bot.data:
+    bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
+    return
+
+  
+def remove_old_posts(bot: botPy.Bot, max_age_unix: int):
+  for post in bot.data[BK_WEEKLY]:
+    if post["date_unix"] > max_age_unix:
+      dict(bot.data[BK_WEEKLY]).pop(post)
+
+
+def clear_posts_without_media(bot: botPy.Bot):
+  for post in bot.data[BK_WEEKLY]:
+    post_data = post["post_data"]
+    if post_data["media_type"] == None and len(post_data["media_urls"]) == 0:
+      dict(bot.data[BK_WEEKLY]).pop(post)

@@ -2,15 +2,17 @@
 - [x] ~~Embed creation tool~~
 - [ ] Reddit bot that scrapes images with tag "Original Art" and posts them in Discord server
   - [x] ~~Scrape the data~~
-  - [ ] Put it in a JSON
+  - [x] ~~Put it in a JSON~~
   - [ ] Ship it to Discord using the Rust bot
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] Manually add posts (via `u/[bot] add` or `/bk_week_add [url]`)
     - [ ] Manually remove posts (via `/bk_week_remove [url]`)
     - [ ] Manually approve posts (via `/bk_week_approve [url]`)
     - [ ] Manually un-approve posts (via `/bk_week_disapprove [url]`)
-    - [ ] Automatically add scraped posts to JSON
+    - [x] ~~Automatically add scraped posts to JSON~~
     - [ ] Automatically remove posts older than 7 days from JSON
+      - [x] ~~Function~~
+      - [ ] Autonomize
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
 
 ### Medium priority:
