@@ -26,12 +26,12 @@ def main():
   py_print("Fetching posts...")
   posts = reddit.fetch_posts_with_flair(bot, "Original Art")
 
-  py_print("Evaluating posts...\n\n")
+  py_print("Evaluating posts...\n")
   for post in posts:
     media = reddit.has_media(post)
     media_urls = "\n        ".join(media[3])
 
-    py_print(
+    print(
       f"\n{post.title}",
       f"\n    {post.shortlink}"
       f"\n    {check_emoji if media[0] else cross_emoji} Media ({media[1]}) [{media[2]}]",

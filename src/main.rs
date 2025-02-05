@@ -35,6 +35,7 @@ async fn main() {
     println!("HELP MENU:\n{}", help);
     process::exit(1);
   }
+  if args.contains(&"--dev".to_string()) { println!("----- DEV MODE ENABLED -----"); }
 
   if args.contains(&"--py".to_string())
      && !args.contains(&"--rs".to_string())
@@ -50,7 +51,6 @@ async fn main() {
     start(args).await;
     process::exit(1);
   }
-  if args.contains(&"--dev".to_string()) { println!("----- DEV MODE ENABLED -----"); }
 
   let rust = thread::spawn(|| {
 
