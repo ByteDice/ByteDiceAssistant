@@ -1,7 +1,9 @@
 use crate::{Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
-use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp};
+use std::fs;
+
+use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
 
 
@@ -27,13 +29,18 @@ pub async fn stop(
   let should_stop = dev_enabled
     || confirmation.unwrap_or_else(|| "".to_string()).to_lowercase() == "i want to stop the bot now";
 
-  if should_stop {
+  let is_creator = ctx.author().id == UserId::new(ctx.data().creator_id);
+
+  if should_stop && is_creator {
     send_msg(ctx, "Shutting down...".to_string(), true, true).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
     ctx.framework().shard_manager.shutdown_all().await;
   }
-  else {
-    send_msg(ctx, "Failed to shut down.".to_string(), true, true).await;
+  else if !is_creator {
+    send_msg(ctx, "Failed to shut down: Invalid permissions.".to_string(), true, true).await;
+  }
+  else if !should_stop {
+    send_msg(ctx, "Failed to shut down: Invalid confirmation.".to_string(), true, true).await;
   }
 
   return Ok(());
@@ -209,5 +216,17 @@ pub async fn rule(
   _rule: Vec<String> 
 ) -> Result<(), Error>
 {
+  return Ok(());
+}
+
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn bk_week_help(
+  ctx: Context<'_>,
+) -> Result<(), Error>
+{
+  let help = fs::read_to_string("./bk_week_help.txt").unwrap();
+  send_msg(ctx, help, true, true).await;
+
   return Ok(());
 }

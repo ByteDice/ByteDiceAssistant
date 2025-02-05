@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{rs_println, Context};
 
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
 use poise::serenity_prelude::{Color, CreateEmbed, Timestamp};
@@ -61,6 +61,8 @@ pub async fn send_embed(
   reply: bool
 ) -> Option<ReplyHandle<'_>>
 {
+  let r_text = format!("Sent embed: {}", options.title.clone().unwrap_or_else(|| "No title".to_string()));
+
   let mut embed = CreateEmbed::new()
     .title      (none_to_empty(options.title))
     .description(options.desc)
@@ -77,11 +79,13 @@ pub async fn send_embed(
     };
 
     let msg = ctx.send(r).await;
+    rs_println!("{}", r_text);
     return Some(msg.unwrap());
   }
   else {
     let r = CreateMessage::new().embeds(vec![embed]);
     let _ = ctx.channel_id().send_message(ctx.http(), r).await;
+    rs_println!("{}", r_text);
     return None;
   }
 }
@@ -93,9 +97,12 @@ pub async fn edit_msg(
   new_text: String
 ) {
   let r = CreateReply {
-    content: Some(new_text),
+    content: Some(new_text.clone()),
     ..Default::default()
   };
 
   let _ = msg.edit(ctx, r).await;
+
+  let msg_text = &msg.message().await.unwrap().content;
+  rs_println!("Edited message: {} -> {}", msg_text, new_text);
 }

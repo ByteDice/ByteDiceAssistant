@@ -1,0 +1,46 @@
+```
+--- Discord commands ---
+/bk_week_add [url] [approve]  - Takes a URL and adds it to the list of posts.
+                                This is done automatically by the bot for certain posts.
+                                [approve] is true or false, and determines wether to pre-
+                                    approve the post.
+/bk_week_remove [url]         - Takes an existing URL and removes it from the list of posts.
+/bk_week_approve [url]        - Takes an existing URL and flags the post as human_approved.
+                                  Approve a post to tell the bot that an art piece is original art.
+/bk_week_disapprove [url]     - Does what /bk_week_approve does, but opposite.
+
+EXAMPLES:
+/bk_week_add https://reddit.com/abc123 false
+/bk_week_approve https://reddit.com/def456
+
+--- Reddit commands ---
+To execute a command on the Reddit bot, type "u/ByteDiceAssistant [args]" in a comment.
+[args] should be replaced with a command:
+
+add     - Adds the post the command was ran in to the list of posts.
+
+EXAMPLES:
+u/ByteDiceAssistant add
+
+You can even do this: (without the quotes)
+  """
+  Hey guys welcome back to my lets play, today we are checking out original art.
+  Wow, this art is original and cool.
+
+  u/ByteDiceAssistant add
+
+  I want this art to be recognized
+  """
+and this:
+  "Cool art. u/ByteDiceAssistant add
+and this:
+  """
+  Cool art. u/ByteDiceAssistant add
+  Very cool.
+  """
+
+But you cant do this: (without the quotes)
+  "Cool art. u/ByteDiceAssistant add very cool."
+  "Cool art. u/ByteDiceAssistant add. Very cool."
+  "Cool art. u/ByteDiceAssistant add." (Notice the period?)
+```

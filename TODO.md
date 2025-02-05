@@ -1,10 +1,10 @@
 ### High priority:
 - [x] ~~Embed creation tool~~
 - [ ] Reddit bot that scrapes images with tag "Original Art" and posts them in Discord server
-  - [ ] Discord bot /bk_help command
+  - [x] ~~Discord bot /bk_help command~~
   - [x] ~~Scrape the data~~
   - [x] ~~Put it in a JSON~~
-  - [ ] Multithread so it can run both Discord and Reddit bot!!!
+  - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~
   - [ ] Ship Python data to Rust
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] Manually add posts (via `u/[bot] add` or `/bk_week_add [url]`)
@@ -26,7 +26,7 @@
 - [ ] BPS args -> JSON
 - [ ] Random tip (from ByteDice.net/data/loadingScreenTips.json)
 - [ ] A command that just sends my socials
-- [x] Magic 8 ball
+- [x] ~~Magic 8 ball~~
 
 ### Low priority:
 - [ ] Particle of the week

@@ -3,17 +3,19 @@ mod events;
 mod messages;
 mod python;
 
-use poise::serenity_prelude::Client;
 use std::env;
 use std::process;
 use std::thread;
 use std::fs;
 
+use tokio::runtime::Runtime;
+use poise::serenity_prelude::Client;
 use poise::serenity_prelude as serenity;
 
 struct Data {
   dev: bool,
-  ball_prompts: [Vec<String>; 2]
+  ball_prompts: [Vec<String>; 2],
+  creator_id: u64
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -21,7 +23,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 #[macro_export]
 macro_rules! rs_println {
   ($($arg:tt)*) => {
-      println!("RS - {}", format!($($arg)*));
+    println!("RS - {}", format!($($arg)*));
   };
 }
 
@@ -42,22 +44,26 @@ async fn main() {
   {
     println!("----- PYTHON ONLY MODE -----");
     let _ = python::start();
-    process::exit(1);
+    process::exit(0);
   }
   else if args.contains(&"--rs".to_string())
           && ! args.contains(&"--py".to_string())
   {
     println!("----- RUST ONLY MODE -----");
     start(args).await;
-    process::exit(1);
+    process::exit(0);
   }
 
-  let rust = thread::spawn(|| {
+  let rt = Runtime::new().unwrap();
 
+  let rust = thread::spawn(move || {
+    rt.block_on(async {
+      start(args).await;
+    });
   });
 
   let python = thread::spawn(|| {
-
+    let _ = python::start();
   });
 
   rust.join().unwrap();
@@ -69,7 +75,7 @@ async fn start(args: Vec<String>) {
   let data = gen_data(args);
   let mut bot = gen_bot(data).await;
 
-  println!("Starting bot...");
+  rs_println!("Starting bot...");
   bot.start().await.unwrap();
 }
 
@@ -83,7 +89,8 @@ fn gen_data(args: Vec<String>) -> Data {
 
   return Data {
     dev: args.contains(&"--dev".to_string()),
-    ball_prompts: [ball_classic, ball_quirk]
+    ball_prompts: [ball_classic, ball_quirk],
+    creator_id: 697149665166229614,
   };
 }
 
@@ -95,7 +102,7 @@ async fn gen_bot(data: Data) -> Client {
   let peek_len = 27;
   let token_peek = &token[..peek_len];
   let token_end_len = token[peek_len..].len();
-  println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
+  rs_println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
 
 
   let framework = poise::Framework::builder()
@@ -106,7 +113,8 @@ async fn gen_bot(data: Data) -> Client {
         cmds::stop(),
         cmds::eight_ball(),
         cmds::write_json(),
-        cmds::rule()
+        cmds::rule(),
+        cmds::bk_week_help()
       ],
       event_handler: events::event_handler,
       ..Default::default()

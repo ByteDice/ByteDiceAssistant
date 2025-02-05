@@ -2,9 +2,10 @@ use crate::rs_println;
 
 use std::fs;
 use std::ffi::CString;
+use std::env;
+
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use std::env;
 
 
 pub fn start() -> PyResult<()> { 
@@ -16,6 +17,7 @@ pub fn start() -> PyResult<()> {
   let app_path = CString::new(code).unwrap();
   
   pyo3::prepare_freethreaded_python();
+
   let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
     let syspath = py
       .import("sys")?
