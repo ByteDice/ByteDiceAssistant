@@ -1,13 +1,15 @@
 mod cmds;
 mod events;
+mod messages;
+mod python;
 
-use poise::{serenity_prelude::{Client, CreateMessage}, CreateReply, ReplyHandle};
-use core::str;
+use poise::serenity_prelude::Client;
 use std::env;
-use std::process::Command;
 use std::process;
+use std::thread;
+use std::fs;
 
-use poise::serenity_prelude::{self as serenity, Color, CreateEmbed, Timestamp};
+use poise::serenity_prelude as serenity;
 
 struct Data {
   dev: bool,
@@ -16,26 +18,11 @@ struct Data {
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
-
-struct EmbedOptions {
-  desc: String,
-  title: Option<String>,
-  col: Option<u32>,
-  url: Option<String>,
-  ts: Option<Timestamp>,
-  empheral: bool
-}
-impl Default for EmbedOptions {
-  fn default() -> Self {
-    return EmbedOptions {
-      desc: "default description".to_string(),
-      title: None,
-      col: None,
-      url: None,
-      ts: None,
-      empheral: false
-    };
-  }
+#[macro_export]
+macro_rules! rs_println {
+  ($($arg:tt)*) => {
+      println!("RS - {}", format!($($arg)*));
+  };
 }
 
 
@@ -43,27 +30,47 @@ impl Default for EmbedOptions {
 async fn main() {
   let args: Vec<String> = env::args().collect();
 
-  if args.contains(&"--py".to_string()) {
-    let output = Command::new("python")
-      .arg("./src/python/main.py")
-      .output()
-      .expect("Failed to launch main.py");
-
-    let stdout = str::from_utf8(&output.stdout).unwrap_or("Invalid UTF-8 in stdout");
-    let stderr = str::from_utf8(&output.stderr).unwrap_or("Invalid UTF-8 in stderr");
-
-    println!("--- PYTHON OUTPUT:\n\n{}\n", stdout);
-    println!("--- PYTHON ERROR:\n\n{}", stderr);
-
+  if args.contains(&"--h".to_string()) || args.contains(&"--help".to_string()) {
+    let help = fs::read_to_string("./help.txt").unwrap_or_else(|_| "No help.txt file found.".to_string());
+    println!("HELP MENU:\n{}", help);
     process::exit(1);
   }
-  else {
-    let data = gen_data(args);
-    let mut bot = gen_bot(data).await;
 
-    println!("Starting bot...");
-    bot.start().await.unwrap();
+  if args.contains(&"--py".to_string())
+     && !args.contains(&"--rs".to_string())
+  {
+    println!("----- PYTHON ONLY MODE -----");
+    let _ = python::start();
+    process::exit(1);
   }
+  else if args.contains(&"--rs".to_string())
+          && ! args.contains(&"--py".to_string())
+  {
+    println!("----- RUST ONLY MODE -----");
+    start(args).await;
+    process::exit(1);
+  }
+  if args.contains(&"--dev".to_string()) { println!("----- DEV MODE ENABLED -----"); }
+
+  let rust = thread::spawn(|| {
+
+  });
+
+  let python = thread::spawn(|| {
+
+  });
+
+  rust.join().unwrap();
+  python.join().unwrap();
+}
+
+
+async fn start(args: Vec<String>) {
+  let data = gen_data(args);
+  let mut bot = gen_bot(data).await;
+
+  println!("Starting bot...");
+  bot.start().await.unwrap();
 }
 
 
@@ -116,79 +123,4 @@ async fn gen_bot(data: Data) -> Client {
     .framework(framework)
     .await
     .unwrap();
-}
-
-
-fn none_to_empty(string: Option<String>) -> String {
-  return string.unwrap_or_else(|| "".to_string());
-}
-
-
-async fn send_msg(
-  ctx: Context<'_>,
-  t: String,
-  empheral: bool,
-  reply: bool
-) -> Option<ReplyHandle<'_>>
-{
-  if reply {
-    let r = CreateReply {
-      content: Some(t),
-      ephemeral: Some(empheral),
-      ..Default::default()
-    };
-
-    let msg = ctx.send(r).await;
-    return Some(msg.unwrap());
-  }
-  else {
-    let _ = ctx.channel_id().say(ctx.http(), t).await;
-    return None;
-  }
-}
-
-
-async fn send_embed(
-  ctx: Context<'_>,
-  options: EmbedOptions,
-  reply: bool
-) -> Option<ReplyHandle<'_>>
-{
-  let mut embed = CreateEmbed::new()
-    .title      (none_to_empty(options.title))
-    .description(options.desc)
-    .colour     (Color::new(options.col.unwrap_or_else(|| 5793266)))
-    .url        (none_to_empty(options.url));
-  
-  if options.ts.is_some() { embed = embed.timestamp(options.ts.unwrap()); }
-
-  if reply {
-    let r = CreateReply {
-      embeds: vec![embed],
-      ephemeral: Some(options.empheral),
-      ..Default::default()
-    };
-
-    let msg = ctx.send(r).await;
-    return Some(msg.unwrap());
-  }
-  else {
-    let r = CreateMessage::new().embeds(vec![embed]);
-    let _ = ctx.channel_id().send_message(ctx.http(), r).await;
-    return None;
-  }
-}
-
-
-async fn edit_msg(
-  ctx: Context<'_>,
-  msg: ReplyHandle<'_>,
-  new_text: String
-) {
-  let r = CreateReply {
-    content: Some(new_text),
-    ..Default::default()
-  };
-
-  let _ = msg.edit(ctx, r).await;
 }

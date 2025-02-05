@@ -4,7 +4,8 @@
   - [ ] Discord bot /bk_help command
   - [x] ~~Scrape the data~~
   - [x] ~~Put it in a JSON~~
-  - [ ] Ship it to Discord using the Rust bot
+  - [ ] Multithread so it can run both Discord and Reddit bot!!!
+  - [ ] Ship Python data to Rust
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] Manually add posts (via `u/[bot] add` or `/bk_week_add [url]`)
     - [ ] Manually remove posts (via `/bk_week_remove [url]`)
@@ -13,7 +14,7 @@
     - [x] ~~Automatically add scraped posts to JSON~~
     - [ ] Automatically remove posts older than 7 days from JSON
       - [x] ~~Function~~
-      - [ ] Autonomize
+      - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
 
 ### Medium priority:

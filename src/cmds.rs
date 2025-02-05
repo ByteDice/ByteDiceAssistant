@@ -1,4 +1,5 @@
-use crate::{send_embed, send_msg, edit_msg, Context, EmbedOptions, Error};
+use crate::{Context, Error};
+use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
 use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp};
 use rand::{seq::IteratorRandom, Rng};
