@@ -1,5 +1,4 @@
 from praw import models
-import praw
 
 import bot as botPy
 

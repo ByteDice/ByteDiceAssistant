@@ -3,6 +3,7 @@ import json
 from typing import Final
 
 import bot as botPy
+from macros import *
 
 
 BK_WEEKLY: Final[str] = "bk_weekly_art_posts"
@@ -84,9 +85,17 @@ def write_data(bot: botPy.Bot):
 
 
 def update_post_in_data(bot: botPy.Bot, new_data: PostData):
-  if new_data.url not in bot.data:
+  if new_data.url not in bot.data[BK_WEEKLY]:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
+    py_print(f"Added post \"{new_data.url}\"")
     return
+  
+  elif "removed" in bot.data[BK_WEEKLY][new_data.url]:
+    py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
+    return
+  
+  else:
+    py_print(f"Failed to add post \"{new_data.url}\": Already exists.")
 
   
 def remove_old_posts(bot: botPy.Bot, max_age_unix: int):
