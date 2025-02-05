@@ -1,7 +1,9 @@
 mod cmds;
+mod bk_week_cmds;
 mod events;
 mod messages;
 mod python;
+mod reddit_data;
 
 use std::env;
 use std::process;
@@ -11,11 +13,14 @@ use std::fs;
 use tokio::runtime::Runtime;
 use poise::serenity_prelude::Client;
 use poise::serenity_prelude as serenity;
+use serde_json::Value;
 
 struct Data {
   dev: bool,
   ball_prompts: [Vec<String>; 2],
-  creator_id: u64
+  creator_id: u64,
+  reddit_data: Option<Value>,
+  // TODO: schedules
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -91,6 +96,7 @@ fn gen_data(args: Vec<String>) -> Data {
     dev: args.contains(&"--dev".to_string()),
     ball_prompts: [ball_classic, ball_quirk],
     creator_id: 697149665166229614,
+    reddit_data: None
   };
 }
 
@@ -113,8 +119,8 @@ async fn gen_bot(data: Data) -> Client {
         cmds::stop(),
         cmds::eight_ball(),
         cmds::write_json(),
-        cmds::rule(),
-        cmds::bk_week_help()
+        //cmds::rule(),
+        bk_week_cmds::bk_week_help()
       ],
       event_handler: events::event_handler,
       ..Default::default()

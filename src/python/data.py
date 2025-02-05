@@ -65,7 +65,7 @@ def read_data(bot: botPy.Bot):
     bot.data_f = open(data_path + "\\reddit_data.json", "r+")
 
   except FileNotFoundError:
-    print("reddit_data.json not found, creating new from preset...")
+    py_print("reddit_data.json not found, creating new from preset...")
     with open(data_path + "\\reddit_data.json", "w") as f:
       f.write(open(data_path + "\\reddit_data_preset.json", "r").read())
 
@@ -84,28 +84,16 @@ def write_data(bot: botPy.Bot):
   bot.data_f.truncate()
 
 
-def update_post_in_data(bot: botPy.Bot, new_data: PostData):
+def add_post_to_data(bot: botPy.Bot, new_data: PostData) -> bool:
   if new_data.url not in bot.data[BK_WEEKLY]:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
     py_print(f"Added post \"{new_data.url}\"")
-    return
+    return True
   
   elif "removed" in bot.data[BK_WEEKLY][new_data.url]:
     py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
-    return
+    return False
   
   else:
     py_print(f"Failed to add post \"{new_data.url}\": Already exists.")
-
-  
-def remove_old_posts(bot: botPy.Bot, max_age_unix: int):
-  for post in bot.data[BK_WEEKLY]:
-    if post["date_unix"] > max_age_unix:
-      dict(bot.data[BK_WEEKLY]).pop(post)
-
-
-def clear_posts_without_media(bot: botPy.Bot):
-  for post in bot.data[BK_WEEKLY]:
-    post_data = post["post_data"]
-    if post_data["media_type"] == None and len(post_data["media_urls"]) == 0:
-      dict(bot.data[BK_WEEKLY]).pop(post)
+    return False

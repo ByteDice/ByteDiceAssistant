@@ -1,8 +1,6 @@
 use crate::{Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
-use std::fs;
-
 use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
 
@@ -180,7 +178,7 @@ pub async fn write_json(
 }
 
 
-async fn autocomplete_rule_list(_: Context<'_>, _partial: &str) -> Vec<String> {
+/* async fn autocomplete_rule_list(_: Context<'_>, _partial: &str) -> Vec<String> {
   let json_str = std::fs::read_to_string("./data/write_json.json")
     .expect("No JSON preset file exists.");
   let json_json: serde_json::Value = serde_json::from_str(&json_str).expect("JSON was improperly formatted");
@@ -218,15 +216,4 @@ pub async fn rule(
 {
   return Ok(());
 }
-
-
-#[poise::command(slash_command, prefix_command)]
-pub async fn bk_week_help(
-  ctx: Context<'_>,
-) -> Result<(), Error>
-{
-  let help = fs::read_to_string("./bk_week_help.txt").unwrap();
-  send_msg(ctx, help, true, true).await;
-
-  return Ok(());
-}
+ */

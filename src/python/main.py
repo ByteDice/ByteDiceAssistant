@@ -13,6 +13,9 @@ def main():
   py_print("Reading data...")
   data.read_data(bot)
 
+  # TEMPORARY, will be replaced with a
+  # schedule and/or Discord bot command
+  # config file or options ^
   posts.add_new_posts(bot)
 
 

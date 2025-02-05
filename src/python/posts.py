@@ -12,8 +12,13 @@ def add_new_posts(bot: botPy.Bot, debug_print: bool = False):
   posts = reddit.fetch_posts_with_flair(bot, "Original Art")
 
   py_print("Evaluating posts...\n")
+
+  added_posts = 0
+  without_media = 0
+  not_added = 0
   for post in posts:
     media = reddit.has_media(post)
+
     media_urls = "\n        ".join(media[3])
 
     if debug_print: print(
@@ -22,8 +27,12 @@ def add_new_posts(bot: botPy.Bot, debug_print: bool = False):
       f"\n    {check_emoji if media[0] else cross_emoji} Media ({media[1]}) [{media[2]}]",
       f"\n        {media_urls}\n"
     )
+      
+    if not media[0]:
+      without_media += 1
+      continue
 
-    data.update_post_in_data(
+    post_added = data.add_post_to_data(
       bot,
       data.PostData(
         post.shortlink,
@@ -36,6 +45,12 @@ def add_new_posts(bot: botPy.Bot, debug_print: bool = False):
       )
     )
 
-  py_print(f"Sucessfully fetched {len(posts)} posts")
+    if post_added: added_posts += 1
+    else: not_added += 1
+
+  py_print(f"Sucessfully fetched {len(posts)} posts.\n" +
+           f"       Out of which were {added_posts} added.\n" +
+           f"       {without_media} had no media, " +
+           f"and {not_added} weren't added because they are removed or already existed")
 
   data.write_data(bot)

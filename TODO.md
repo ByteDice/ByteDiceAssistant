@@ -5,7 +5,6 @@
   - [x] ~~Scrape the data~~
   - [x] ~~Put it in a JSON~~
   - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~
-  - [ ] Ship Python data to Rust
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] Manually add posts (via `u/[bot] add` or `/bk_week_add [url]`)
     - [ ] Manually remove posts (via `/bk_week_remove [url]`)
@@ -16,6 +15,9 @@
       - [x] ~~Function~~
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
+    - [ ] Log all posts in a Discord thread
+      - [ ] `/bk_week_get` command. Idk how to do this efficiently and automatically
+        - [ ] Removes the thread (if any exists), creates a new one, and sends all posts as embeds.
 
 ### Medium priority:
 - [x] ~~JSON -> Rules list~~
