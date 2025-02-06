@@ -3,8 +3,8 @@ mod bk_week_cmds;
 mod events;
 mod messages;
 mod python;
-mod reddit_data;
 mod macros;
+mod python_comms;
 
 use std::env;
 use std::process;

@@ -11,7 +11,7 @@ def add_new_posts(bot: botPy.Bot, debug_print: bool = False):
   py_print("Fetching posts...")
   posts = reddit.fetch_posts_with_flair(bot, "Original Art")
 
-  py_print("Evaluating posts...\n")
+  py_print("Evaluating posts...")
 
   added_posts = 0
   without_media = 0
