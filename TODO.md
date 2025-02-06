@@ -16,8 +16,11 @@
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
     - [ ] Log all posts in a Discord thread
-      - [ ] `/bk_week_get` command. Idk how to do this efficiently and automatically
-        - [ ] Removes the thread (if any exists), creates a new one, and sends all posts as embeds.
+      - [ ] `/bk_week_get` command
+      - [ ] Send all posts data as embeds
+      - [ ] Compare all posts in the JSON with the posts in the channel
+        - [ ] If the JSON is empty, remove the entire channel and make a new one
+        - [ ] Else, remove each embed and add new ones to be up-to-date with the JSON
 
 ### Medium priority:
 - [x] ~~JSON -> Rules list~~
