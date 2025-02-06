@@ -1,2 +1,17 @@
+from printColors import PrintColors
+
 def py_print(*args: str):
-  print("Py -", " ".join(args))
+  print(
+    PrintColors.FG.blue + "Py" + PrintColors.Special.reset,
+    "-",
+    " ".join(args)
+  )
+
+def py_error(*args: str):
+  print(
+    PrintColors.BG.red + "ERROR" + PrintColors.Special.reset,
+    PrintColors.FG.blue + "Py" + PrintColors.Special.reset,
+    "-",
+    " ".join(args)
+  )
+  quit()

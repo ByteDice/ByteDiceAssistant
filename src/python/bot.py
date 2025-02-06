@@ -2,10 +2,16 @@ from io import TextIOWrapper
 from praw import models
 import praw
 import os
+from macros import *
 
 class Bot:
-  password: str = os.environ["ASSISTANT_R_PASS"]
-  secret: str   = os.environ["ASSISTANT_R_TOKEN"]
+  password: str = os.environ.get("ASSISTANT_R_PASS")
+  secret: str   = os.environ.get("ASSISTANT_R_TOKEN")
+
+  if password is None:
+    py_error("Environment variable \"ASSISTANT_R_PASS\" is null!")
+  if secret is None:
+    py_error("Environment variable \"ASSISTANT_R_TOKEN\" is null!")
 
   r: praw.Reddit = praw.Reddit(
     client_id     = "iCSRWS6PMlTLwmylCJRYmA",

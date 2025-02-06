@@ -4,6 +4,7 @@ mod events;
 mod messages;
 mod python;
 mod reddit_data;
+mod macros;
 
 use std::env;
 use std::process;
@@ -24,13 +25,6 @@ struct Data {
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
-
-#[macro_export]
-macro_rules! rs_println {
-  ($($arg:tt)*) => {
-    println!("RS - {}", format!($($arg)*));
-  };
-}
 
 
 #[tokio::main]
