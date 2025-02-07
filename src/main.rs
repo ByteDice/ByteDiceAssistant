@@ -1,9 +1,12 @@
+#![warn(unused_extern_crates)]
+
 mod cmds;
 mod bk_week_cmds;
 mod events;
 mod messages;
 mod python;
 mod macros;
+mod websocket;
 
 use std::env;
 use std::process;
@@ -58,6 +61,7 @@ async fn main() {
 
   let rust = thread::spawn(move || {
     rt.block_on(async {
+      websocket::start(rust_args.clone()).await;
       start(rust_args).await;
     });
   });
@@ -117,7 +121,8 @@ async fn gen_bot(data: Data) -> Client {
         cmds::eight_ball(),
         cmds::write_json(),
         //cmds::rule(),
-        bk_week_cmds::bk_week_help()
+        bk_week_cmds::bk_week_help(),
+        bk_week_cmds::bk_week_get()
       ],
       event_handler: events::event_handler,
       ..Default::default()

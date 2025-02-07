@@ -1,3 +1,5 @@
+use std::process;
+
 use crate::{Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
@@ -33,6 +35,7 @@ pub async fn stop(
     send_msg(ctx, "Shutting down...".to_string(), true, true).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
     ctx.framework().shard_manager.shutdown_all().await;
+    process::exit(0);
   }
   else if !is_creator {
     send_msg(ctx, "Failed to shut down: Invalid permissions.".to_string(), true, true).await;

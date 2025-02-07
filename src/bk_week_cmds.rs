@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use crate::{rs_println, websocket, Context, Error};
 use crate::messages::send_msg;
 
 use std::fs;
@@ -23,6 +23,8 @@ pub async fn bk_week_get(
 ) -> Result<(), Error>
 {
   // log all posts in a thread
+  rs_println!("Sending hello to python...");
+  websocket::send_msg("Hello from Rust!").await;
   return Ok(());
 }
 

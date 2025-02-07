@@ -1,8 +1,10 @@
 import sys
+import asyncio
 
 from macros import *
 import bot as botPy
 import data
+import py_websocket
 
 
 def main():
@@ -16,6 +18,12 @@ def main():
   py_print("ARGS:", str(bot.args[1:]))
   py_print("Reading data...")
   data.read_data(bot)
+
+  if "--py" not in bot.args:
+    py_print("Connecting to local websocket...")
+    asyncio.run(py_websocket.websocket_client())
+
+    py_websocket.send_message("[Connection test] Hello from Python!")
 
 
 main()
