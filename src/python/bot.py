@@ -2,9 +2,11 @@ from io import TextIOWrapper
 from praw import models
 import praw
 import os
+
 from macros import *
 
 class Bot:
+  args: list[str] = ["NO_RUST", "--dev", "--py"]
   password: str = os.environ.get("ASSISTANT_R_PASS")
   secret: str   = os.environ.get("ASSISTANT_R_TOKEN")
 
@@ -23,3 +25,6 @@ class Bot:
   sr: models.Subreddit = r.subreddit("bytedicetesting") #r.subreddit("boykisser")
   data_f: TextIOWrapper = None
   data: dict = {}
+
+  def set_args(self, args: list[str]):
+    self.args = args

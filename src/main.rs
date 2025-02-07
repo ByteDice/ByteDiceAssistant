@@ -4,7 +4,6 @@ mod events;
 mod messages;
 mod python;
 mod macros;
-mod python_comms;
 
 use std::env;
 use std::process;
@@ -42,7 +41,7 @@ async fn main() {
      && !args.contains(&"--rs".to_string())
   {
     println!("----- PYTHON ONLY MODE -----");
-    let _ = python::start();
+    let _ = python::start(args);
     process::exit(0);
   }
   else if args.contains(&"--rs".to_string())
@@ -54,15 +53,17 @@ async fn main() {
   }
 
   let rt = Runtime::new().unwrap();
+  let rust_args = args.clone();
+  let python_args = args.clone();
 
   let rust = thread::spawn(move || {
     rt.block_on(async {
-      start(args).await;
+      start(rust_args).await;
     });
   });
 
   let python = thread::spawn(|| {
-    let _ = python::start();
+    let _ = python::start(python_args);
   });
 
   rust.join().unwrap();
@@ -71,6 +72,8 @@ async fn main() {
 
 
 async fn start(args: Vec<String>) {
+  rs_println!("ARGS: {:?}", &args[1..]);
+
   let data = gen_data(args);
   let mut bot = gen_bot(data).await;
 

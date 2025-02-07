@@ -8,22 +8,18 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 
 
-pub fn start() -> PyResult<()> { 
+pub fn start(args: Vec<String>) -> PyResult<()> { 
   rs_println!("Running Python program...");
 
   let path = concat!(env!("CARGO_MANIFEST_DIR"), "\\src\\python");
 
   let code = get_code(&(path.to_owned() + "\\main.py"));
-  let app_path = CString::new(code).unwrap();
+  let app_path = CString::new(format!("args = {:?}\n{}", args, code)).unwrap();
   
   pyo3::prepare_freethreaded_python();
 
   let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
-    let syspath = py
-      .import("sys")?
-      .getattr("path")?
-      .downcast_into::<PyList>()?;
-
+    let syspath = py.import("sys")?.getattr("path")?.downcast_into::<PyList>()?;
     syspath.insert(0, path)?;
     let empty = CString::new("").unwrap();
 
@@ -37,6 +33,7 @@ pub fn start() -> PyResult<()> {
   println!("py: {}", from_python?);
   return Ok(());
 }
+
 
 fn get_code(path: &str) -> String {
   return fs::read_to_string(path)
