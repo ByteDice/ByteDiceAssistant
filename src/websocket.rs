@@ -65,7 +65,6 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
 
       unsafe {
         if !REPLY_HELLO {
-          rs_println!("Replying to python...");
           send_msg("[Connection test] Hello from Rust!").await;
           REPLY_HELLO = true;
         }

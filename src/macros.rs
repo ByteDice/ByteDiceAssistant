@@ -19,7 +19,7 @@ macro_rules! rs_errln {
       "\x1b[0m",
       format!($($arg)*)
     );
-    process::exit(-1);
+    process::exit(1);
   };
 }
 
@@ -32,6 +32,6 @@ macro_rules! errln {
       "\x1b[0m",
       format!($($arg)*)
     );
-    process::exit(-1);
+    std::process::exit(1);
   };
 }

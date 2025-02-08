@@ -1,5 +1,7 @@
 import sys
 import asyncio
+import threading
+import time
 
 from macros import *
 import bot as botPy
@@ -20,11 +22,14 @@ def main():
   py_print("Reading data...")
   data.read_data(bot)
 
-  if True: #bot.args["py"]:
+  if not bot.args["py"]:
     py_print("Connecting to local websocket...")
-    asyncio.run(py_websocket.websocket_client(bot))
+    ws_thread = threading.Thread(target=py_websocket.run_thread, args=(bot,))
+    ws_thread.start()
+    
+    while not py_websocket.is_connected:
+      py_print("Awaiting connection...")
+      time.sleep(1)
+      continue
 
-    #py_websocket.send_message("[Connection test] Hello from Python!")
-
-
-main()
+    asyncio.run(py_websocket.send_message("[Connection test] Hello from Python!"))

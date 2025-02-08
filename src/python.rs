@@ -1,4 +1,4 @@
-use crate::rs_println;
+use crate::{rs_println, errln};
 
 use std::fs;
 use std::ffi::CString;
@@ -25,13 +25,13 @@ pub fn start(args: String) -> PyResult<()> {
     let empty = CString::new("").unwrap();
 
     let app: Py<PyAny> = PyModule::from_code(py, &app_path, &empty, &empty)?
-      .getattr("run")?
+      .getattr("main")?
       .into();
 
     return app.call0(py);
   });
 
-  if from_python.is_err() { println!("py: {:?}", from_python); }
+  if from_python.is_err() { errln!("pyO3: {:?}", from_python); }
   return Ok(());
 }
 
