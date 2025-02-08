@@ -4,6 +4,7 @@ use tokio::net::TcpListener;
 use tokio_tungstenite::{accept_async, tungstenite};
 use futures::StreamExt;
 use std::sync::Arc;
+use serde_json::Value;
 
 use crate::rs_println;
 use crate::Args;
@@ -27,6 +28,22 @@ pub async fn send_msg(msg: &str) {
       let mut sender = sender.lock().await;
       if let Some(s) = sender.as_mut() {
         s.send(tungstenite::Message::Text(msg.to_string().into())).await.unwrap();
+      }
+    }
+  }
+}
+
+
+pub async fn send_cmd_json(func_name: &str, func_args: Value) {
+  unsafe {
+    if let Some(sender) = &GLOBAL_SENDER {
+      let mut sender = sender.lock().await;
+      if let Some(s) = sender.as_mut() {
+        let json_str: String = format!(
+          "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
+          func_name, func_args
+        );
+        s.send(tungstenite::Message::Text(json_str.into())).await.unwrap();
       }
     }
   }

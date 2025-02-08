@@ -79,6 +79,7 @@ def read_data(bot: botPy.Bot):
 
 
 def write_data(bot: botPy.Bot):
+  bot.data["TEST"] = True
   bot.data_f.seek(0)
   json.dump(bot.data, bot.data_f, indent=2)
   bot.data_f.truncate()

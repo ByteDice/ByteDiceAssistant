@@ -1,4 +1,7 @@
-use crate::{rs_println, websocket, Context, Error};
+use serde_json::json;
+
+use crate::websocket::send_cmd_json;
+use crate::{Context, Error};
 use crate::messages::send_msg;
 
 use std::fs;
@@ -8,7 +11,7 @@ pub async fn bk_week_help(
   ctx: Context<'_>,
 ) -> Result<(), Error>
 {
-  let help = fs::read_to_string("./bk_week_help.txt").unwrap();
+  let help = fs::read_to_string("./bk_week_help.md").unwrap();
   send_msg(ctx, help, true, true).await;
 
   return Ok(());
@@ -21,9 +24,7 @@ pub async fn bk_week_get(
   #[description = "The post URL"] url: Option<String>
 ) -> Result<(), Error>
 {
-  // log all posts in a thread
-  rs_println!("Sending hello to python...");
-  websocket::send_msg("Hello from Rust!").await;
+  send_cmd_json("update_data_file", json!([])).await;
   return Ok(());
 }
 

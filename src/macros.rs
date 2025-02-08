@@ -1,9 +1,8 @@
 #[macro_export]
 macro_rules! rs_println {
   ($($arg:tt)*) => {
-    println!("{}RS{} - {}",
+    println!("{}RS - {}",
       "\x1b[31m",
-      "\x1b[0m",
       format!($($arg)*)
     );
   };
@@ -13,10 +12,9 @@ macro_rules! rs_println {
 #[macro_export]
 macro_rules! rs_errln {
   ($($arg:tt)*) => {
-    println!("{}ERROR{} RS{} - {}",
+    println!("{}ERROR{} RS - {}",
       "\x1b[41m",
       "\x1b[0m\x1b[31m",
-      "\x1b[0m",
       format!($($arg)*)
     );
     process::exit(1);
