@@ -15,15 +15,16 @@ def main():
   except NameError:
     py_print("No command args found from Rust. Don't worry though, we have backup in place.")
 
-  py_print("ARGS:", str(bot.args[1:]))
+  if bot.args["dev"]:
+    py_print("ARGS:", str(bot.args))
   py_print("Reading data...")
   data.read_data(bot)
 
-  if "--py" not in bot.args:
+  if True: #bot.args["py"]:
     py_print("Connecting to local websocket...")
-    asyncio.run(py_websocket.websocket_client())
+    asyncio.run(py_websocket.websocket_client(bot))
 
-    py_websocket.send_message("[Connection test] Hello from Python!")
+    #py_websocket.send_message("[Connection test] Hello from Python!")
 
 
 main()

@@ -8,13 +8,14 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 
 
-pub fn start(args: Vec<String>) -> PyResult<()> { 
+pub fn start(args: String) -> PyResult<()> { 
   rs_println!("Running Python program...");
 
   let path = concat!(env!("CARGO_MANIFEST_DIR"), "\\src\\python");
 
   let code = get_code(&(path.to_owned() + "\\main.py"));
-  let app_path = CString::new(format!("args = {:?}\n{}", args, code)).unwrap();
+  let py_args = args.replace(":true", ":True").replace(":false", ":False");
+  let app_path = CString::new(format!("args = {}\n{}", py_args, code)).unwrap();
   
   pyo3::prepare_freethreaded_python();
 
@@ -30,7 +31,7 @@ pub fn start(args: Vec<String>) -> PyResult<()> {
     return app.call0(py);
   });
 
-  println!("py: {}", from_python?);
+  if from_python.is_err() { println!("py: {:?}", from_python); }
   return Ok(());
 }
 

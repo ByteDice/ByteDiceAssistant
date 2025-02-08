@@ -22,3 +22,16 @@ macro_rules! rs_errln {
     process::exit(-1);
   };
 }
+
+
+#[macro_export]
+macro_rules! errln {
+  ($($arg:tt)*) => {
+    println!("{}ERROR{} - {}",
+      "\x1b[41m",
+      "\x1b[0m",
+      format!($($arg)*)
+    );
+    process::exit(-1);
+  };
+}

@@ -25,8 +25,7 @@ pub async fn stop(
   #[description = "Type \"i want to stop the bot now\" to confirm."] confirmation: Option<String>,
 ) -> Result<(), Error>
 {
-  let dev_enabled = ctx.data().dev;
-  let should_stop = dev_enabled
+  let should_stop = ctx.data().args.dev
     || confirmation.unwrap_or_else(|| "".to_string()).to_lowercase() == "i want to stop the bot now";
 
   let is_creator = ctx.author().id == UserId::new(ctx.data().creator_id);

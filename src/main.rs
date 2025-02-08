@@ -1,6 +1,7 @@
 #![warn(unused_extern_crates)]
 
 mod cmds;
+#[allow(unused_variables)]
 mod bk_week_cmds;
 mod events;
 mod messages;
@@ -8,21 +9,35 @@ mod python;
 mod macros;
 mod websocket;
 
-use std::env;
 use std::process;
 use std::thread;
-use std::fs;
 
-use tokio::runtime::Runtime;
-use poise::serenity_prelude::Client;
+use clap::Parser;
 use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::Client;
+use serde::Serialize;
 use serde_json::Value;
+use tokio::runtime::Runtime;
+use serde_json;
+
+
+#[derive(Parser, Serialize, Clone)]
+struct Args {
+  #[arg(short = 'p', long, default_value = "2920", help = "Sets the port number, e.g 2200.")]
+  port: u16,
+  #[arg(long, help = "Runs only the Python part of the program.")]
+  py: bool,
+  #[arg(long, help = "Runs only the Rust part of the program.")]
+  rs: bool,
+  #[arg(short = 'd', long, help = "Enables dev mode. Dev mode shows more debug info and turns of certain security measures.")]
+  dev: bool
+}
 
 struct Data {
-  dev: bool,
   ball_prompts: [Vec<String>; 2],
   creator_id: u64,
   reddit_data: Option<Value>,
+  args: Args
   // TODO: schedules
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -31,38 +46,32 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[tokio::main]
 async fn main() {
-  let args: Vec<String> = env::args().collect();
+  let args = <Args as clap::Parser>::parse();
+  let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
 
-  if args.contains(&"--h".to_string()) || args.contains(&"--help".to_string()) {
-    let help = fs::read_to_string("./help.txt").unwrap_or_else(|_| "No help.txt file found.".to_string());
-    println!("HELP MENU:\n{}", help);
-    process::exit(1);
-  }
-  if args.contains(&"--dev".to_string()) { println!("----- DEV MODE ENABLED -----"); }
+  if args.dev { println!("----- DEV MODE ENABLED -----"); rs_println!("ARGS: {}", args_str); }
 
-  if args.contains(&"--py".to_string())
-     && !args.contains(&"--rs".to_string())
-  {
+  if args.py && !args.rs {
     println!("----- PYTHON ONLY MODE -----");
-    let _ = python::start(args);
+    let _ = python::start(args_str);
     process::exit(0);
   }
-  else if args.contains(&"--rs".to_string())
-          && ! args.contains(&"--py".to_string())
-  {
+  else if args.rs && ! args.py {
     println!("----- RUST ONLY MODE -----");
     start(args).await;
     process::exit(0);
   }
+  else if args.py && args.rs {
+    errln!("Invalid arguments: Arguments cannot include both --rs and --py.");
+  }
 
   let rt = Runtime::new().unwrap();
-  let rust_args = args.clone();
-  let python_args = args.clone();
+  let python_args = args_str;
 
   let rust = thread::spawn(move || {
     rt.block_on(async {
-      websocket::start(rust_args.clone()).await;
-      start(rust_args).await;
+      websocket::start(args.clone()).await;
+      start(args).await;
     });
   });
 
@@ -75,9 +84,7 @@ async fn main() {
 }
 
 
-async fn start(args: Vec<String>) {
-  rs_println!("ARGS: {:?}", &args[1..]);
-
+async fn start(args: Args) {
   let data = gen_data(args);
   let mut bot = gen_bot(data).await;
 
@@ -86,7 +93,7 @@ async fn start(args: Vec<String>) {
 }
 
 
-fn gen_data(args: Vec<String>) -> Data {
+fn gen_data(args: Args) -> Data {
   let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
   let ball_quirk_str = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
 
@@ -94,10 +101,10 @@ fn gen_data(args: Vec<String>) -> Data {
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
 
   return Data {
-    dev: args.contains(&"--dev".to_string()),
     ball_prompts: [ball_classic, ball_quirk],
     creator_id: 697149665166229614,
-    reddit_data: None
+    reddit_data: None,
+    args
   };
 }
 

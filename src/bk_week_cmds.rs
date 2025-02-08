@@ -3,7 +3,6 @@ use crate::messages::send_msg;
 
 use std::fs;
 
-
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_help(
   ctx: Context<'_>,

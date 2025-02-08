@@ -6,6 +6,7 @@ use futures::StreamExt;
 use std::sync::Arc;
 
 use crate::rs_println;
+use crate::Args;
 
 type Sender = Arc<Mutex<Option<futures::stream::SplitSink<tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>, tungstenite::Message>>>>;
 
@@ -32,16 +33,17 @@ pub async fn send_msg(msg: &str) {
 }
 
 
-pub async fn start(args: Vec<String>) {
+pub async fn start(args: Args) {
   rs_println!("Starting local websocket...");
-  let listener = TcpListener::bind("127.0.0.1:9001").await.unwrap();
-  rs_println!("WebSocket server running on ws://127.0.0.1:9001");
+  let ip = format!("127.0.0.1:{}", args.port);
+  let listener = TcpListener::bind(&ip).await.unwrap();
+  rs_println!("WebSocket server running on ws://{}", ip);
 
   tokio::spawn(handle_connections(listener, args));
 }
 
 
-async fn handle_connections(listener: TcpListener, args: Vec<String>) {
+async fn handle_connections(listener: TcpListener, args: Args) {
   while let Ok((stream, _)) = listener.accept().await {
     let ws_stream = accept_async(stream).await.unwrap();
     let (sender, mut receiver) = ws_stream.split();
@@ -50,13 +52,13 @@ async fn handle_connections(listener: TcpListener, args: Vec<String>) {
     set_sender(sender_arc.clone()).await;
 
     while let Some(Ok(msg)) = receiver.next().await {
-      handle_message(msg, &args).await;
+      handle_message(msg, args.clone()).await;
     }
   }
 }
 
 
-async fn handle_message(msg: tungstenite::protocol::Message, args: &[String]) {
+async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
   match msg {
     tungstenite::Message::Text(text) => {
       rs_println!("Received from Python: {}", text);
@@ -70,12 +72,12 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: &[String]) {
       }
     }
     tungstenite::Message::Binary(bytes) => {
-      if args.contains(&"--dev".to_string()) {
+      if args.dev {
         rs_println!("[Binary] from Python: {:?}", bytes);
       }
     }
     _ => {
-      if args.contains(&"--dev".to_string()) {
+      if args.dev {
         rs_println!("Received from Python: [UNKNOWN / OTHER]");
       }
     }

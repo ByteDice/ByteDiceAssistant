@@ -6,7 +6,7 @@ import os
 from macros import *
 
 class Bot:
-  args: list[str] = ["NO_RUST", "--dev", "--py"]
+  args: dict = {"NO_RUST": True, "dev": True, "py": True, "port": 2920}
   password: str = os.environ.get("ASSISTANT_R_PASS")
   secret: str   = os.environ.get("ASSISTANT_R_TOKEN")
 
@@ -26,5 +26,5 @@ class Bot:
   data_f: TextIOWrapper = None
   data: dict = {}
 
-  def set_args(self, args: list[str]):
+  def set_args(self, args: dict):
     self.args = args
