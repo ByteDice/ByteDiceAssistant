@@ -1,6 +1,8 @@
+use futures::stream::SplitStream;
 use tokio::sync::Mutex;
 use futures::SinkExt;
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::{accept_async, tungstenite};
 use futures::StreamExt;
 use std::sync::Arc;
@@ -10,14 +12,21 @@ use crate::rs_println;
 use crate::Args;
 
 type Sender = Arc<Mutex<Option<futures::stream::SplitSink<tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>, tungstenite::Message>>>>;
+type Receiver = Arc<Mutex<Option<SplitStream<WebSocketStream<TcpStream>>>>>;
 
 static mut GLOBAL_SENDER: Option<Sender> = None;
+static mut GLOBAL_RECEIVER: Option<Receiver> = None;
 static mut REPLY_HELLO: bool = false;
 
 
 async fn set_sender(sender: Sender) {
   unsafe {
     GLOBAL_SENDER = Some(sender);
+  }
+}
+async fn set_receiver(receiver: Receiver) {
+  unsafe {
+    GLOBAL_RECEIVER = Some(receiver);
   }
 }
 
@@ -34,17 +43,41 @@ pub async fn send_msg(msg: &str) {
 }
 
 
-pub async fn send_cmd_json(func_name: &str, func_args: Value) {
+pub async fn send_cmd_json(func_name: &str, func_args: Value) -> Option<Value> {
   unsafe {
-    if let Some(sender) = &GLOBAL_SENDER {
-      let mut sender = sender.lock().await;
-      if let Some(s) = sender.as_mut() {
-        let json_str: String = format!(
-          "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
-          func_name, func_args
-        );
-        s.send(tungstenite::Message::Text(json_str.into())).await.unwrap();
-      }
+    let Some(sender) = &GLOBAL_SENDER else { return None };
+    let mut sender = sender.lock().await;
+    let Some(s) = sender.as_mut() else { return None };
+
+    let json_str = format!(
+      "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
+      func_name, func_args
+    );
+
+    if s.send(tungstenite::Message::Text(json_str.into())).await.is_err() {
+      return None;
+    }
+
+    let r = receive_response().await;
+    return r;
+  }
+}
+
+
+async fn receive_response() -> Option<Value> {
+  unsafe {
+    let Some(receiver) = &GLOBAL_RECEIVER else { return None };
+    let mut receiver = receiver.lock().await;
+    let Some(r) = receiver.as_mut() else { return None };
+
+    let Some(Ok(msg)) = r.next().await else { return None };
+    let tungstenite::Message::Text(response) = msg else { return None };
+
+    if response.starts_with("json:") {
+      return serde_json::from_str(&response[5..]).ok();
+    }
+    else {
+      return serde_json::from_str(&response).ok();
     }
   }
 }
@@ -63,12 +96,15 @@ pub async fn start(args: Args) {
 async fn handle_connections(listener: TcpListener, args: Args) {
   while let Ok((stream, _)) = listener.accept().await {
     let ws_stream = accept_async(stream).await.unwrap();
-    let (sender, mut receiver) = ws_stream.split();
+    let (sender, receiver) = ws_stream.split();
 
     let sender_arc = Arc::new(Mutex::new(Some(sender)));
-    set_sender(sender_arc.clone()).await;
+    let receiver_arc = Arc::new(Mutex::new(Some(receiver)));
 
-    while let Some(Ok(msg)) = receiver.next().await {
+    set_sender(sender_arc.clone()).await;
+    set_receiver(receiver_arc.clone()).await;
+
+    while let Some(Ok(msg)) = receiver_arc.lock().await.as_mut().unwrap().next().await {
       handle_message(msg, args.clone()).await;
     }
   }

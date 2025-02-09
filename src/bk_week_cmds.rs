@@ -1,11 +1,11 @@
-use crate::{rs_println, Context, Error};
+use crate::{rs_println, websocket, Context, Error};
 use crate::messages::{send_embed, send_msg, EmbedOptions};
 use crate::data;
 
 use std::fs;
 
 use poise::serenity_prelude::Timestamp;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -53,6 +53,7 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
     if let Some(post) = bk_week.get(url) {
       if post.get("removed").is_some() {
         send_post_removed_message(ctx, url).await;
+        return Ok(None);
       }
       return Ok(Some(post.clone()));
     }
@@ -71,18 +72,18 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
 async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Result<(), Error> {
   let embed_options = EmbedOptions {
     desc: format!(
-      r#"**Spoilers for fair review!**
-      Upvotes: ||`{}`||
+      r#"**Spoilers and vote length anonymizer for fair review!**
+      Upvotes: ||`{:>6}`||
       URL: ||<{}>||
-      Added by human: `{}`
-      Added by bot: `{}`
-      Approved by human: `{}`
+      Added by human: {}
+      Added by bot: {}
+      Approved by human: {}
       Approved by bot: `[not implemented]`"#,
-      post["post_data"]["upvotes"],
+      post["post_data"]["upvotes"].as_i64().unwrap(),
       url,
-      post["added"]["by_human"],
-      post["added"]["by_bot"],
-      post["approved"]["by_human"]
+      if post["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
+      if post["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
+      if post["approved"]["by_human"].as_bool().unwrap() { "✅" } else { "❌" }
     ).trim().to_string(),
     title: Some(post["post_data"]["title"].as_str().unwrap().to_string()),
     url: Some(url.to_string()),
@@ -143,14 +144,41 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_add(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: Option<String>,
+  #[description = "The post URL"] url: String,
   #[description = "Wether to approve it after adding it"] approve: Option<bool>
 ) -> Result<(), Error>
 {
-  // update data
-  // use python_comms.rs to tell python to update its data
+  // TODO: auto approve
+  data::update_re_data(ctx.data()).await;
+  let reddit_data = get_reddit_data(ctx).await.unwrap();
+
+  if let Some(bk_week) = reddit_data.get("bk_weekly_art_posts") {
+    websocket::send_cmd_json("add_post_url", json!([&url])).await;
+
+    if let Some(post) = bk_week.get(&url) {
+      if post.get("removed").is_some() {
+        send_unremove_msg(ctx, &url).await;
+      }
+      else {
+        send_updated_msg(ctx, &url).await;
+      }
+    }
+  }
+
   return Ok(());
 }
+
+
+async fn send_unremove_msg(ctx: Context<'_>, url: &str) {
+  send_msg(ctx, format!("Un-removed post with URL \"{}\"!", url), true, true).await;
+}
+
+
+async fn send_updated_msg(ctx: Context<'_>, url: &str) {
+  send_msg(ctx, format!("Updated post with URL \"{}\"!", url), true, true).await;
+}
+
+
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -165,6 +193,8 @@ pub async fn bk_week_remove(
 }
 
 
+
+
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_approve(
   ctx: Context<'_>,
@@ -175,6 +205,8 @@ pub async fn bk_week_approve(
   // use python_comms.rs to tell python to update its data
   return Ok(());
 }
+
+
 
 
 #[poise::command(slash_command, prefix_command)]

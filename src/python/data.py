@@ -85,13 +85,19 @@ def read_data(bot: botPy.Bot):
     raise Exception("reddit_data.json file wasn't created properly. Delete the file and retry.")
 
 
-def write_data(bot: botPy.Bot):
+def write_data(bot: botPy.Bot) -> bool:
   bot.data_f.seek(0)
   json.dump(bot.data, bot.data_f, indent=2)
   bot.data_f.truncate()
+  return True
 
 
-def add_post_to_data(bot: botPy.Bot, new_data: PostData) -> bool:
+def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool = False) -> bool:
+  if bypass_conditions:
+    bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
+    py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
+    return True
+
   if new_data.url not in bot.data[BK_WEEKLY]:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
     py_print(f"Added post \"{new_data.url}\"")

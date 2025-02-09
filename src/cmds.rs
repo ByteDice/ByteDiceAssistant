@@ -5,6 +5,7 @@ use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
 use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
+use regex::Regex;
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -179,6 +180,27 @@ pub async fn write_json(
 
   if include_cmd && json.is_none() {
     send_msg(ctx, "Use /rules thank you".to_string(), false, false).await;
+  }
+
+  return Ok(());
+}
+
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn re_shorturl(
+  ctx: Context<'_>,
+  #[description = "A Reddit post URL"] url: String
+) -> Result<(), Error>
+{
+  let re = Regex::new(r"comments/([a-zA-Z0-9]+)").unwrap();
+    
+  if let Some(caps) = re.captures(&url) {
+    let post_id = &caps[1];
+    let short_url = format!("https://redd.it/{}", post_id);
+    send_msg(ctx, format!("ShortURL: <{}>", short_url), true, true).await;
+  }
+  else {
+    println!("Post ID not found in the URL");
   }
 
   return Ok(());

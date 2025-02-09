@@ -7,7 +7,6 @@ from macros import *
 import bot as botPy
 import data
 import py_websocket
-import posts
 
 
 def main():

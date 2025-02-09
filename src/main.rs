@@ -136,9 +136,11 @@ async fn gen_bot(data: Data) -> Client {
         cmds::stop(),
         cmds::eight_ball(),
         cmds::write_json(),
+        cmds::re_shorturl(),
         //cmds::rule(),
         bk_week_cmds::bk_week_help(),
-        bk_week_cmds::bk_week_get()
+        bk_week_cmds::bk_week_get(),
+        bk_week_cmds::bk_week_add()
       ],
       event_handler: events::event_handler,
       ..Default::default()
