@@ -22,7 +22,7 @@
       - [ ] Remove post if its `"removed": true` in data
       - [ ] Add posts to data from channel
       - [ ] `/bk_week_update` to forcefully trigger this ^
-    - [x] `/bk_week_get [url]` get the data of a single post from the data
+    - [x] ~~`/bk_week_get [url]` get the data of a single post from the data~~
 
 ### Medium priority:
 - [x] ~~JSON -> Rules list~~
