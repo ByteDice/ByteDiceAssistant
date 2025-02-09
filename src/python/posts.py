@@ -4,7 +4,7 @@ import data
 import bot as botPy
 from macros import *
 
-def add_new_posts(bot: botPy.Bot, debug_print: bool = False):
+def add_new_posts(bot: botPy.Bot):
   check_emoji = emoji.emojize(":check_mark_button:")
   cross_emoji = emoji.emojize(":cross_mark:")
 
@@ -21,7 +21,7 @@ def add_new_posts(bot: botPy.Bot, debug_print: bool = False):
 
     media_urls = "\n        ".join(media[3])
 
-    if debug_print: print(
+    if bot.args["dev"]: py_print(
       f"\n{post.title}",
       f"\n    {post.shortlink}"
       f"\n    {check_emoji if media[0] else cross_emoji} Media ({media[1]}) [{media[2]}]",

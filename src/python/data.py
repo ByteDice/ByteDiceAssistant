@@ -66,20 +66,26 @@ def read_data(bot: botPy.Bot):
 
   except FileNotFoundError:
     py_print("reddit_data.json not found, creating new from preset...")
+    with open(data_path + "\\reddit_data_preset.json", "r") as f:
+      data_preset_json = json.load(f)
+
+    data_preset_json["bk_weekly_art_posts"].pop("EXAMPLE VALUE", None)
+    data_preset_json["bk_weekly_art_posts"].pop("EXAMPLE VALUE DELETED", None)
+
     with open(data_path + "\\reddit_data.json", "w") as f:
-      f.write(open(data_path + "\\reddit_data_preset.json", "r").read())
+      json.dump(data_preset_json, f, indent = 2)
 
     bot.data_f = open(data_path + "\\reddit_data.json", "r+")
 
   data_str = bot.data_f.read()
-  bot.data = json.loads(data_str)
+  json_data = json.loads(data_str)
+  bot.data = json_data
 
   if not bot.data["file_created_correctly"]:
     raise Exception("reddit_data.json file wasn't created properly. Delete the file and retry.")
 
 
 def write_data(bot: botPy.Bot):
-  bot.data["TEST"] = True
   bot.data_f.seek(0)
   json.dump(bot.data, bot.data_f, indent=2)
   bot.data_f.truncate()

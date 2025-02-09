@@ -102,7 +102,4 @@ pub async fn edit_msg(
   };
 
   let _ = msg.edit(ctx, r).await;
-
-  let msg_text = &msg.message().await.unwrap().content;
-  rs_println!("Edited message: {} -> {}", msg_text, new_text);
 }

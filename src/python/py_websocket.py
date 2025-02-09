@@ -58,4 +58,4 @@ def json_to_func(v: dict, bot: botPy.Bot):
     case _: value_supported = False
 
   if bot.args["dev"] and not value_supported:
-    print(f"Value {v['value']} is not supported")
+    py_print(f"Value {v['value']} is not supported")

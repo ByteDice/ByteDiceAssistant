@@ -8,9 +8,11 @@ mod messages;
 mod python;
 mod macros;
 mod websocket;
+mod data;
 
 use std::process;
 use std::thread;
+use std::sync::Mutex;
 
 use clap::Parser;
 use poise::serenity_prelude as serenity;
@@ -35,8 +37,9 @@ struct Args {
 
 struct Data {
   ball_prompts: [Vec<String>; 2],
-  creator_id: u64,
-  reddit_data: Option<Value>,
+  byte_dice_id: u64,
+  reddit_data: Mutex<Option<Value>>,
+  discord_data: Mutex<Option<Value>>,
   args: Args
   // TODO: schedules
 }
@@ -100,12 +103,18 @@ fn gen_data(args: Args) -> Data {
   let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
 
-  return Data {
+  let data = Data {
     ball_prompts: [ball_classic, ball_quirk],
-    creator_id: 697149665166229614,
-    reddit_data: None,
+    byte_dice_id: 697149665166229614,
+    reddit_data: None.into(),
+    discord_data: None.into(),
     args
   };
+
+  data::read_dc_data(&data);
+  data::read_re_data(&data);
+
+  return data;
 }
 
 

@@ -16,11 +16,13 @@
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
     - [ ] Log all posts in a Discord thread
-      - [ ] `/bk_week_get` command
-      - [ ] Send all posts data as embeds
-      - [ ] Compare all posts in the JSON with the posts in the channel
-        - [ ] If the JSON is empty, remove the entire channel and make a new one
-        - [ ] Else, remove each embed and add new ones to be up-to-date with the JSON
+      - [ ] `/bk_week_bind` to bind a channel for bk_week logs
+      - [ ] Add post if it exists in data but not in channel
+      - [ ] Edit post if it exists in channel and is different in data
+      - [ ] Remove post if its `"removed": true` in data
+      - [ ] Add posts to data from channel
+      - [ ] `/bk_week_update` to forcefully trigger this ^
+    - [x] `/bk_week_get [url]` get the data of a single post from the data
 
 ### Medium priority:
 - [x] ~~JSON -> Rules list~~

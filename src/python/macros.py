@@ -4,7 +4,7 @@ def py_print(*args: str):
   print(
     PrintColors.FG.blue + "Py",
     "-",
-    " ".join(args)
+    " ".join(args) + PrintColors.Special.reset
   )
 
 def py_error(*args: str):
@@ -12,6 +12,6 @@ def py_error(*args: str):
     PrintColors.BG.red + "ERROR" + PrintColors.Special.reset,
     PrintColors.FG.blue + "Py",
     "-",
-    " ".join(args)
+    " ".join(args) + PrintColors.Special.reset
   )
   quit()

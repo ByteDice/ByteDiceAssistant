@@ -7,6 +7,7 @@ from macros import *
 import bot as botPy
 import data
 import py_websocket
+import posts
 
 
 def main():
@@ -33,3 +34,7 @@ def main():
       continue
 
     asyncio.run(py_websocket.send_message("[Connection test] Hello from Python!"))
+
+
+if __name__ == "__main__":
+  main()

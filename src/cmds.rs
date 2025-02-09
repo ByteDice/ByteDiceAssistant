@@ -1,6 +1,6 @@
 use std::process;
 
-use crate::{Context, Error};
+use crate::{data, Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
 use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp, UserId};
@@ -28,12 +28,17 @@ pub async fn stop(
   let should_stop = ctx.data().args.dev
     || confirmation.unwrap_or_else(|| "".to_string()).to_lowercase() == "i want to stop the bot now";
 
-  let is_creator = ctx.author().id == UserId::new(ctx.data().creator_id);
+  let is_creator = ctx.author().id == UserId::new(ctx.data().byte_dice_id);
 
   if should_stop && is_creator {
-    send_msg(ctx, "Shutting down...".to_string(), true, true).await;
+    let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
+    data::write_dc_data(ctx.data());
+    data::write_re_data().await;
+
+    edit_msg(ctx, msg, "Saving data... Done!\nShutting down...".to_string()).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
     ctx.framework().shard_manager.shutdown_all().await;
+
     process::exit(0);
   }
   else if !is_creator {
