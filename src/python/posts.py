@@ -102,7 +102,7 @@ def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
     return False, None
 
 
-def get_post_details(post: models.Submission):
+def get_post_details(post: models.Submission) -> data.PostData:
   media = has_media(post)
 
   return data.PostData(
@@ -116,11 +116,11 @@ def get_post_details(post: models.Submission):
   )
 
 
-async def add_post_url(bot, url: str) -> bool:
+def add_post_url(bot, url: str) -> bool:
   result, post = from_url(bot, url)
 
   if not result:
     return result
   
   post_data = get_post_details(post)
-  data.add_post_to_data(bot, post_data, True)
+  return data.add_post_to_data(bot, post_data, True)

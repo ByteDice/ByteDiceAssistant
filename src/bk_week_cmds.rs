@@ -1,4 +1,4 @@
-use crate::{rs_println, websocket, Context, Error};
+use crate::{rs_println, websocket, Context, Error, BK_WEEK};
 use crate::messages::{send_embed, send_msg, EmbedOptions};
 use crate::data;
 
@@ -49,10 +49,10 @@ async fn get_reddit_data(ctx: Context<'_>) -> Result<Value, Error> {
 
 
 async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) -> Result<Option<Value>, Error> {
-  if let Some(bk_week) = reddit_data.get("bk_weekly_art_posts") {
+  if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     if let Some(post) = bk_week.get(url) {
       if post.get("removed").is_some() {
-        send_post_removed_message(ctx, url).await;
+        send_post_removed_message(ctx, url, post.get("removed_by").unwrap().as_str().unwrap()).await;
         return Ok(None);
       }
       return Ok(Some(post.clone()));
@@ -101,7 +101,7 @@ async fn send_post_not_found_message(ctx: Context<'_>, url: &str) {
   send_msg(
     ctx, 
     format!(
-      r#"Post url \"<{}>\" not found: Post doesn't exist in the data!
+      r#"Post URL \"<{}>\" not found: Post doesn't exist in the data!
       Hint: Run the command `/bk_week_add [URL]` in a Discord channel or `u/ByteDiceAssistant bk_week_add` in a Reddit post."#, 
       url
     ).trim().to_string(), 
@@ -111,13 +111,13 @@ async fn send_post_not_found_message(ctx: Context<'_>, url: &str) {
 }
 
 
-async fn send_post_removed_message(ctx: Context<'_>, url: &str) {
+async fn send_post_removed_message(ctx: Context<'_>, url: &str, rm_by: &str) {
   send_msg(
     ctx, 
     format!(
-      r#"Post url \"<{}>\" is removed: Post is removed from the data!
+      r#"Post URL \"<{}>\" is removed: Post is removed from the data! (Removed by: {})
       Hint: Run the command `/bk_week_add [URL]` in a Discord channel or `u/ByteDiceAssistant bk_week_add` in a Reddit post."#, 
-      url
+      url, rm_by
     ).trim().to_string(), 
     true, 
     true
@@ -152,7 +152,7 @@ pub async fn bk_week_add(
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_reddit_data(ctx).await.unwrap();
 
-  if let Some(bk_week) = reddit_data.get("bk_weekly_art_posts") {
+  if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     websocket::send_cmd_json("add_post_url", json!([&url])).await;
 
     if let Some(post) = bk_week.get(&url) {
@@ -170,12 +170,12 @@ pub async fn bk_week_add(
 
 
 async fn send_unremove_msg(ctx: Context<'_>, url: &str) {
-  send_msg(ctx, format!("Un-removed post with URL \"{}\"!", url), true, true).await;
+  send_msg(ctx, format!("Un-removed post with URL \"<{}>\"!", url), true, true).await;
 }
 
 
 async fn send_updated_msg(ctx: Context<'_>, url: &str) {
-  send_msg(ctx, format!("Updated post with URL \"{}\"!", url), true, true).await;
+  send_msg(ctx, format!("Updated post with URL \"<{}>\"!", url), true, true).await;
 }
 
 
@@ -184,11 +184,9 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_remove(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: Option<String>
+  #[description = "The post URL"] url: String
 ) -> Result<(), Error>
 {
-  // update data
-  // use python_comms.rs to tell python to update its data
   return Ok(());
 }
 
@@ -198,11 +196,31 @@ pub async fn bk_week_remove(
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_approve(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: Option<String>
+  #[description = "The post URL"] url: String
 ) -> Result<(), Error>
 {
-  // update data
-  // use python_comms.rs to tell python to update its data
+  data::update_re_data(ctx.data()).await;
+  let reddit_data = get_reddit_data(ctx).await.unwrap();
+
+  if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(&url) {
+    if post.get("removed").is_some() {
+      send_post_removed_message(ctx, &url, post.get("removed_by").unwrap().as_str().unwrap()).await;
+    }
+
+    let r = websocket::send_cmd_json("set_approve_post", json!([true, &url])).await;
+    if let Some(v) = r.unwrap().get("value") {
+      send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
+    }
+    else {
+      send_msg(ctx, format!("Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_approve() -> unwrap websocket result error`."), true, true).await;
+    }
+  }
+  else {
+    send_post_not_found_message(ctx, &url).await;
+  }
+
+  let result = websocket::send_cmd_json("set_approve_post", json!([true, &url]));
+  
   return Ok(());
 }
 
@@ -212,10 +230,8 @@ pub async fn bk_week_approve(
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_disapprove(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: Option<String>
+  #[description = "The post URL"] url: String
 ) -> Result<(), Error>
 {
-  // update data
-  // use python_comms.rs to tell python to update its data
   return Ok(());
 }

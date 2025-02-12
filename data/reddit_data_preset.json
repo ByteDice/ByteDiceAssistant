@@ -20,7 +20,8 @@
       }
     },
     "EXAMPLE VALUE DELETED": {
-      "removed": true
+      "removed": true,
+      "removed_by": "ME!!!!"
     }
   }
 }

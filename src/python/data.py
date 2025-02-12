@@ -69,8 +69,8 @@ def read_data(bot: botPy.Bot):
     with open(data_path + "\\reddit_data_preset.json", "r") as f:
       data_preset_json = json.load(f)
 
-    data_preset_json["bk_weekly_art_posts"].pop("EXAMPLE VALUE", None)
-    data_preset_json["bk_weekly_art_posts"].pop("EXAMPLE VALUE DELETED", None)
+    data_preset_json[BK_WEEKLY].pop("EXAMPLE VALUE", None)
+    data_preset_json[BK_WEEKLY].pop("EXAMPLE VALUE DELETED", None)
 
     with open(data_path + "\\reddit_data.json", "w") as f:
       json.dump(data_preset_json, f, indent = 2)
@@ -110,3 +110,11 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
   else:
     py_print(f"Failed to add post \"{new_data.url}\": Already exists.")
     return False
+  
+
+def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
+  if not hasattr(bot.data[BK_WEEKLY][url], "removed"):
+    bot.data[BK_WEEKLY][url]["approved"]["by_human"] = approved
+    return True
+  
+  return False

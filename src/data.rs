@@ -3,7 +3,7 @@ use std::path::Path;
 
 use serde_json::{self, Value, json};
 
-use crate::Data;
+use crate::{Data, BK_WEEK};
 use crate::websocket::send_cmd_json;
 
 
@@ -73,7 +73,7 @@ fn generate_re_data() {
   let preset_str = fs::read_to_string(PRESET_PATH_RE).unwrap();
   let mut preset_json: Value = serde_json::from_str(&preset_str).unwrap();
 
-  if let Some(bk_week) = preset_json["bk_weekly_art_posts"].as_object_mut() {
+  if let Some(bk_week) = preset_json[BK_WEEK].as_object_mut() {
     bk_week.remove("EXAMPLE VALUE");
     bk_week.remove("EXAMPLE VALUE DELETED");
   }

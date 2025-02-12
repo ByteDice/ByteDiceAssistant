@@ -47,6 +47,9 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 
+static BK_WEEK: &str = "bk_weekly_art_posts";
+
+
 #[tokio::main]
 async fn main() {
   let args = <Args as clap::Parser>::parse();
@@ -140,7 +143,10 @@ async fn gen_bot(data: Data) -> Client {
         //cmds::rule(),
         bk_week_cmds::bk_week_help(),
         bk_week_cmds::bk_week_get(),
-        bk_week_cmds::bk_week_add()
+        bk_week_cmds::bk_week_add(),
+        //bk_week_cmds::bk_week_remove(),
+        bk_week_cmds::bk_week_approve(),
+        //bk_week_cmds::bk_week_disapprove()
       ],
       event_handler: events::event_handler,
       ..Default::default()

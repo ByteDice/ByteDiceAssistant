@@ -6,10 +6,12 @@
   - [x] ~~Put it in a JSON~~
   - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~
   - [ ] Allow updating the data autonomously and via manual commands.
-    - [ ] Manually add posts (via `u/[bot] add` or `/bk_week_add [url]`)
-    - [ ] Manually remove posts (via `/bk_week_remove [url]`)
-    - [ ] Manually approve posts (via `/bk_week_approve [url]`)
-    - [ ] Manually un-approve posts (via `/bk_week_disapprove [url]`)
+    - [ ] Manually add posts 
+      - [ ] via `u/[bot] add`
+      - [x] ~~via `/bk_week_add [url]`~~
+    - [ ] Manually remove posts via `/bk_week_remove [url]`
+    - [ ] Manually approve posts via `/bk_week_approve [url]`
+    - [ ] Manually un-approve posts via `/bk_week_disapprove [url]`
     - [x] ~~Automatically add scraped posts to JSON~~
     - [ ] Automatically remove posts older than 7 days from JSON
       - [x] ~~Function~~
