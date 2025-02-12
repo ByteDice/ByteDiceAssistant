@@ -36,7 +36,6 @@ async def parse_json(response: str, bot: botPy.Bot):
       json_response = json.loads(json_str)
       result = await json_to_func(json_response, bot)
       await ws_global.ping()
-      print(result)
       await send_message(f"json:{json.dumps(result)}")
     except json.JSONDecodeError as e:
       if bot.args["dev"]: py_print(f"failed to parse json: {json_str}\n     reason: {e}")
@@ -60,12 +59,17 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
   result = {"type": "result", "value": False}
 
   match v["value"]:
-    case "update_data_file": result = {"type": "result", "value": data.write_data(bot)}
-    case "add_post_url": result = {"type": "result", "value": posts.add_post_url(bot, *v["args"])}
-    case "set_approve_post": result = {"type": "result", "value": data.set_approve_post(bot, *v["args"])}
+    case "update_data_file": result = result_json(data.write_data(bot))
+    case "add_post_url": result = result_json(await posts.add_post_url(bot, *v["args"]))
+    case "set_approve_post": result = result_json(data.set_approve_post(bot, *v["args"]))
+    case "stop_praw": result = result_json(bot.stop())
     case _: value_supported = False
 
   if bot.args["dev"] and not value_supported:
     py_print(f"Value {v['value']} is not supported")
 
   return result
+
+
+def result_json(bool: bool) -> dict:
+  return {"type": "result", "value": bool}

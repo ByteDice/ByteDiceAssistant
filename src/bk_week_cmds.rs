@@ -8,12 +8,31 @@ use poise::serenity_prelude::Timestamp;
 use serde_json::{json, Value};
 
 
+#[derive(poise::ChoiceParameter, PartialEq)]
+enum HelpOptions {
+  Discord,
+  Reddit
+}
+
+
 #[poise::command(slash_command, prefix_command)]
 pub async fn bk_week_help(
   ctx: Context<'_>,
+  #[description = "Discord or Reddit help."] option: HelpOptions
 ) -> Result<(), Error>
 {
-  let help = fs::read_to_string("./bk_week_help.md").unwrap();
+  let help: String;
+
+  if option == HelpOptions::Discord {
+    help = fs::read_to_string("./bk_week_help_dc.md").unwrap();
+  }
+  else if option == HelpOptions::Reddit {
+    help = fs::read_to_string("./bk_week_help_re.md").unwrap();
+  }
+  else {
+    help = "Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_help() -> option is not valid`.".to_string();
+  }
+
   send_msg(ctx, help, true, true).await;
   data::read_dc_data(ctx.data());
 
@@ -218,8 +237,6 @@ pub async fn bk_week_approve(
   else {
     send_post_not_found_message(ctx, &url).await;
   }
-
-  let result = websocket::send_cmd_json("set_approve_post", json!([true, &url]));
   
   return Ok(());
 }

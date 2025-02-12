@@ -1,17 +1,17 @@
 import emoji
-from praw import models
+from asyncpraw import models
 
 import data
 import bot as botPy
 from macros import *
 
 
-def add_new_posts(bot: botPy.Bot):
+async def add_new_posts(bot: botPy.Bot):
   check_emoji = emoji.emojize(":check_mark_button:")
   cross_emoji = emoji.emojize(":cross_mark:")
 
   py_print("Fetching posts...")
-  posts = fetch_posts_with_flair(bot, "Original Art")
+  posts = await fetch_posts_with_flair(bot, "Original Art")
 
   py_print("Evaluating posts...")
 
@@ -51,11 +51,11 @@ def add_new_posts(bot: botPy.Bot):
   data.write_data(bot)
 
 
-def fetch_posts_with_flair(bot: botPy.Bot, flair_name: str) -> list[models.Submission]:
+async def fetch_posts_with_flair(bot: botPy.Bot, flair_name: str) -> list[models.Submission]:
   posts: list[models.Submission] = []
 
   # ~36 OG-art posts per week, round limit to 50, 75 or 100
-  for post in bot.sr.search(f"flair:\"{flair_name}\"", sort="new", limit=10):
+  async for post in bot.sr.search(f"flair:\"{flair_name}\"", sort="new", limit=10):
     posts.append(post)
 
   return posts
@@ -91,10 +91,8 @@ def has_media(post: models.Submission) -> tuple[bool, str, int, list[str]]:
   return (media_type != None, media_type, media_count, media_urls)
 
 
-# TODO: convert to asyncpraw because praw wont SHUT THE FUCK UP
-# Gosh i gotta handle so much pain dont i?
-def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
-  post = bot.r.submission(url=url)
+async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
+  post: models.Submission = await bot.r.submission(url=url)
 
   if hasattr(post, "id"):
     return True, post
@@ -116,8 +114,8 @@ def get_post_details(post: models.Submission) -> data.PostData:
   )
 
 
-def add_post_url(bot, url: str) -> bool:
-  result, post = from_url(bot, url)
+async def add_post_url(bot, url: str) -> bool:
+  result, post = await from_url(bot, url)
 
   if not result:
     return result

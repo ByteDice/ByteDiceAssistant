@@ -95,12 +95,14 @@ def write_data(bot: botPy.Bot) -> bool:
 def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool = False) -> bool:
   if bypass_conditions:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
-    py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
+    if bot.args["dev"]:
+      py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
 
   if new_data.url not in bot.data[BK_WEEKLY]:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
-    py_print(f"Added post \"{new_data.url}\"")
+    if bot.args["dev"]:
+      py_print(f"Added post \"{new_data.url}\"")
     return True
   
   elif "removed" in bot.data[BK_WEEKLY][new_data.url]:

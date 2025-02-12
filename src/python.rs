@@ -24,11 +24,9 @@ pub fn start(args: String) -> PyResult<()> {
     syspath.insert(0, path)?;
     let empty = CString::new("").unwrap();
 
-    let app: Py<PyAny> = PyModule::from_code(py, &app_path, &empty, &empty)?
-      .getattr("main")?
-      .into();
+    let app: Py<PyAny> = PyModule::from_code(py, &app_path, &empty, &empty)?.into();
 
-    return app.call0(py);
+    return Ok(app);
   });
 
   if from_python.is_err() { errln!("pyO3: {:?}", from_python); }

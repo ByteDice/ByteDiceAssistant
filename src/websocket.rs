@@ -59,6 +59,7 @@ pub async fn send_cmd_json(func_name: &str, func_args: Value) -> Option<Value> {
     }
 
     let r = receive_response().await;
+    rs_println!("Received from Python: [RESPONSE] {:?}", r);
     return r;
   }
 }

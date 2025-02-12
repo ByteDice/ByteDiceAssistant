@@ -1,11 +1,13 @@
 use std::process;
 
+use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
 use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
+use serde_json::json;
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -35,6 +37,7 @@ pub async fn stop(
     let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
     data::write_dc_data(ctx.data());
     data::write_re_data().await;
+    send_cmd_json("stop_praw", json!([])).await;
 
     edit_msg(ctx, msg, "Saving data... Done!\nShutting down...".to_string()).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
