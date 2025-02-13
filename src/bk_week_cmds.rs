@@ -16,7 +16,11 @@ enum HelpOptions {
 }
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
+/// Shows helpful information on how to use the bk_week section of the bot.
 pub async fn bk_week_help(
   ctx: Context<'_>,
   #[description = "Discord or Reddit help."] option: HelpOptions
@@ -44,6 +48,7 @@ pub async fn bk_week_help(
 
 
 #[poise::command(slash_command, prefix_command, guild_only)]
+/// Retrieves the data of a single post just for you. The data has to be within the database to work.
 pub async fn bk_week_get(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -163,6 +168,7 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 
 
 #[poise::command(slash_command, prefix_command, guild_only)]
+/// Fetches a post from Reddit and adds it to the database.
 pub async fn bk_week_add(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String,
@@ -215,6 +221,7 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 
 
 #[poise::command(slash_command, prefix_command, guild_only)]
+/// Removes a post from the database. It will show who last removed it.
 pub async fn bk_week_remove(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -242,6 +249,7 @@ pub async fn bk_week_remove(
 
 
 #[poise::command(slash_command, prefix_command, guild_only)]
+/// Approves a post in the database. Approving posts tells the bot that it's original.
 pub async fn bk_week_approve(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -283,6 +291,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
 
 
 #[poise::command(slash_command, prefix_command, guild_only)]
+/// Opposite effects of `/bk_week_approve`.
 pub async fn bk_week_disapprove(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -298,6 +307,7 @@ pub async fn bk_week_disapprove(
 
 
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+/// Sets the channel where the bot will dump all log info. It's reccommended to only run this once.
 pub async fn bk_week_bind(
   ctx: Context<'_>
 ) -> Result<(), Error>

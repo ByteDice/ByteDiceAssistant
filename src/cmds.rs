@@ -5,13 +5,14 @@ use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
 
-use poise::serenity_prelude::{GetMessages, OnlineStatus, Timestamp, UserId};
+use poise::serenity_prelude::{OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
 use serde_json::json;
 
 
 #[poise::command(slash_command, prefix_command)]
+/// Check if you have connection to the bot.
 pub async fn ping(
   ctx: Context<'_>,
   #[description = "The text to echo back."] text: Option<String>,
@@ -24,6 +25,7 @@ pub async fn ping(
 
 
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR")]
+/// Stops the bot... if you're mighty enough!
 pub async fn stop(
   ctx: Context<'_>,
   #[description = "Type \"i want to stop the bot now\" to confirm."] confirmation: Option<String>,
@@ -62,6 +64,7 @@ pub async fn stop(
   prefix_command,
   default_member_permissions = "ADMINISTRATOR"
 )]
+/// Creates an embed.
 pub async fn embed(
   ctx: Context<'_>,
   #[description = "Title of embed."] title: Option<String>,
@@ -96,7 +99,8 @@ pub async fn embed(
 }
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, rename = "8_ball")]
+/// Magic 8-ball. Ask a question, get an answer.
 pub async fn eight_ball(
   ctx: Context<'_>,
   #[description = "Question to ask."] question: String
@@ -117,80 +121,8 @@ pub async fn eight_ball(
 }
 
 
-#[poise::command(
-  slash_command,
-  prefix_command,
-  default_member_permissions = "ADMINISTRATOR"
-)]
-pub async fn write_json(
-  ctx: Context<'_>,
-  #[description = "Delete all messages sent by the bot in the selected channel."] remove_all: Option<bool>,
-  #[description = "Includes \"Use '/rule {rule}' to view rules individually\" preset message"] include_rule_command: Option<bool>,
-  #[description = "JSON (empty is preset file)"] json: Option<String>
-) -> Result<(), Error>
-{
-  let rm_all = remove_all.unwrap_or_else(|| false);
-  let include_cmd = include_rule_command.unwrap_or_else(|| false);
-
-  if rm_all {
-    let progress = send_msg(ctx, "Deleting all messages in channel...".to_string(), true, true).await;
-
-    let builder = GetMessages::new().limit(100);
-    let msgs = ctx.channel_id().messages(ctx.http(), builder).await?;
-
-    for msg in msgs {
-      if msg.author.id == ctx.framework().bot_id {
-        msg.delete(ctx.http()).await?;
-      }
-    }
-
-    edit_msg(ctx, progress.unwrap(), "Deleting all messages in channel... Done!".to_string()).await;
-  }
-
-  let json_str = json.clone().unwrap_or_else(||
-    std::fs::read_to_string("./data/write_json.json")
-      .expect("No JSON preset file exists.")
-  ).to_string();
-
-  let json_json: serde_json::Value = serde_json::from_str(&json_str).expect("JSON was improperly formatted");
-  if !json_json.is_array() {
-    send_msg(ctx, "JSON is not an array of strings".to_string(), true, true).await;
-    return Ok(());
-  }
-
-  for i in json_json.as_array().unwrap() {
-    if !i.is_object() { continue; }
-
-    let title = i["title"].to_string();
-    let title_str = title[1..title.len() - 1].to_string();
-
-    let desc = i["desc"].to_string();
-    let desc_str = desc[1..desc.len() - 1].to_string();
-
-    let index_str = i["index"].to_string();
-
-    let title_format = if index_str.len() > 0
-      { format!("{} - {}", index_str, title_str) }
-      else { title_str };
-
-    let embed = EmbedOptions {
-      title: Some(title_format),
-      desc: desc_str,
-      ..Default::default()
-    };
-
-    send_embed(ctx, embed, false).await;
-  }
-
-  if include_cmd && json.is_none() {
-    send_msg(ctx, "Use /rules thank you".to_string(), false, false).await;
-  }
-
-  return Ok(());
-}
-
-
 #[poise::command(slash_command, prefix_command)]
+/// Convert a long reddit URL to a short one. The bot ONLY uses shortURLs when asking for one.
 pub async fn re_shorturl(
   ctx: Context<'_>,
   #[description = "A Reddit post URL"] url: String
@@ -204,7 +136,7 @@ pub async fn re_shorturl(
     send_msg(ctx, format!("ShortURL: <{}>", short_url), true, true).await;
   }
   else {
-    println!("Post ID not found in the URL");
+    send_msg(ctx, "Couldn't convert to shortURL: Invalid URL".to_string(), true, true).await;
   }
 
   return Ok(());
@@ -212,6 +144,7 @@ pub async fn re_shorturl(
 
 
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+/// Add your server to my database so I can sell it! (/s), I only store some minimal data the bot needs.
 pub async fn add_server(
   ctx: Context<'_>
 ) -> Result<(), Error>
@@ -227,44 +160,3 @@ pub async fn add_server(
 
   return Ok(());
 }
-
-
-/* async fn autocomplete_rule_list(_: Context<'_>, _partial: &str) -> Vec<String> {
-  let json_str = std::fs::read_to_string("./data/write_json.json")
-    .expect("No JSON preset file exists.");
-  let json_json: serde_json::Value = serde_json::from_str(&json_str).expect("JSON was improperly formatted");
-
-  if json_json.is_array() { 
-    let mut titles: Vec<String> = vec![];
-
-    for i in json_json.as_array().unwrap() {
-      let title = i["title"].to_string();
-      let title_str = title[1..title.len() - 1].to_string();
-      let index_str = i["index"].to_string();
-
-      let title_format = if index_str.len() > 0
-        { format!("{} - {}", index_str, title_str) }
-        else { title_str };
-
-      titles.push(title_format);
-    }
-
-    return titles;
-  }
-  else {
-    return vec!["JSON data not found".to_string()];
-  }
-}
-
-
-#[poise::command(slash_command, prefix_command)]
-pub async fn rule(
-  _ctx: Context<'_>,
-  #[description = "The name of the rule to display"]
-  #[autocomplete = "autocomplete_rule_list"]
-  _rule: Vec<String> 
-) -> Result<(), Error>
-{
-  return Ok(());
-}
- */

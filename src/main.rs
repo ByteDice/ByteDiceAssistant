@@ -22,7 +22,7 @@ use tokio::runtime::Runtime;
 use serde_json;
 
 
-// TODO: command descriptions
+// TODO: update bk_week help files
 // TODO: bot command permissions
 // TODO: bk_mod verification system
 
@@ -144,7 +144,6 @@ async fn gen_bot(data: Data) -> Client {
         cmds::embed(),
         cmds::stop(),
         cmds::eight_ball(),
-        cmds::write_json(),
         cmds::re_shorturl(),
         cmds::add_server(),
         //cmds::rule(),
