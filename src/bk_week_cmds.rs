@@ -1,3 +1,4 @@
+use crate::websocket::send_cmd_json;
 use crate::{rs_println, websocket, Context, Error, BK_WEEK};
 use crate::messages::{send_embed, send_msg, EmbedOptions};
 use crate::data;
@@ -135,7 +136,7 @@ async fn send_post_removed_message(ctx: Context<'_>, url: &str, rm_by: &str) {
   send_msg(
     ctx, 
     format!(
-      r#"Post URL \"<{}>\" is removed: Post is removed from the data! (Removed by: {})
+      r#"Post URL \"<{}>\" is removed: Post is removed from the data! (Removed by: `{}`)
       Hint: Run the command `/bk_week_add [URL]` in a Discord channel or `u/ByteDiceAssistant bk_week_add` in a Reddit post."#, 
       url, rm_by
     ).trim().to_string(), 
@@ -219,6 +220,21 @@ pub async fn bk_week_remove(
   #[description = "The post URL"] url: String
 ) -> Result<(), Error>
 {
+  let auth = &ctx.author().name;
+  let r = send_cmd_json("remove_post_url", json!([&url, &auth])).await.unwrap();
+
+  if r["value"].as_bool().unwrap() {
+    send_msg(
+      ctx,
+      format!("Successfully flagged URL \"{}\" as `\"removed\": true` and `\"removed_by\": \"{}\"`", url, auth),
+      true,
+      true
+    ).await;
+  }
+  else {
+    send_post_not_found_message(ctx, &url).await;
+  }
+
   return Ok(());
 }
 
@@ -246,9 +262,14 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
       send_post_removed_message(ctx, &url, post.get("removed_by").unwrap().as_str().unwrap()).await;
     }
 
-    let r = websocket::send_cmd_json("set_approve_post", json!([approve, &url])).await;
-    if let Some(v) = r.unwrap().get("value") {
-      send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
+    let r = websocket::send_cmd_json("set_approve_post", json!([approve, &url])).await.unwrap();
+    if let Some(v) = r.get("value") {
+      if approve {
+        send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
+      }
+      else {
+        send_msg(ctx, format!("Successfully removed flag `approved:by_human` from URL \"<{}>\"!", &url), true, true).await;
+      }
     }
     else {
       send_msg(ctx, format!("Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_approve() -> unwrap websocket result error`."), true, true).await;

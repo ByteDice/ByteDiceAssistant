@@ -65,6 +65,7 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
   match v["value"]:
     case "update_data_file": result = result_json(data.write_data(bot))
     case "add_post_url": result = result_json(await posts.add_post_url(bot, *v["args"]))
+    case "remove_post_url": result = result_json(data.remove_post(bot, *v["args"]))
     case "set_approve_post": result = result_json(data.set_approve_post(bot, *v["args"]))
     case "stop_praw": result = result_json(await bot.stop())
     case _: value_supported = False

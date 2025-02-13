@@ -146,9 +146,9 @@ async fn gen_bot(data: Data) -> Client {
         bk_week_cmds::bk_week_help(),
         bk_week_cmds::bk_week_get(),
         bk_week_cmds::bk_week_add(),
-        //bk_week_cmds::bk_week_remove(),
+        bk_week_cmds::bk_week_remove(),
         bk_week_cmds::bk_week_approve(),
-        //bk_week_cmds::bk_week_disapprove()
+        bk_week_cmds::bk_week_disapprove()
       ],
       event_handler: events::event_handler,
       ..Default::default()

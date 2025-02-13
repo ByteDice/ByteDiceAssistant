@@ -9,12 +9,12 @@
     - [ ] Manually add posts 
       - [ ] via `u/[bot] add`
       <!-- - [x] ~~via `/bk_week_add [url]`~~ -->
-    - [ ] Manually remove posts via `/bk_week_remove [url]`
+    <!-- - [x] ~~Manually remove posts via `/bk_week_remove [url]`~~ -->
     <!-- - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~ -->
-    - [ ] Manually un-approve posts via `/bk_week_disapprove [url]`
+    <!-- - [x] ~~Manually un-approve posts via `/bk_week_disapprove [url]`~~ -->
     <!-- - [x] ~~Automatically add scraped posts to JSON~~ -->
     - [ ] Automatically remove posts older than 7 days from JSON
-      <!-- - [x] ~~Function~~ -->
+      - [x] ~~Function~~
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
     - [ ] Log all posts in a Discord thread

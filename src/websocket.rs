@@ -62,6 +62,11 @@ pub async fn send_cmd_json(func_name: &str, func_args: Value) -> Option<Value> {
 
     let r = receive_response().await;
     rs_println!("Received from Python: [RESPONSE] {:?}", r);
+    
+    if r.is_none() {
+      rs_println!("--- Response from Python is None!");
+    }
+
     return r;
   }
 }

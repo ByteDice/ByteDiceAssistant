@@ -125,3 +125,11 @@ def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
     return True
   
   return False
+
+
+def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN") -> bool:
+  if url in bot.data[BK_WEEKLY]:
+    bot.data[BK_WEEKLY][url] = { "removed": True, "removed_by": removed_by }
+    return True
+  else:
+    return False
