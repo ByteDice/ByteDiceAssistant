@@ -46,7 +46,8 @@ pub async fn bk_week_help(
 pub async fn bk_week_get(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
-) -> Result<(), Error> {
+) -> Result<(), Error>
+{
   data::update_re_data(ctx.data()).await;
 
   let reddit_data = get_reddit_data(ctx).await?;
@@ -167,12 +168,17 @@ pub async fn bk_week_add(
   #[description = "Wether to approve it after adding it"] approve: Option<bool>
 ) -> Result<(), Error>
 {
-  // TODO: auto approve
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_reddit_data(ctx).await.unwrap();
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
-    websocket::send_cmd_json("add_post_url", json!([&url])).await;
+    let a = approve.unwrap_or_else(|| false);
+    let r = websocket::send_cmd_json("add_post_url", json!([&url, a])).await.unwrap();
+
+    if !r["value"].as_bool().unwrap() {
+      send_msg(ctx, "Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_add() -> Unknown error`.".to_string(), true, true).await;
+      return Ok(());
+    }
 
     if let Some(post) = bk_week.get(&url) {
       if post.get("removed").is_some() {
@@ -181,6 +187,13 @@ pub async fn bk_week_add(
       else {
         send_updated_msg(ctx, &url).await;
       }
+    }
+    else {
+      send_msg(ctx, format!("Added post with URL \"<{}>\"!", &url), true, true).await;
+    }
+
+    if a {
+      send_msg(ctx, "Also approved it!".to_string(), true, true).await;
     }
   }
 
@@ -221,12 +234,19 @@ pub async fn bk_week_approve(
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_reddit_data(ctx).await.unwrap();
 
+  approve_cmd(ctx, &url, &reddit_data, true).await;
+  
+  return Ok(());
+}
+
+
+async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: bool) {
   if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(&url) {
     if post.get("removed").is_some() {
       send_post_removed_message(ctx, &url, post.get("removed_by").unwrap().as_str().unwrap()).await;
     }
 
-    let r = websocket::send_cmd_json("set_approve_post", json!([true, &url])).await;
+    let r = websocket::send_cmd_json("set_approve_post", json!([approve, &url])).await;
     if let Some(v) = r.unwrap().get("value") {
       send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
     }
@@ -237,10 +257,7 @@ pub async fn bk_week_approve(
   else {
     send_post_not_found_message(ctx, &url).await;
   }
-  
-  return Ok(());
 }
-
 
 
 
@@ -250,5 +267,10 @@ pub async fn bk_week_disapprove(
   #[description = "The post URL"] url: String
 ) -> Result<(), Error>
 {
+  data::update_re_data(ctx.data()).await;
+  let reddit_data = get_reddit_data(ctx).await.unwrap();
+
+  approve_cmd(ctx, &url, &reddit_data, false).await;
+
   return Ok(());
 }

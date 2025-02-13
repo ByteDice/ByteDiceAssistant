@@ -27,21 +27,28 @@ async def main():
 
   if bot.args["dev"]:
     py_print("ARGS:", str(bot.args))
+
   py_print("Reading data...")
-  data.read_data(bot)
+  dr = data.read_data(bot)
+  data_retries = 0
+
+  while not dr:
+    data_retries += 1
+    time.sleep(1)
+    py_print(f"Failed to read data: File doesn't exist yet. Retrying (#{data_retries}/5)...")
+    dr = data.read_data(bot)
+
+    if data_retries == 5 and not dr:
+      raise Exception("Couldn't read reddit_data.json: File doesn't exist")
+
+  py_print("Successfully read data!")
 
   if not bot.args["py"]:
     py_print("Connecting to local websocket...")
     await py_websocket.websocket_client(bot)
-    """ ws_thread = threading.Thread(target=py_websocket.run_thread, args=(bot,))
-    ws_thread.start() """
-    
-    while not py_websocket.is_connected:
-      py_print("Awaiting connection...")
-      time.sleep(1)
-      continue
 
-    await py_websocket.send_message("[Connection test] Hello from Python!")
+    # ws_thread = threading.Thread(target=py_websocket.run_thread, args=(bot,))
+    # ws_thread.start()
 
   await bot.stop()
 

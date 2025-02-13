@@ -57,14 +57,17 @@ class PostData:
     }
   
 
-def read_data(bot: botPy.Bot):
+def read_data(bot: botPy.Bot) -> bool:
   # Intentionally unreadable >:]
   data_path = os.path.abspath(os.path.join(os.path.join(os.getcwd(), "data")))
 
-  try: 
+  if os.path.isfile(data_path + "\\reddit_data.json"):
     bot.data_f = open(data_path + "\\reddit_data.json", "r+")
 
-  except FileNotFoundError:
+  else:
+    if not bot.args["py"]:
+      return False
+
     py_print("reddit_data.json not found, creating new from preset...")
     with open(data_path + "\\reddit_data_preset.json", "r") as f:
       data_preset_json = json.load(f)
@@ -83,6 +86,8 @@ def read_data(bot: botPy.Bot):
 
   if not bot.data["file_created_correctly"]:
     raise Exception("reddit_data.json file wasn't created properly. Delete the file and retry.")
+  
+  return True
 
 
 def write_data(bot: botPy.Bot) -> bool:

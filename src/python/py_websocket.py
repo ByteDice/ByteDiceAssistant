@@ -2,7 +2,7 @@ import websockets
 import asyncio
 import json
 
-from macros import py_print
+from macros import *
 import bot as botPy
 import data
 import posts
@@ -18,10 +18,13 @@ async def send_message(message: str):
 
 async def websocket_client(bot: botPy.Bot):
   global ws_global, is_connected
-  async with websockets.connect(f"ws://127.0.0.1:{bot.args["port"]}") as ws:
+  port = bot.args["port"]
+  async with websockets.connect(f"ws://127.0.0.1:{port}") as ws:
     ws_global = ws
     is_connected = True
-    py_print(f"Connected webSocket server on ws://127.0.0.1:{bot.args["port"]}")
+    py_print(f"Connected webSocket server on ws://127.0.0.1:{port}")
+
+    await send_message("[Connection test] Hello from Python!")
 
     while True:
       response = await ws.recv()
@@ -52,7 +55,8 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
     if bot.args["dev"]: py_print("JSON is not a dictionary or does not include \"type\" and \"value\" keys.")
     return
   if v["type"] != "function":
-    if bot.args["dev"]: py_print(f"Type \"{v['type']}\" is not supported.")
+    v_type = v["type"]
+    if bot.args["dev"]: py_print(f"Type \"{v_type}\" is not supported.")
     return
 
   value_supported = True
@@ -62,11 +66,15 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
     case "update_data_file": result = result_json(data.write_data(bot))
     case "add_post_url": result = result_json(await posts.add_post_url(bot, *v["args"]))
     case "set_approve_post": result = result_json(data.set_approve_post(bot, *v["args"]))
-    case "stop_praw": result = result_json(bot.stop())
+    case "stop_praw": result = result_json(await bot.stop())
     case _: value_supported = False
 
+  if not isinstance(result.get("value"), bool):
+    py_print("Result JSON is invalid:", str(result))
+
   if bot.args["dev"] and not value_supported:
-    py_print(f"Value {v['value']} is not supported")
+    val = v["value"]
+    py_print(f"Value \"{val}\" is not supported")
 
   return result
 

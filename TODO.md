@@ -1,20 +1,20 @@
 ### High priority:
-- [x] ~~Embed creation tool~~
+<!-- - [x] ~~Embed creation tool~~ -->
 - [ ] Reddit bot that scrapes images with tag "Original Art" and posts them in Discord server
-  - [x] ~~Discord bot /bk_help command~~
-  - [x] ~~Scrape the data~~
-  - [x] ~~Put it in a JSON~~
-  - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~
+  <!-- - [x] ~~Discord bot /bk_help command~~ -->
+  <!-- - [x] ~~Scrape the data~~ -->
+  <!-- - [x] ~~Put it in a JSON~~ -->
+  <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] Manually add posts 
       - [ ] via `u/[bot] add`
-      - [x] ~~via `/bk_week_add [url]`~~
+      <!-- - [x] ~~via `/bk_week_add [url]`~~ -->
     - [ ] Manually remove posts via `/bk_week_remove [url]`
-    - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~
+    <!-- - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~ -->
     - [ ] Manually un-approve posts via `/bk_week_disapprove [url]`
-    - [x] ~~Automatically add scraped posts to JSON~~
+    <!-- - [x] ~~Automatically add scraped posts to JSON~~ -->
     - [ ] Automatically remove posts older than 7 days from JSON
-      - [x] ~~Function~~
+      <!-- - [x] ~~Function~~ -->
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
     - [ ] Log all posts in a Discord thread
@@ -24,10 +24,10 @@
       - [ ] Remove post if its `"removed": true` in data
       - [ ] Add posts to data from channel
       - [ ] `/bk_week_update` to forcefully trigger this ^
-    - [x] ~~`/bk_week_get [url]` get the data of a single post from the data~~
+    <!-- - [x] ~~`/bk_week_get [url]` get the data of a single post from the data~~ -->
 
 ### Medium priority:
-- [x] ~~JSON -> Rules list~~
+<!-- - [x] ~~JSON -> Rules list~~ -->
 - [ ] View single rule (/rule {rulename})
 - [ ] Postfix calculator
 - [ ] Postfic generator
@@ -35,7 +35,7 @@
 - [ ] BPS args -> JSON
 - [ ] Random tip (from ByteDice.net/data/loadingScreenTips.json)
 - [ ] A command that just sends my socials
-- [x] ~~Magic 8 ball~~
+<!-- - [x] ~~Magic 8 ball~~ -->
 
 ### Low priority:
 - [ ] Particle of the week

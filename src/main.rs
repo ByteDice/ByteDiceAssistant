@@ -32,7 +32,9 @@ struct Args {
   #[arg(long, help = "Runs only the Rust part of the program.")]
   rs: bool,
   #[arg(short = 'd', long, help = "Enables dev mode. Dev mode shows more debug info and turns of certain security measures.")]
-  dev: bool
+  dev: bool,
+  #[arg(short = 'w', long, help = "Wipes all data before running the program.")]
+  wipe: bool
 }
 
 struct Data {
@@ -111,11 +113,11 @@ fn gen_data(args: Args) -> Data {
     byte_dice_id: 697149665166229614,
     reddit_data: None.into(),
     discord_data: None.into(),
-    args
+    args: args.clone()
   };
 
   data::read_dc_data(&data);
-  data::read_re_data(&data);
+  data::read_re_data(&data, args.clone().wipe);
 
   return data;
 }

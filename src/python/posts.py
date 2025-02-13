@@ -43,7 +43,7 @@ async def add_new_posts(bot: botPy.Bot):
     if post_added: added_posts += 1
     else: not_added += 1
 
-  py_print(f"Sucessfully fetched {len(posts)} posts.\n" +
+  py_print(f"Successfully fetched {len(posts)} posts.\n" +
            f"       Out of which were {added_posts} added.\n" +
            f"       {without_media} had no media, " +
            f"and {not_added} weren't added because they are removed or already existed")
@@ -114,11 +114,12 @@ def get_post_details(post: models.Submission) -> data.PostData:
   )
 
 
-async def add_post_url(bot, url: str) -> bool:
+async def add_post_url(bot, url: str, approve: bool) -> bool:
   result, post = await from_url(bot, url)
 
   if not result:
     return result
   
   post_data = get_post_details(post)
+  post_data.approved_by_human = approve
   return data.add_post_to_data(bot, post_data, True)

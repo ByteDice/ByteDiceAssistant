@@ -3,7 +3,7 @@ use std::path::Path;
 
 use serde_json::{self, Value, json};
 
-use crate::{Data, BK_WEEK};
+use crate::{Data, BK_WEEK, rs_println};
 use crate::websocket::send_cmd_json;
 
 
@@ -57,8 +57,12 @@ pub fn write_dc_data(data: &Data) {
 }
 
 
-pub fn read_re_data(data: &Data) {
-  if !Path::new(DATA_PATH_RE).exists() {
+pub fn read_re_data(data: &Data, wipe: bool) {
+  if !Path::new(DATA_PATH_RE).exists() || wipe {
+    rs_println!(
+      "{} creating new from preset...",
+      if !wipe { "reddit_data.json not found," } else { "[WIPE] (reddit_data.json)" }
+    );
     generate_re_data();
   }
 
@@ -87,7 +91,7 @@ fn generate_re_data() {
 
 pub async fn update_re_data(data: &Data) {
   send_cmd_json("update_data_file", json!([])).await;
-  read_re_data(data);
+  read_re_data(data, false);
 }
 
 

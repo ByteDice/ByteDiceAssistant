@@ -31,6 +31,7 @@ async fn set_receiver(receiver: Receiver) {
 }
 
 
+#[allow(static_mut_refs)]
 pub async fn send_msg(msg: &str) {
   unsafe {
     if let Some(sender) = &GLOBAL_SENDER {
@@ -43,6 +44,7 @@ pub async fn send_msg(msg: &str) {
 }
 
 
+#[allow(static_mut_refs)]
 pub async fn send_cmd_json(func_name: &str, func_args: Value) -> Option<Value> {
   unsafe {
     let Some(sender) = &GLOBAL_SENDER else { return None };
@@ -65,6 +67,7 @@ pub async fn send_cmd_json(func_name: &str, func_args: Value) -> Option<Value> {
 }
 
 
+#[allow(static_mut_refs)]
 async fn receive_response() -> Option<Value> {
   unsafe {
     let Some(receiver) = &GLOBAL_RECEIVER else { return None };
