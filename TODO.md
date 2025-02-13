@@ -18,7 +18,7 @@
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
     - [ ] Log all posts in a Discord thread
-      - [ ] `/bk_week_bind` to bind a channel for bk_week logs
+      <!-- - [x] ~~`/bk_week_bind` to bind a channel for bk_week logs~~ -->
       - [ ] Add post if it exists in data but not in channel
       - [ ] Edit post if it exists in channel and is different in data
       - [ ] Remove post if its `"removed": true` in data
