@@ -2,7 +2,8 @@
   "servers": {
     "SERVER ID": {
       "bk_week_channel": "CHANNEL ID INT",
-      "bk_week_users": [
+      "bk_mod_role": "bk mod",
+      "bk_mods": [
         "USER ID 1",
         "USER ID 2"
       ]

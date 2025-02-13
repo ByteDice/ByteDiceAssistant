@@ -1,5 +1,6 @@
 use std::process;
 
+use crate::data::dc_add_server;
 use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
 use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
@@ -204,6 +205,24 @@ pub async fn re_shorturl(
   }
   else {
     println!("Post ID not found in the URL");
+  }
+
+  return Ok(());
+}
+
+
+#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+pub async fn add_server(
+  ctx: Context<'_>
+) -> Result<(), Error>
+{
+  let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into());
+
+  if r {
+    send_msg(ctx, "Added your server to my data! Thanks for letting me steal it! (/s)".to_string(), true, true).await;
+  }
+  else {
+    send_msg(ctx, "Oopsies `(｡>\\\\<)`. It looks like my data i-is \\**sob*\\*... c-cor-corrupted!".to_string(), true, true).await;
   }
 
   return Ok(());

@@ -13,8 +13,12 @@ static DATA_PATH_RE: &str = "./data/reddit_data.json";
 static PRESET_PATH_RE: &str = "./data/reddit_data_preset.json";
 
 
-pub fn read_dc_data(data: &Data) {
-  if !Path::new(DATA_PATH_DC).exists() {
+pub fn read_dc_data(data: &Data, wipe: bool) {
+  if !Path::new(DATA_PATH_DC).exists() || wipe {
+    rs_println!(
+      "{} creating new from preset...",
+      if !wipe { "discord_data.json not found," } else { "[WIPE] (discord_data.json)" }
+    );
     generate_dc_data();
   }
 
@@ -97,4 +101,40 @@ pub async fn update_re_data(data: &Data) {
 
 pub async fn write_re_data() {
   send_cmd_json("update_data_file", json!([])).await;
+}
+
+
+pub fn dc_add_server(data: &Data, server_id: u64) -> bool {
+  let mut dc_data_lock = data.discord_data.lock().unwrap();
+  let dc_data = dc_data_lock.as_mut().unwrap(); 
+
+  if dc_data.get("servers").is_none() { return false; }
+
+  let servers = dc_data["servers"].as_object_mut().unwrap();
+
+  if !servers.contains_key(&server_id.to_string()) {
+    servers.insert(server_id.to_string(), json!({ "bk_week_channel": 0, "bk_mod_role": "bk mod", "bk_mods": [] }));
+  }
+
+  return true;
+}
+
+
+pub fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> bool {
+  let mut dc_data_lock = data.discord_data.lock().unwrap();
+  let dc_data = dc_data_lock.as_mut().unwrap(); 
+
+  if dc_data.get("servers").is_none() { return false; }
+
+  let servers = dc_data["servers"].as_object_mut().unwrap();
+
+  if !servers.contains_key(&server_id.to_string()) {
+    return false;
+  }
+
+  let server = servers[&server_id.to_string()].as_object_mut().unwrap();
+
+  server.insert("bk_week_channel".to_string(), channel_id.into());
+
+  return true;
 }

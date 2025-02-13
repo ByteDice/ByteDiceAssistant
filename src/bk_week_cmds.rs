@@ -1,7 +1,7 @@
 use crate::websocket::send_cmd_json;
 use crate::{rs_println, websocket, Context, Error, BK_WEEK};
 use crate::messages::{send_embed, send_msg, EmbedOptions};
-use crate::data;
+use crate::data::{self, dc_bind_bk};
 
 use std::fs;
 
@@ -16,7 +16,7 @@ enum HelpOptions {
 }
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn bk_week_help(
   ctx: Context<'_>,
   #[description = "Discord or Reddit help."] option: HelpOptions
@@ -35,7 +35,7 @@ pub async fn bk_week_help(
   }
 
   send_msg(ctx, help, true, true).await;
-  data::read_dc_data(ctx.data());
+  data::read_dc_data(ctx.data(), false);
 
   return Ok(());
 }
@@ -43,7 +43,7 @@ pub async fn bk_week_help(
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn bk_week_get(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -162,7 +162,7 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn bk_week_add(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String,
@@ -214,7 +214,7 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn bk_week_remove(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -241,7 +241,7 @@ pub async fn bk_week_remove(
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn bk_week_approve(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -263,7 +263,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
     }
 
     let r = websocket::send_cmd_json("set_approve_post", json!([approve, &url])).await.unwrap();
-    if let Some(v) = r.get("value") {
+    if r.get("value").is_some() {
       if approve {
         send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
       }
@@ -282,7 +282,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn bk_week_disapprove(
   ctx: Context<'_>,
   #[description = "The post URL"] url: String
@@ -292,6 +292,25 @@ pub async fn bk_week_disapprove(
   let reddit_data = get_reddit_data(ctx).await.unwrap();
 
   approve_cmd(ctx, &url, &reddit_data, false).await;
+
+  return Ok(());
+}
+
+
+#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+pub async fn bk_week_bind(
+  ctx: Context<'_>
+) -> Result<(), Error>
+{
+  let c_id = ctx.channel_id().into();
+  let r = dc_bind_bk(ctx.data(), ctx.guild_id().unwrap().into(), c_id);
+
+  if r {
+    send_msg(ctx, format!("Successfully bound channel ID `{}` as the bk_week channel!", c_id), true, true).await;
+  }
+  else {
+    send_msg(ctx, "Your server is not in the data!\nHint: Run the command `/add_server` inside of a Discord server.".to_string(), true, true).await;
+  }
 
   return Ok(());
 }

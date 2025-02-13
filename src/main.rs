@@ -1,7 +1,6 @@
 #![warn(unused_extern_crates)]
 
 mod cmds;
-#[allow(unused_variables)]
 mod bk_week_cmds;
 mod events;
 mod messages;
@@ -21,6 +20,11 @@ use serde::Serialize;
 use serde_json::Value;
 use tokio::runtime::Runtime;
 use serde_json;
+
+
+// TODO: command descriptions
+// TODO: bot command permissions
+// TODO: bk_mod verification system
 
 
 #[derive(Parser, Serialize, Clone)]
@@ -116,7 +120,7 @@ fn gen_data(args: Args) -> Data {
     args: args.clone()
   };
 
-  data::read_dc_data(&data);
+  data::read_dc_data(&data, args.clone().wipe);
   data::read_re_data(&data, args.clone().wipe);
 
   return data;
@@ -142,13 +146,15 @@ async fn gen_bot(data: Data) -> Client {
         cmds::eight_ball(),
         cmds::write_json(),
         cmds::re_shorturl(),
+        cmds::add_server(),
         //cmds::rule(),
         bk_week_cmds::bk_week_help(),
         bk_week_cmds::bk_week_get(),
         bk_week_cmds::bk_week_add(),
         bk_week_cmds::bk_week_remove(),
         bk_week_cmds::bk_week_approve(),
-        bk_week_cmds::bk_week_disapprove()
+        bk_week_cmds::bk_week_disapprove(),
+        bk_week_cmds::bk_week_bind()
       ],
       event_handler: events::event_handler,
       ..Default::default()
