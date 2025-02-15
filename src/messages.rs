@@ -2,9 +2,15 @@ use crate::Context;
 
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
-use poise::serenity_prelude::{Color, CreateEmbed, Timestamp};
+use poise::serenity_prelude::{Color, CreateEmbed, CreateEmbedAuthor, Timestamp};
+use serde_json::json;
 
 
+pub struct Author {
+  pub name: String,
+  pub url: String,
+  pub icon_url: String
+}
 pub struct EmbedOptions {
   pub desc: String,
   pub title: Option<String>,
@@ -12,7 +18,9 @@ pub struct EmbedOptions {
   pub url: Option<String>,
   pub ts: Option<Timestamp>,
   pub empheral: bool,
-  pub message: Option<String>
+  pub message: Option<String>,
+  pub author: Option<Author>,
+  pub thumbnail: Option<String>
 }
 impl Default for EmbedOptions {
   fn default() -> Self {
@@ -23,7 +31,9 @@ impl Default for EmbedOptions {
       url: None,
       ts: None,
       empheral: false,
-      message: None
+      message: None,
+      author: None,
+      thumbnail: None
     };
   }
 }
@@ -67,12 +77,19 @@ pub async fn send_embed(
   reply: bool
 ) -> Option<ReplyHandle<'_>>
 {
+  let mut author: Option<CreateEmbedAuthor> = None;
+  if let Some(o_author) = options.author {
+    author = Some(CreateEmbedAuthor::new(o_author.name).url(o_author.url).icon_url(o_author.icon_url))
+  }
+  
   let mut embed = CreateEmbed::new()
     .title      (none_to_empty(options.title))
     .description(options.desc)
     .colour     (Color::new(options.col.unwrap_or_else(|| DEFAULT_DC_COL)))
     .url        (none_to_empty(options.url));
-  
+
+  if let Some(a) = author { embed = embed.author(a); }
+  if options.thumbnail.is_some() { embed = embed.thumbnail(options.thumbnail.unwrap()); }
   if options.ts.is_some() { embed = embed.timestamp(options.ts.unwrap()); }
 
   if reply {
@@ -118,7 +135,6 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     **URL:** ||<{}>||
     **Media URLS:**
     {}
-
     ## Listing Data:
     **Added by:** `{{ human: {}, bot: {} }}`
     **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
@@ -137,13 +153,19 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     .collect::<Vec<_>>()
     .join("\n");
 
+  let json_min = json!({"post_data": post_data["post_data"]["upvotes"], "added": post_data["added"], "approved": post_data["approved"]});
+  let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
+
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
-    desc: trimmed,
+    desc: format!("{}\nJSON: ||`{}`||", trimmed, serde_json::to_string(&json_min).unwrap()),
     col: Some(DEFAULT_DC_COL),
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
-    message: Some(format!("||`{{\"{}\":{}}}`||", url, serde_json::to_string(post_data).unwrap())),
-    empheral
+    empheral,
+    thumbnail: media_urls.get(0)
+      .and_then(|url| url.as_str().map(|s| s.to_string()))
+      .or_else(|| None),
+    ..Default::default()
   };
 }

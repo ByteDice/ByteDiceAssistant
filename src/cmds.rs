@@ -3,7 +3,7 @@ use std::process;
 use crate::data::dc_add_server;
 use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
-use crate::messages::{send_embed, send_msg, edit_msg, EmbedOptions};
+use crate::messages::{edit_msg, send_embed, send_msg, Author, EmbedOptions};
 
 use poise::serenity_prelude::{OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
@@ -74,7 +74,9 @@ pub async fn embed(
   #[description = "Timestamp at bottom (best to leave empty)."] timestamp: Option<Timestamp>,
   #[description = "Empheral (only visible to you)."] empheral: Option<bool>,
   #[description = "Shows \"used {Command}\" reply text."] reply: Option<bool>,
-  #[description = "Text that appears above and outside of the embed"] message: Option<String>
+  #[description = "Text that appears above and outside of the embed."] message: Option<String>,
+  #[description = "A URL for a thumbnail image."] thumbnail: Option<String>,
+  #[description = "Sets yourself as the author."] author: Option<bool>
 ) -> Result<(), Error> 
 {
   let reply_unwrap = reply.unwrap_or_else(|| false);
@@ -88,7 +90,9 @@ pub async fn embed(
       url,
       ts: timestamp,
       empheral: empheral.unwrap_or_else(|| false),
-      message
+      message,
+      thumbnail,
+      author: if author.unwrap_or_else(|| false) { Some(Author { name: ctx.author().name.clone(), url: "".to_string(), icon_url: ctx.author().avatar_url().unwrap() }) } else { None }
     },
     reply_unwrap
   ).await;

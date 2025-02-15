@@ -329,7 +329,7 @@ pub async fn bk_week_update(
   let r_data = get_reddit_data(ctx).await.unwrap();
 
   let c_id = get_c_id(ctx).await.unwrap_or_else(|| 0);
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), format!("Done!\nReading messages in <#{}>...", c_id)).await;
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
   
   if c_id == 0 {
     send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run `/bk_week_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
@@ -338,17 +338,13 @@ pub async fn bk_week_update(
 
   let msgs = read_msgs(ctx, c_id).await;
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "Done!\nParsing messages to JSON...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
   let msgs_json = msgs_to_json(ctx, msgs, &r_data).await;
-
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "Done!\nAdding new posts...".to_string()).await;
-
-
-  // TODO: parse to JSON
+  // TODO: parse to JSON ^^^^^^^^^^^^
     // json should be {"added": [], "updated": [], "removed": []}
 
-  
-  // TODO: add new posts to channel
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
+
   let weekly_art = r_data["bk_weekly_art_posts"].as_object().unwrap();
   
   for url in weekly_art.keys() {
@@ -358,15 +354,21 @@ pub async fn bk_week_update(
     send_embed(ctx, messages::embed_post(&weekly_art[url], url, false), false).await;
   }
 
+  if only_add.unwrap_or_else(|| false) {
+    p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
+    return Ok(());
+  }
+
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
   // TODO: edit outdated posts
+
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
   // TODO: remove removed posts
 
-  /* MSG FORMAT:
-    {json as spoiler}
-    {embed}
-  */
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
+  // TODO: remove duplicates
 
-
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
   return Ok(());
 }
 
