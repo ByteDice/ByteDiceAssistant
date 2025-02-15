@@ -38,7 +38,7 @@ pub async fn stop(
 
   if should_stop && is_creator {
     let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
-    data::write_dc_data(ctx.data());
+    data::write_dc_data(ctx.data()).await;
     data::write_re_data().await;
     send_cmd_json("stop_praw", json!([])).await;
 
@@ -92,11 +92,30 @@ pub async fn embed(
   ).await;
 
   if !reply_unwrap {
-    send_msg(ctx, "Mandatory success response.".to_string(), true, true).await;
+    send_msg(ctx, "Mandatory success response, please ignore.".to_string(), true, true).await;
   }
 
   return Ok(());
 }
+
+
+
+#[poise::command(
+  slash_command,
+  prefix_command,
+  default_member_permissions = "ADMINISTRATOR"
+)]
+/// Sends a message.
+pub async fn send(
+  ctx: Context<'_>,
+  #[description = "The message to send (NO EMPHERAL)"] msg: String
+) -> Result<(), Error>
+{
+  send_msg(ctx, msg, false, false).await;
+  send_msg(ctx, "Mandatory success response, please ignore.".to_string(), true, true).await;
+  return Ok(());
+}
+
 
 
 #[poise::command(slash_command, prefix_command, rename = "8_ball")]
@@ -149,7 +168,7 @@ pub async fn add_server(
   ctx: Context<'_>
 ) -> Result<(), Error>
 {
-  let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into());
+  let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into()).await;
 
   if r {
     send_msg(ctx, "Added your server to my data! Thanks for letting me steal it! (/s)".to_string(), true, true).await;

@@ -1,11 +1,11 @@
 use crate::websocket::send_cmd_json;
 use crate::{rs_println, websocket, Context, Error, BK_WEEK};
-use crate::messages::{send_embed, send_msg, EmbedOptions};
+use crate::messages::{edit_msg, send_embed, send_msg, EmbedOptions};
 use crate::data::{self, dc_bind_bk};
 
 use std::fs;
 
-use poise::serenity_prelude::Timestamp;
+use poise::serenity_prelude::{ChannelId, GetMessages, Message, Timestamp};
 use serde_json::{json, Value};
 
 
@@ -39,7 +39,7 @@ pub async fn bk_week_help(
   }
 
   send_msg(ctx, help, true, true).await;
-  data::read_dc_data(ctx.data(), false);
+  data::read_dc_data(ctx.data(), false).await;
 
   return Ok(());
 }
@@ -66,7 +66,7 @@ pub async fn bk_week_get(
 }
 
 async fn get_reddit_data(ctx: Context<'_>) -> Result<Value, Error> {
-  let data_lock = ctx.data().reddit_data.lock().unwrap();
+  let data_lock = ctx.data().reddit_data.lock().await;
   match data_lock.as_ref() {
     Some(data) => Ok(data.clone()),
     None => Err("Reddit data is corrupted".into()),
@@ -307,20 +307,92 @@ pub async fn bk_week_disapprove(
 
 
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
-/// Sets the channel where the bot will dump all log info. It's reccommended to only run this once.
+/// Sets the channel where the bot will dump all log info. It's recommended to only run this once.
 pub async fn bk_week_bind(
   ctx: Context<'_>
 ) -> Result<(), Error>
 {
   let c_id = ctx.channel_id().into();
-  let r = dc_bind_bk(ctx.data(), ctx.guild_id().unwrap().into(), c_id);
+  let r = dc_bind_bk(ctx.data(), ctx.guild_id().unwrap().into(), c_id).await;
 
   if r {
     send_msg(ctx, format!("Successfully bound channel ID `{}` as the bk_week channel!", c_id), true, true).await;
   }
   else {
-    send_msg(ctx, "Your server is not in the data!\nHint: Run the command `/add_server` inside of a Discord server.".to_string(), true, true).await;
+    send_server_not_in_data_msg(ctx).await;
   }
+
+  return Ok(());
+}
+
+
+async fn send_server_not_in_data_msg(ctx: Context<'_>) {
+  send_msg(ctx, "Your server is not in the data!\nHint: Run the command `/add_server` inside of a Discord server.".to_string(), true, true).await;
+}
+
+
+#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+/// Updates all logs
+pub async fn bk_week_update(
+  ctx: Context<'_>,
+  #[description = "Only adds new posts, leaves everything else unchanged."] only_add: Option<bool>
+) -> Result<(), Error>
+{
+  if !data::dc_contains_server(ctx.data(), ctx.guild_id().unwrap().into()).await {
+    send_server_not_in_data_msg(ctx).await;
+    return Ok(());
+  }
+
+  let d_lock = ctx.data().discord_data.lock().await;
+  let d = d_lock.as_ref().unwrap();
+  let c_id =
+    d["servers"]
+     [ctx.guild_id().unwrap().to_string()]
+     ["bk_week_channel"].as_u64().unwrap();
+
+  if c_id == 0 {
+    send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run `/bk_week_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
+    return Ok(());
+  }
+
+  let c = ChannelId::new(c_id);
+
+  let mut p_text = format!("Reading messages in <#{}>...", c_id);
+  let progress = send_msg(ctx, p_text.clone(), true, true).await;
+
+  let b = GetMessages::new().limit(100);
+  let mut msgs = c.messages(ctx.http(), b).await.unwrap();
+  msgs = msgs.into_iter().filter(|item| item.author.id == ctx.framework().bot_id).collect();
+
+  let mut last_msg: Option<Message> = msgs.last().cloned();
+
+  while last_msg.is_some() {
+    let new_b = GetMessages::new().limit(100).before(last_msg.clone().unwrap());
+    let new_msgs = c.messages(ctx.http(), new_b).await.unwrap();
+
+    last_msg = new_msgs.last().cloned();
+
+    if new_msgs.is_empty() {
+      break;
+    }
+
+    let filtered_msgs: Vec<Message> = new_msgs
+      .into_iter()
+      .filter(|item| item.author.id == ctx.framework().bot_id)
+      .collect();
+
+    msgs.extend(filtered_msgs);
+  }
+
+  p_text = p_text.as_str().to_owned() + " Done!";
+  edit_msg(ctx, progress.unwrap(), p_text).await;
+
+
+  // TODO: parse to JSON
+  // TODO: add new posts to channel
+  // TODO: edit outdated posts
+  // TODO: remove removed posts
+
 
   return Ok(());
 }

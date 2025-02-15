@@ -11,7 +11,6 @@ mod data;
 
 use std::process;
 use std::thread;
-use std::sync::Mutex;
 
 use clap::Parser;
 use poise::serenity_prelude as serenity;
@@ -19,10 +18,11 @@ use poise::serenity_prelude::Client;
 use serde::Serialize;
 use serde_json::Value;
 use tokio::runtime::Runtime;
+use tokio::sync::Mutex;
 use serde_json;
 
 
-// TODO: update bk_week help files
+// TODO: /bk_week_adds sets as added by bot instead of human
 // TODO: bot command permissions
 // TODO: bk_mod verification system
 
@@ -35,7 +35,7 @@ struct Args {
   py: bool,
   #[arg(long, help = "Runs only the Rust part of the program.")]
   rs: bool,
-  #[arg(short = 'd', long, help = "Enables dev mode. Dev mode shows more debug info and turns of certain security measures.")]
+  #[arg(short = 'd', long, help = "Enables dev mode. Dev mode shows more debug info and turns off certain security measures.")]
   dev: bool,
   #[arg(short = 'w', long, help = "Wipes all data before running the program.")]
   wipe: bool
@@ -97,7 +97,7 @@ async fn main() {
 
 
 async fn start(args: Args) {
-  let data = gen_data(args);
+  let data = gen_data(args).await;
   let mut bot = gen_bot(data).await;
 
   rs_println!("Starting bot...");
@@ -105,7 +105,7 @@ async fn start(args: Args) {
 }
 
 
-fn gen_data(args: Args) -> Data {
+async fn gen_data(args: Args) -> Data {
   let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
   let ball_quirk_str = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
 
@@ -120,8 +120,8 @@ fn gen_data(args: Args) -> Data {
     args: args.clone()
   };
 
-  data::read_dc_data(&data, args.clone().wipe);
-  data::read_re_data(&data, args.clone().wipe);
+  data::read_dc_data(&data, args.clone().wipe).await;
+  data::read_re_data(&data, args.clone().wipe).await;
 
   return data;
 }
@@ -142,6 +142,7 @@ async fn gen_bot(data: Data) -> Client {
       commands: vec![
         cmds::ping(),
         cmds::embed(),
+        cmds::send(),
         cmds::stop(),
         cmds::eight_ball(),
         cmds::re_shorturl(),
@@ -153,7 +154,8 @@ async fn gen_bot(data: Data) -> Client {
         bk_week_cmds::bk_week_remove(),
         bk_week_cmds::bk_week_approve(),
         bk_week_cmds::bk_week_disapprove(),
-        bk_week_cmds::bk_week_bind()
+        bk_week_cmds::bk_week_bind(),
+        bk_week_cmds::bk_week_update()
       ],
       event_handler: events::event_handler,
       ..Default::default()

@@ -13,7 +13,7 @@ static DATA_PATH_RE: &str = "./data/reddit_data.json";
 static PRESET_PATH_RE: &str = "./data/reddit_data_preset.json";
 
 
-pub fn read_dc_data(data: &Data, wipe: bool) {
+pub async fn read_dc_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_DC).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
@@ -24,7 +24,7 @@ pub fn read_dc_data(data: &Data, wipe: bool) {
 
   let str_data = fs::read_to_string(DATA_PATH_DC).unwrap();
   let json_data = serde_json::from_str(&str_data).unwrap();
-  let mut dc_data = data.discord_data.lock().unwrap();
+  let mut dc_data = data.discord_data.lock().await;
   *dc_data = json_data;
 }
 
@@ -44,7 +44,7 @@ fn generate_dc_data() {
 }
 
 
-pub fn write_dc_data(data: &Data) {
+pub async fn write_dc_data(data: &Data) {
   if !Path::new(DATA_PATH_DC).exists() {
     generate_dc_data();
   }
@@ -55,13 +55,15 @@ pub fn write_dc_data(data: &Data) {
     .open(DATA_PATH_DC)
     .unwrap();
 
-  let json_str = serde_json::to_string_pretty(&data.discord_data).unwrap();
+  let mut dc_data_lock = data.discord_data.lock().await;
+  let dc_data = dc_data_lock.as_mut().unwrap(); 
+  let json_str = serde_json::to_string_pretty(dc_data).unwrap();
 
   file.write_all(json_str.as_bytes()).unwrap();
 }
 
 
-pub fn read_re_data(data: &Data, wipe: bool) {
+pub async fn read_re_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_RE).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
@@ -72,7 +74,7 @@ pub fn read_re_data(data: &Data, wipe: bool) {
 
   let str_data = fs::read_to_string(DATA_PATH_RE).unwrap();
   let json_data = serde_json::from_str(&str_data).unwrap();
-  let mut re_data = data.reddit_data.lock().unwrap();
+  let mut re_data = data.reddit_data.lock().await;
   *re_data = json_data;
 }
 
@@ -95,7 +97,7 @@ fn generate_re_data() {
 
 pub async fn update_re_data(data: &Data) {
   send_cmd_json("update_data_file", json!([])).await;
-  read_re_data(data, false);
+  read_re_data(data, false).await;
 }
 
 
@@ -104,8 +106,8 @@ pub async fn write_re_data() {
 }
 
 
-pub fn dc_add_server(data: &Data, server_id: u64) -> bool {
-  let mut dc_data_lock = data.discord_data.lock().unwrap();
+pub async fn dc_add_server(data: &Data, server_id: u64) -> bool {
+  let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
 
   if dc_data.get("servers").is_none() { return false; }
@@ -120,8 +122,8 @@ pub fn dc_add_server(data: &Data, server_id: u64) -> bool {
 }
 
 
-pub fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> bool {
-  let mut dc_data_lock = data.discord_data.lock().unwrap();
+pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> bool {
+  let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
 
   if dc_data.get("servers").is_none() { return false; }
@@ -137,4 +139,18 @@ pub fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> bool {
   server.insert("bk_week_channel".to_string(), channel_id.into());
 
   return true;
+}
+
+
+pub async fn dc_contains_server(data: &Data, server_id: u64) -> bool {
+  let dc_data_lock = data.discord_data.lock().await;
+  let dc_data = dc_data_lock.as_ref().unwrap();
+
+  if dc_data.get("servers").is_none() { return false; }
+
+  let mut clone = dc_data.clone();
+  let servers = clone["servers"].as_object_mut().unwrap();
+
+  if servers.contains_key(&server_id.to_string()) { return true; }
+  else { return false; }
 }
