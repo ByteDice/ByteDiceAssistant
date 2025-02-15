@@ -1,11 +1,12 @@
 use crate::websocket::send_cmd_json;
-use crate::{rs_println, websocket, Context, Error, BK_WEEK};
-use crate::messages::{edit_msg, send_embed, send_msg, EmbedOptions};
+use crate::{messages, rs_println, websocket, Context, Error, BK_WEEK};
+use crate::messages::{edit_msg, send_embed, send_msg};
 use crate::data::{self, dc_bind_bk};
 
 use std::fs;
 
-use poise::serenity_prelude::{ChannelId, GetMessages, Message, Timestamp};
+use poise::serenity_prelude::{ChannelId, GetMessages, Message};
+use poise::ReplyHandle;
 use serde_json::{json, Value};
 
 
@@ -96,29 +97,7 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
 
 
 async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Result<(), Error> {
-  let embed_options = EmbedOptions {
-    desc: format!(
-      r#"**Spoilers and vote length anonymizer for fair review!**
-      Upvotes: ||`{:>6}`||
-      URL: ||<{}>||
-      Added by human: {}
-      Added by bot: {}
-      Approved by human: {}
-      Approved by bot: `[not implemented]`"#,
-      post["post_data"]["upvotes"].as_i64().unwrap(),
-      url,
-      if post["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
-      if post["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
-      if post["approved"]["by_human"].as_bool().unwrap() { "✅" } else { "❌" }
-    ).trim().to_string(),
-    title: Some(post["post_data"]["title"].as_str().unwrap().to_string()),
-    url: Some(url.to_string()),
-    ts: Some(Timestamp::from_unix_timestamp(post["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
-    empheral: true,
-    ..Default::default()
-  };
-
-  send_embed(ctx, embed_options, true).await;
+  send_embed(ctx, messages::embed_post(&post, url, true), true).await;
   Ok(())
 }
 
@@ -290,6 +269,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
 
 
 
+
 #[poise::command(slash_command, prefix_command, guild_only)]
 /// Opposite effects of `/bk_week_approve`.
 pub async fn bk_week_disapprove(
@@ -304,6 +284,8 @@ pub async fn bk_week_disapprove(
 
   return Ok(());
 }
+
+
 
 
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
@@ -331,6 +313,8 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
 }
 
 
+
+
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
 /// Updates all logs
 pub async fn bk_week_update(
@@ -338,9 +322,66 @@ pub async fn bk_week_update(
   #[description = "Only adds new posts, leaves everything else unchanged."] only_add: Option<bool>
 ) -> Result<(), Error>
 {
+  let mut p_text = "Fetching new posts & updating data file...".to_string();
+  let progress = send_msg(ctx, p_text.clone(), true, true).await;
+
+  send_cmd_json("add_new_posts", json!([])).await;
+  let r_data = get_reddit_data(ctx).await.unwrap();
+
+  let c_id = get_c_id(ctx).await.unwrap_or_else(|| 0);
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), format!("Done!\nReading messages in <#{}>...", c_id)).await;
+  
+  if c_id == 0 {
+    send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run `/bk_week_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
+    return Ok(());
+  }
+
+  let msgs = read_msgs(ctx, c_id).await;
+
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "Done!\nParsing messages to JSON...".to_string()).await;
+  let msgs_json = msgs_to_json(ctx, msgs, &r_data).await;
+
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "Done!\nAdding new posts...".to_string()).await;
+
+
+  // TODO: parse to JSON
+    // json should be {"added": [], "updated": [], "removed": []}
+
+  
+  // TODO: add new posts to channel
+  let weekly_art = r_data["bk_weekly_art_posts"].as_object().unwrap();
+  
+  for url in weekly_art.keys() {
+    if msgs_json.get(url).is_some() { continue; }
+    if weekly_art[url].get("removed").is_some() { continue; }
+
+    send_embed(ctx, messages::embed_post(&weekly_art[url], url, false), false).await;
+  }
+
+  // TODO: edit outdated posts
+  // TODO: remove removed posts
+
+  /* MSG FORMAT:
+    {json as spoiler}
+    {embed}
+  */
+
+
+  return Ok(());
+}
+
+
+async fn update_progress(ctx: Context<'_>, p: ReplyHandle<'_>, t: String, a_t: String) -> String {
+  let p_text = format!("{} {}", t, a_t);
+  edit_msg(ctx, p, p_text.clone()).await;
+  return p_text;
+}
+
+
+async fn get_c_id(ctx: Context<'_>) -> Option<u64> {
   if !data::dc_contains_server(ctx.data(), ctx.guild_id().unwrap().into()).await {
     send_server_not_in_data_msg(ctx).await;
-    return Ok(());
+    return None;
   }
 
   let d_lock = ctx.data().discord_data.lock().await;
@@ -350,15 +391,12 @@ pub async fn bk_week_update(
      [ctx.guild_id().unwrap().to_string()]
      ["bk_week_channel"].as_u64().unwrap();
 
-  if c_id == 0 {
-    send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run `/bk_week_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
-    return Ok(());
-  }
+  return Some(c_id);
+}
 
+
+async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
   let c = ChannelId::new(c_id);
-
-  let mut p_text = format!("Reading messages in <#{}>...", c_id);
-  let progress = send_msg(ctx, p_text.clone(), true, true).await;
 
   let b = GetMessages::new().limit(100);
   let mut msgs = c.messages(ctx.http(), b).await.unwrap();
@@ -384,15 +422,22 @@ pub async fn bk_week_update(
     msgs.extend(filtered_msgs);
   }
 
-  p_text = p_text.as_str().to_owned() + " Done!";
-  edit_msg(ctx, progress.unwrap(), p_text).await;
+  return msgs;
+}
 
 
-  // TODO: parse to JSON
-  // TODO: add new posts to channel
-  // TODO: edit outdated posts
-  // TODO: remove removed posts
+async fn msgs_to_json(ctx: Context<'_>, msgs: Vec<Message>, reddit_data: &Value) -> Value {
+  let mut msgs_json = json!({"no_change": [], "updated": [], "removed": []});
 
+  for msg in msgs {
+    let msg_json = serde_json::from_str(&msg.content);
+    if msg_json.is_ok() {
+      let u_json: Value = msg_json.unwrap();
+      println!("{:?}", u_json);
+    }
 
-  return Ok(());
+    else { continue }
+  }
+
+  return msgs_json;
 }

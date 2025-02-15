@@ -1,5 +1,6 @@
 use crate::Context;
 
+use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
 use poise::serenity_prelude::{Color, CreateEmbed, Timestamp};
 
@@ -10,7 +11,8 @@ pub struct EmbedOptions {
   pub col: Option<u32>,
   pub url: Option<String>,
   pub ts: Option<Timestamp>,
-  pub empheral: bool
+  pub empheral: bool,
+  pub message: Option<String>
 }
 impl Default for EmbedOptions {
   fn default() -> Self {
@@ -20,10 +22,14 @@ impl Default for EmbedOptions {
       col: None,
       url: None,
       ts: None,
-      empheral: false
+      empheral: false,
+      message: None
     };
   }
 }
+
+
+static DEFAULT_DC_COL: u32 = 5793266;
 
 
 fn none_to_empty(string: Option<String>) -> String {
@@ -64,7 +70,7 @@ pub async fn send_embed(
   let mut embed = CreateEmbed::new()
     .title      (none_to_empty(options.title))
     .description(options.desc)
-    .colour     (Color::new(options.col.unwrap_or_else(|| 5793266)))
+    .colour     (Color::new(options.col.unwrap_or_else(|| DEFAULT_DC_COL)))
     .url        (none_to_empty(options.url));
   
   if options.ts.is_some() { embed = embed.timestamp(options.ts.unwrap()); }
@@ -72,6 +78,7 @@ pub async fn send_embed(
   if reply {
     let r = CreateReply {
       embeds: vec![embed],
+      content: options.message,
       ephemeral: Some(options.empheral),
       ..Default::default()
     };
@@ -98,4 +105,45 @@ pub async fn edit_msg(
   };
 
   let _ = msg.edit(ctx, r).await;
+}
+
+
+pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
+  let desc_str = format!(
+    r#"Sorted by what I think will be most important
+    Spoilers and vote length anonymizer for fair review!
+    ## Post Data:
+    **Media type:** `{}`
+    **Upvotes:** ||`{:>6}`||
+    **URL:** ||<{}>||
+    **Media URLS:**
+    {}
+
+    ## Listing Data:
+    **Added by:** `{{ human: {}, bot: {} }}`
+    **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
+    post_data["post_data"]["media_type"].as_str().unwrap(),
+    post_data["post_data"]["upvotes"].as_i64().unwrap(),
+    url,
+    post_data["post_data"]["media_urls"].as_array().unwrap().iter().map(|s| format!("* ||<{}>||", s.as_str().unwrap())).collect::<Vec<_>>().join("\n"),
+    if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
+    if post_data["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
+    if post_data["approved"]["by_human"].as_bool().unwrap() { "✅" } else { "❌" }
+  );
+
+  let trimmed = desc_str
+    .lines()
+    .map(|line| line.trim())
+    .collect::<Vec<_>>()
+    .join("\n");
+
+  return EmbedOptions { 
+    title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
+    desc: trimmed,
+    col: Some(DEFAULT_DC_COL),
+    url: Some(url.to_string()),
+    ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
+    message: Some(format!("||`{{\"{}\":{}}}`||", url, serde_json::to_string(post_data).unwrap())),
+    empheral
+  };
 }

@@ -73,7 +73,8 @@ pub async fn embed(
   #[description = "A URL the title is bound to."] url: Option<String>,
   #[description = "Timestamp at bottom (best to leave empty)."] timestamp: Option<Timestamp>,
   #[description = "Empheral (only visible to you)."] empheral: Option<bool>,
-  #[description = "Shows \"used {Command}\" reply text."] reply: Option<bool>
+  #[description = "Shows \"used {Command}\" reply text."] reply: Option<bool>,
+  #[description = "Text that appears above and outside of the embed"] message: Option<String>
 ) -> Result<(), Error> 
 {
   let reply_unwrap = reply.unwrap_or_else(|| false);
@@ -81,12 +82,13 @@ pub async fn embed(
   send_embed(
     ctx,
     EmbedOptions {
-      desc: description,
-      title,
+      desc: description.replace("\\n", "\n"),
+      title: Some(title.unwrap().replace("\\n", "\n")),
       col: color,
       url,
       ts: timestamp,
-      empheral: empheral.unwrap_or_else(|| false)
+      empheral: empheral.unwrap_or_else(|| false),
+      message
     },
     reply_unwrap
   ).await;
@@ -111,7 +113,7 @@ pub async fn send(
   #[description = "The message to send (NO EMPHERAL)"] msg: String
 ) -> Result<(), Error>
 {
-  send_msg(ctx, msg, false, false).await;
+  send_msg(ctx, msg.replace("\\n", "\n"), false, false).await;
   send_msg(ctx, "Mandatory success response, please ignore.".to_string(), true, true).await;
   return Ok(());
 }

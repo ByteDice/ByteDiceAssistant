@@ -6,7 +6,7 @@ import bot as botPy
 from macros import *
 
 
-async def add_new_posts(bot: botPy.Bot):
+async def add_new_posts(bot: botPy.Bot) -> bool:
   check_emoji = emoji.emojize(":check_mark_button:")
   cross_emoji = emoji.emojize(":cross_mark:")
 
@@ -49,6 +49,7 @@ async def add_new_posts(bot: botPy.Bot):
            f"and {not_added} weren't added because they are removed or already existed")
 
   data.write_data(bot)
+  return True
 
 
 async def fetch_posts_with_flair(bot: botPy.Bot, flair_name: str) -> list[models.Submission]:
