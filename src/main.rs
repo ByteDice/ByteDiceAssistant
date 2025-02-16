@@ -97,8 +97,8 @@ async fn main() {
 
 
 async fn start(args: Args) {
-  let data = gen_data(args).await;
-  let mut bot = gen_bot(data).await;
+  let data = gen_data(args.clone()).await;
+  let mut bot = gen_bot(data, args).await;
 
   rs_println!("Starting bot...");
   bot.start().await.unwrap();
@@ -127,8 +127,15 @@ async fn gen_data(args: Args) -> Data {
 }
 
 
-async fn gen_bot(data: Data) -> Client {
-  let token = std::env::var("ASSISTANT_TOKEN").expect("missing ASSISTANT_TOKEN env var");
+async fn gen_bot(data: Data, args: Args) -> Client {
+  let token;
+  if !args.dev {
+    token = std::env::var("ASSISTANT_TOKEN").expect("Missing ASSISTANT_TOKEN env var!");
+  }
+  else {
+    token = std::env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!");
+  }
+
   let intents = serenity::GatewayIntents::all();
 
   let peek_len = 27;
