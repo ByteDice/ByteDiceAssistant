@@ -38,7 +38,9 @@ struct Args {
   #[arg(short = 'd', long, help = "Enables dev mode. Dev mode shows more debug info and turns off certain security measures.")]
   dev: bool,
   #[arg(short = 'w', long, help = "Wipes all data before running the program.")]
-  wipe: bool
+  wipe: bool,
+  #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
+  test: String
 }
 
 struct Data {
