@@ -315,7 +315,7 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
 
 
 
-#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 /// Updates all logs
 pub async fn bk_week_update(
   ctx: Context<'_>,
