@@ -17,13 +17,12 @@
       - [x] ~~Function~~
       - [ ] Automate
     - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
-    - [ ] Log all posts in a Discord thread
+    <!-- - [x] Log all posts in a Discord thread -->
       <!-- - [x] ~~`/bk_week_bind` to bind a channel for bk_week logs~~ -->
-      - [ ] Add post if it exists in data but not in channel
-      - [ ] Edit post if it exists in channel and is different in data
-      - [ ] Remove post if its `"removed": true` in data
-      - [ ] Add posts to data from channel
-      - [ ] `/bk_week_update` to forcefully trigger this ^
+      <!-- - [x] Add post if it exists in data but not in channel -->
+      <!-- - [x] Edit post if it exists in channel and is different in data -->
+      <!-- - [x] Remove post if its `"removed": true` in data -->
+      <!-- - [x] `/bk_week_update` to forcefully trigger these ^ -->
     <!-- - [x] ~~`/bk_week_get [url]` get the data of a single post from the data~~ -->
 
 ### Medium priority:

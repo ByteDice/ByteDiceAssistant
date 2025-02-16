@@ -85,7 +85,7 @@ pub async fn embed(
     ctx,
     EmbedOptions {
       desc: description.replace("\\n", "\n"),
-      title: Some(title.unwrap().replace("\\n", "\n")),
+      title: if title.is_some() { Some(title.unwrap().replace("\\n", "\n")) } else { None },
       col: color,
       url,
       ts: timestamp,

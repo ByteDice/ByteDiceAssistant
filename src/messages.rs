@@ -6,11 +6,13 @@ use poise::serenity_prelude::{Color, CreateEmbed, CreateEmbedAuthor, Timestamp};
 use serde_json::json;
 
 
+#[derive(Clone)]
 pub struct Author {
   pub name: String,
   pub url: String,
   pub icon_url: String
 }
+#[derive(Clone)]
 pub struct EmbedOptions {
   pub desc: String,
   pub title: Option<String>,
@@ -40,6 +42,7 @@ impl Default for EmbedOptions {
 
 
 static DEFAULT_DC_COL: u32 = 5793266;
+static REMOVED_DC_COL: u32 = 16716032;
 
 
 fn none_to_empty(string: Option<String>) -> String {
@@ -77,20 +80,7 @@ pub async fn send_embed(
   reply: bool
 ) -> Option<ReplyHandle<'_>>
 {
-  let mut author: Option<CreateEmbedAuthor> = None;
-  if let Some(o_author) = options.author {
-    author = Some(CreateEmbedAuthor::new(o_author.name).url(o_author.url).icon_url(o_author.icon_url))
-  }
-  
-  let mut embed = CreateEmbed::new()
-    .title      (none_to_empty(options.title))
-    .description(options.desc)
-    .colour     (Color::new(options.col.unwrap_or_else(|| DEFAULT_DC_COL)))
-    .url        (none_to_empty(options.url));
-
-  if let Some(a) = author { embed = embed.author(a); }
-  if options.thumbnail.is_some() { embed = embed.thumbnail(options.thumbnail.unwrap()); }
-  if options.ts.is_some() { embed = embed.timestamp(options.ts.unwrap()); }
+  let embed = embed_from_options(options.clone());
 
   if reply {
     let r = CreateReply {
@@ -108,6 +98,26 @@ pub async fn send_embed(
     let _ = ctx.channel_id().send_message(ctx.http(), r).await;
     return None;
   }
+}
+
+
+pub fn embed_from_options(options: EmbedOptions) -> CreateEmbed {
+  let mut author: Option<CreateEmbedAuthor> = None;
+  if let Some(o_author) = options.author {
+    author = Some(CreateEmbedAuthor::new(o_author.name).url(o_author.url).icon_url(o_author.icon_url))
+  }
+  
+  let mut embed = CreateEmbed::new()
+    .title      (none_to_empty(options.title))
+    .description(options.desc)
+    .colour     (Color::new(options.col.unwrap_or_else(|| DEFAULT_DC_COL)))
+    .url        (none_to_empty(options.url));
+
+  if let Some(a) = author { embed = embed.author(a); }
+  if options.thumbnail.is_some() { embed = embed.thumbnail(options.thumbnail.unwrap()); }
+  if options.ts.is_some() { embed = embed.timestamp(options.ts.unwrap()); }
+
+  return embed;
 }
 
 
@@ -166,6 +176,18 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     thumbnail: media_urls.get(0)
       .and_then(|url| url.as_str().map(|s| s.to_string()))
       .or_else(|| None),
+    ..Default::default()
+  };
+}
+
+
+pub fn embed_post_removed(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
+  return EmbedOptions { 
+    title: Some("REMOVED!".to_string()),
+    desc: format!("## Removed by `{}`\nJSON: ||`{}`||", post_data["removed_by"].as_str().unwrap(), serde_json::to_string(&post_data).unwrap()),
+    col: Some(REMOVED_DC_COL),
+    url: Some(url.to_string()),
+    empheral,
     ..Default::default()
   };
 }

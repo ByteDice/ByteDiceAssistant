@@ -104,7 +104,11 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
       py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
 
-  if new_data.url not in bot.data[BK_WEEKLY] or new_data.upvotes != bot.data[BK_WEEKLY][new_data.url]["post_data"]:
+  updated = False
+  if "removed" not in bot.data[BK_WEEKLY][new_data.url]:
+    updated = new_data.upvotes != bot.data[BK_WEEKLY][new_data.url]["post_data"]
+
+  if new_data.url not in bot.data[BK_WEEKLY] or updated:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
     if bot.args["dev"]:
       py_print(f"Added post \"{new_data.url}\"")

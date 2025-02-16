@@ -1,11 +1,11 @@
 use crate::websocket::send_cmd_json;
-use crate::{messages, rs_println, websocket, Context, Error, BK_WEEK};
-use crate::messages::{edit_msg, send_embed, send_msg};
+use crate::{rs_println, websocket, Context, Error, BK_WEEK};
+use crate::messages::{edit_msg, embed_from_options, embed_post, embed_post_removed, send_embed, send_msg};
 use crate::data::{self, dc_bind_bk};
 
 use std::fs;
 
-use poise::serenity_prelude::{ChannelId, GetMessages, Message};
+use poise::serenity_prelude::{ChannelId, EditMessage, GetMessages, Message, MessageId};
 use poise::ReplyHandle;
 use serde_json::{json, Value};
 
@@ -97,7 +97,7 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
 
 
 async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Result<(), Error> {
-  send_embed(ctx, messages::embed_post(&post, url, true), true).await;
+  send_embed(ctx, embed_post(&post, url, true), true).await;
   Ok(())
 }
 
@@ -352,10 +352,12 @@ pub async fn bk_week_update(
       { continue; }
     if msgs_json["duplicates"].as_object().unwrap().contains_key(url) { continue; }
 
-    if weekly_art[url].get("removed").is_some() { continue; }
+    if weekly_art[url].get("removed").is_some() {
+      send_embed(ctx, embed_post_removed(&weekly_art[url], url, false), false).await;
+      continue;
+    }
 
-    send_embed(ctx, messages::embed_post(&weekly_art[url], url, false), false).await;
-    break;
+    send_embed(ctx, embed_post(&weekly_art[url], url, false), false).await;
   }
 
   if only_add.unwrap_or_else(|| false) {
@@ -364,13 +366,30 @@ pub async fn bk_week_update(
   }
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
-  // TODO: edit outdated posts
+  for (url, msg_id) in msgs_json["updated"].as_object().unwrap() {
+    let mut msg = ctx.http().get_message(ctx.channel_id(), MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+    let r = EditMessage::new()
+      .embeds(vec![embed_from_options(embed_post(&weekly_art[url], url, false))]);
+  
+    let _ = msg.edit(ctx, r).await;
+  }
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
-  // TODO: remove removed posts
+  for (url, msg_id) in msgs_json["removed"].as_object().unwrap() {
+    let mut msg = ctx.http().get_message(ctx.channel_id(), MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+    let r = EditMessage::new()
+      .embeds(vec![embed_from_options(embed_post_removed(&weekly_art[url], url, false))]);
+  
+    let _ = msg.edit(ctx, r).await;
+  }
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
-  // TODO: remove duplicates
+  for (_url, msgs) in msgs_json["duplicates"].as_object().unwrap() {
+    for msg_id in msgs.as_array().unwrap() {
+      let msg = ctx.http().get_message(ctx.channel_id(), MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+      let _ = msg.delete(ctx.http()).await;
+    }
+  }
 
   update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
   return Ok(());
@@ -465,10 +484,17 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
     let mut u_json: Value = msg_json.unwrap();
     let re_url = &reddit_data["bk_weekly_art_posts"][&url];
 
-    if u_json.get("removed").is_some() {
+    if re_url.get("removed").is_some() {
+      if msgs_json.get("removed").is_some() {
+        if let Some(obj) = msgs_json["no_change"].as_object_mut() {
+          obj.insert(url.clone(), json!(msg.id.get()));
+          obj.insert(url.clone(), u_json.clone());
+          continue;
+        }
+      }
+
       if let Some(obj) = msgs_json["removed"].as_object_mut() {
-        if !obj.contains_key(&url) { obj.insert(url.clone(), json!([])); }
-        obj[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+        obj.insert(url.clone(), json!(msg.id.get()));
         continue;
       }
     }
@@ -480,15 +506,13 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
       u_json.as_object_mut().unwrap().insert("msg_id".to_string(), Value::String(msg.id.clone().to_string()));
 
       if let Some(obj) = msgs_json["updated"].as_object_mut() {
-        if !obj.contains_key(&url) { obj.insert(url.clone(), json!([])); }
-        obj[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+        obj.insert(url.clone(), json!(msg.id.get()));
         continue;
       }
     }
 
     if let Some(obj) = msgs_json["no_change"].as_object_mut() {
-      if !obj.contains_key(&url) { obj.insert(url.clone(), json!([])); }
-      obj[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+      obj.insert(url.clone(), json!(msg.id.get()));
       obj.insert(url, u_json);
     }
   }
