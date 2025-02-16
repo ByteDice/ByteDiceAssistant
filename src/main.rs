@@ -40,7 +40,7 @@ struct Args {
   #[arg(short = 'w', long, help = "Wipes all data before running the program.")]
   wipe: bool,
   #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
-  test: String
+  test: bool
 }
 
 struct Data {
@@ -63,21 +63,26 @@ async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
 
-  if args.dev { println!("----- DEV MODE ENABLED -----"); rs_println!("ARGS: {}", args_str); }
+  if args.test { println!("----- USING TEST BOT -----"); }
+  if args.dev { println!("----- DEV MODE ENABLED -----"); }
 
   if args.py && !args.rs {
     println!("----- PYTHON ONLY MODE -----");
+    rs_println!("ARGS: {}", args_str);
     let _ = python::start(args_str);
     process::exit(0);
   }
   else if args.rs && ! args.py {
     println!("----- RUST ONLY MODE -----");
+    rs_println!("ARGS: {}", args_str);
     start(args).await;
     process::exit(0);
   }
   else if args.py && args.rs {
     errln!("Invalid arguments: Arguments cannot include both --rs and --py.");
   }
+
+  rs_println!("ARGS: {}", args_str);
 
   let rt = Runtime::new().unwrap();
   let python_args = args_str;
@@ -131,7 +136,7 @@ async fn gen_data(args: Args) -> Data {
 
 async fn gen_bot(data: Data, args: Args) -> Client {
   let token;
-  if !args.dev {
+  if !args.test {
     token = std::env::var("ASSISTANT_TOKEN").expect("Missing ASSISTANT_TOKEN env var!");
   }
   else {
