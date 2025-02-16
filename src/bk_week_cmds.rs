@@ -339,23 +339,27 @@ pub async fn bk_week_update(
   let msgs = read_msgs(ctx, c_id).await;
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
-  let msgs_json = msgs_to_json(ctx, msgs, &r_data).await;
-  // TODO: parse to JSON ^^^^^^^^^^^^
-    // json should be {"added": [], "updated": [], "removed": []}
+  let msgs_json = msgs_to_json(msgs, &r_data).await;
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
 
   let weekly_art = r_data["bk_weekly_art_posts"].as_object().unwrap();
   
   for url in weekly_art.keys() {
-    if msgs_json.get(url).is_some() { continue; }
+    if ["no_change", "updated", "removed"]
+      .iter()
+      .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
+      { continue; }
+    if msgs_json["duplicates"].as_object().unwrap().contains_key(url) { continue; }
+
     if weekly_art[url].get("removed").is_some() { continue; }
 
     send_embed(ctx, messages::embed_post(&weekly_art[url], url, false), false).await;
+    break;
   }
 
   if only_add.unwrap_or_else(|| false) {
-    p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
+    update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
     return Ok(());
   }
 
@@ -368,7 +372,7 @@ pub async fn bk_week_update(
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
   // TODO: remove duplicates
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
+  update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
   return Ok(());
 }
 
@@ -428,17 +432,65 @@ async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
 }
 
 
-async fn msgs_to_json(ctx: Context<'_>, msgs: Vec<Message>, reddit_data: &Value) -> Value {
-  let mut msgs_json = json!({"no_change": [], "updated": [], "removed": []});
+async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
+  let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}});
 
   for msg in msgs {
-    let msg_json = serde_json::from_str(&msg.content);
-    if msg_json.is_ok() {
-      let u_json: Value = msg_json.unwrap();
-      println!("{:?}", u_json);
+    if msg.embeds.len() == 0 { continue; }
+    if msg.embeds[0].url.is_none() { continue; }
+
+    let url = msg.embeds[0].url.clone().unwrap();
+    
+    if ["no_change", "updated", "removed"]
+      .iter()
+      .any(|key| msgs_json[key].as_object().unwrap().contains_key(&url))
+    {
+      let dupes_mut = msgs_json["duplicates"].as_object_mut().unwrap();
+      if !dupes_mut.contains_key(&url) { dupes_mut.insert(url.clone(), json!([])); }
+      dupes_mut[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+      continue;
     }
 
-    else { continue }
+    let msg_desc = &msg.embeds[0].description.clone().unwrap();
+    let msg_lines = msg_desc.split("\n");
+    let msg_last_len = msg_lines.clone().last().unwrap().len();
+
+    if msg_last_len < 13 { continue; }
+
+    let msg_json_str = &msg_lines.clone().last().unwrap()[9..msg_last_len - 3];
+    
+    let msg_json = serde_json::from_str(msg_json_str);
+    if msg_json.is_err() { continue; }
+
+    let mut u_json: Value = msg_json.unwrap();
+    let re_url = &reddit_data["bk_weekly_art_posts"][&url];
+
+    if u_json.get("removed").is_some() {
+      if let Some(obj) = msgs_json["removed"].as_object_mut() {
+        if !obj.contains_key(&url) { obj.insert(url.clone(), json!([])); }
+        obj[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+        continue;
+      }
+    }
+
+    if u_json["added"]     != re_url["added"]
+    || u_json["approved"]  != re_url["approved"]
+    || u_json["post_data"]["upvotes"] != re_url["post_data"]["upvotes"]
+    {
+      u_json.as_object_mut().unwrap().insert("msg_id".to_string(), Value::String(msg.id.clone().to_string()));
+
+      if let Some(obj) = msgs_json["updated"].as_object_mut() {
+        if !obj.contains_key(&url) { obj.insert(url.clone(), json!([])); }
+        obj[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+        continue;
+      }
+    }
+
+    if let Some(obj) = msgs_json["no_change"].as_object_mut() {
+      if !obj.contains_key(&url) { obj.insert(url.clone(), json!([])); }
+      obj[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+      obj.insert(url, u_json);
+    }
   }
 
   return msgs_json;

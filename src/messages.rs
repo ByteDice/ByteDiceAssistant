@@ -153,7 +153,7 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     .collect::<Vec<_>>()
     .join("\n");
 
-  let json_min = json!({"post_data": post_data["post_data"]["upvotes"], "added": post_data["added"], "approved": post_data["approved"]});
+  let json_min = json!({"post_data": json!({ "upvotes": post_data["post_data"]["upvotes"] }), "added": post_data["added"], "approved": post_data["approved"]});
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
 
   return EmbedOptions { 
