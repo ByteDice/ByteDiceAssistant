@@ -40,7 +40,9 @@ struct Args {
   #[arg(short = 'w', long, help = "Wipes all data before running the program.")]
   wipe: bool,
   #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
-  test: bool
+  test: bool,
+  #[arg(long, help = "Removes the annoying ping prints.")]
+  noping: bool
 }
 
 struct Data {

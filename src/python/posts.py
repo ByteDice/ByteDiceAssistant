@@ -1,5 +1,7 @@
 import emoji
 from asyncpraw import models
+import asyncprawcore as prawcore
+import asyncpraw.exceptions as exc
 
 import data
 import bot as botPy
@@ -93,11 +95,13 @@ def has_media(post: models.Submission) -> tuple[bool, str, int, list[str]]:
 
 
 async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
-  post: models.Submission = await bot.r.submission(url=url)
-
-  if hasattr(post, "id"):
+  try:
+    post: models.Submission = await bot.r.submission(url=url)
     return True, post
-  else:
+  except (prawcore.NotFound, prawcore.BadRequest, exc.InvalidURL):
+    return False, None
+  except Exception as e:
+    py_error(f"Unexpected error at posts.py -> from_url():\n{e}")
     return False, None
 
 
@@ -119,7 +123,7 @@ async def add_post_url(bot, url: str, approve: bool) -> bool:
   result, post = await from_url(bot, url)
 
   if not result:
-    return result
+    return False
   
   post_data = get_post_details(post)
   post_data.approved_by_human = approve

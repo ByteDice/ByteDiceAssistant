@@ -1,11 +1,9 @@
 # Reddit Commands
-To execute a command on the Reddit bot, include `u/ByteDiceAssistant [args]` in a comment.  
+To execute a command on the Reddit bot, include `u/ByteDiceAssistant [args]` in a comment.
 - **`[args]`**: The command you want to run and its arguments.
-
 ## `bk_week_add`
-Adds the post to the list of posts.  
-- **Only moderators of a subreddit or the OP (Original Poster) can use this command.**  
-
+Adds the post to the list of posts.
+- **Only moderators of a subreddit or the OP (Original Poster) can use this command.**
 ### **Examples**
 ```
 "u/ByteDiceAssistant bk_week_add"

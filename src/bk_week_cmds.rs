@@ -162,7 +162,14 @@ pub async fn bk_week_add(
     let r = websocket::send_cmd_json("add_post_url", json!([&url, a])).await.unwrap();
 
     if !r["value"].as_bool().unwrap() {
-      send_msg(ctx, "Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_add() -> Unknown error`.".to_string(), true, true).await;
+      send_msg(
+        ctx,
+        r#"Unknown error!
+        Error trace: `bk_week_cmds.rs -> bk_week_add() -> Unknown error`.
+        Common reason: The URL provided was likely invalid."#.to_string(),
+        true,
+        true
+      ).await;
       return Ok(());
     }
 

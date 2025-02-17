@@ -136,6 +136,7 @@ pub async fn edit_msg(
 
 
 pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
+  let media_type = &post_data["post_data"]["media_type"];
   let desc_str = format!(
     r#"Sorted by what I think will be most important
     Spoilers and vote length anonymizer for fair review!
@@ -148,7 +149,7 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     ## Listing Data:
     **Added by:** `{{ human: {}, bot: {} }}`
     **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
-    post_data["post_data"]["media_type"].as_str().unwrap(),
+    if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     url,
     post_data["post_data"]["media_urls"].as_array().unwrap().iter().map(|s| format!("* ||<{}>||", s.as_str().unwrap())).collect::<Vec<_>>().join("\n"),
