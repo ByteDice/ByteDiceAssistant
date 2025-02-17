@@ -105,7 +105,7 @@ async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
     return False, None
 
 
-def get_post_details(post: models.Submission) -> data.PostData:
+def get_post_details(post: models.Submission, added_by_h: bool = False) -> data.PostData:
   media = has_media(post)
 
   return data.PostData(
@@ -115,16 +115,17 @@ def get_post_details(post: models.Submission) -> data.PostData:
     int(post.created_utc),
     media[1],
     media[3],
-    added_by_bot = True,
+    added_by_bot = not added_by_h,
+    added_by_human = added_by_h
   )
 
 
-async def add_post_url(bot, url: str, approve: bool) -> bool:
+async def add_post_url(bot, url: str, approve: bool, added_by_h: bool = False) -> bool:
   result, post = await from_url(bot, url)
 
   if not result:
     return False
   
-  post_data = get_post_details(post)
+  post_data = get_post_details(post, added_by_h)
   post_data.approved_by_human = approve
   return data.add_post_to_data(bot, post_data, True)

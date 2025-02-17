@@ -22,7 +22,6 @@ use tokio::sync::Mutex;
 use serde_json;
 
 
-// TODO: /bk_week_adds sets as added by bot instead of human
 // TODO: bot command permissions
 // TODO: bk_mod verification system
 

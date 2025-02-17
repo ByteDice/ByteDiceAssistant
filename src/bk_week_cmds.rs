@@ -159,7 +159,7 @@ pub async fn bk_week_add(
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     let a = approve.unwrap_or_else(|| false);
-    let r = websocket::send_cmd_json("add_post_url", json!([&url, a])).await.unwrap();
+    let r = websocket::send_cmd_json("add_post_url", json!([&url, a, true])).await.unwrap();
 
     if !r["value"].as_bool().unwrap() {
       send_msg(

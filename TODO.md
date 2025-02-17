@@ -4,8 +4,10 @@
   <!-- - [x] ~~Discord bot /bk_help command~~ -->
   <!-- - [x] ~~Scrape the data~~ -->
   <!-- - [x] ~~Put it in a JSON~~ -->
-  <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->
+  <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->¨
+  - [ ] Security that only allows bk mods to run these commands
   - [ ] Allow updating the data autonomously and via manual commands.
+    - [ ] 30-minute schedule
     - [ ] Manually add posts 
       - [ ] via `u/[bot] add`
       <!-- - [x] ~~via `/bk_week_add [url]`~~ -->
