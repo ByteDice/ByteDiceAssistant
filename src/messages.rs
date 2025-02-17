@@ -137,15 +137,25 @@ pub async fn edit_msg(
 
 pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
   let media_type = &post_data["post_data"]["media_type"];
+  let re_votes = &post_data["votes"]["voters_re"].as_array().unwrap().len();
+  let dc_votes = &post_data["votes"]["voters_dc"].as_array().unwrap().len();
+
   let desc_str = format!(
     r#"Sorted by what I think will be most important
     Spoilers and vote length anonymizer for fair review!
     ## Post Data:
     **Media type:** `{}`
-    **Upvotes:** ||`{:>6}`||
+    **Post upvotes:** ||`{:>6}`||
     **URL:** ||<{}>||
     **Media URLS:**
     {}
+
+    ## Voting data:
+    **Moderator votes:** ||`{:>6}`||
+    **Community votes:** ||`{:>6}`||
+    * ||**From Reddit:** `{:>6}`||
+    * ||**From Discord:** `{:>6}`||
+
     ## Listing Data:
     **Added by:** `{{ human: {}, bot: {} }}`
     **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
@@ -153,6 +163,12 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     url,
     post_data["post_data"]["media_urls"].as_array().unwrap().iter().map(|s| format!("* ||<{}>||", s.as_str().unwrap())).collect::<Vec<_>>().join("\n"),
+
+    post_data["votes"]["mod_voters"].as_array().unwrap().len(),
+    re_votes + dc_votes,
+    re_votes,
+    dc_votes,
+
     if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
     if post_data["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
     if post_data["approved"]["by_human"].as_bool().unwrap() { "✅" } else { "❌" }
@@ -169,7 +185,7 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
 
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
-    desc: format!("{}\nJSON: ||`{}`||", trimmed, serde_json::to_string(&json_min).unwrap()),
+    desc: format!("{}\n\nJSON: ||`{}`||", trimmed, serde_json::to_string(&json_min).unwrap()),
     col: Some(DEFAULT_DC_COL),
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
@@ -185,7 +201,12 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
 pub fn embed_post_removed(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
   return EmbedOptions { 
     title: Some("REMOVED!".to_string()),
-    desc: format!("## Removed by `{}`\nJSON: ||`{}`||", post_data["removed_by"].as_str().unwrap(), serde_json::to_string(&post_data).unwrap()),
+    desc: format!(
+      "## Removed by `{}`\n**Reason:** {}\n\nJSON: ||`{}`||",
+      post_data["removed_by"].as_str().unwrap(),
+      post_data["remove_reason"].as_str().unwrap(),
+      serde_json::to_string(&post_data).unwrap()
+    ),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
     empheral,

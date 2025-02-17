@@ -1,5 +1,4 @@
 {
-  "file_created_correctly": true,
   "bk_weekly_art_posts": {
     "EXAMPLE VALUE": {
       "post_data": {
@@ -9,7 +8,11 @@
         "media_type": null,
         "media_urls": []
       },
-      "nominated_by_human": true,
+      "votes": {
+        "voters_re": ["bytedice"],
+        "voters_dc": [0],
+        "mod_voters": [0]
+      },
       "added": {
         "by_human": false,
         "by_bot": true
@@ -21,7 +24,8 @@
     },
     "EXAMPLE VALUE DELETED": {
       "removed": true,
-      "removed_by": "ME!!!!"
+      "removed_by": "ME!!!!",
+      "remove_reason": "i HATED that post >:("
     }
   }
 }

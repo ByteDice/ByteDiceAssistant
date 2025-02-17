@@ -50,7 +50,6 @@ async def add_new_posts(bot: botPy.Bot) -> bool:
            f"       {without_media} had no media, " +
            f"and {not_added} weren't added because they are removed or already existed")
 
-  data.write_data(bot)
   return True
 
 

@@ -23,7 +23,6 @@ use serde_json;
 
 
 // TODO: bot command permissions
-// TODO: bk_mod verification system
 
 
 #[derive(Parser, Serialize, Clone)]
@@ -49,6 +48,7 @@ struct Data {
   byte_dice_id: u64,
   reddit_data: Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
+  bk_mods_json: Value,
   args: Args
   // TODO: schedules
 }
@@ -66,6 +66,7 @@ async fn main() {
 
   if args.test { println!("----- USING TEST BOT -----"); }
   if args.dev { println!("----- DEV MODE ENABLED -----"); }
+  if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
 
   if args.py && !args.rs {
     println!("----- PYTHON ONLY MODE -----");
@@ -115,13 +116,16 @@ async fn start(args: Args) {
 
 async fn gen_data(args: Args) -> Data {
   let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
-  let ball_quirk_str = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
+  let ball_quirk_str   = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
+  let bk_mods_str      = std::fs::read_to_string("./data/bk_mods.json").unwrap();
 
   let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
+  let bk_mods:      Value       = serde_json::from_str(&bk_mods_str).unwrap();
 
   let data = Data {
     ball_prompts: [ball_classic, ball_quirk],
+    bk_mods_json: bk_mods,
     byte_dice_id: 697149665166229614,
     reddit_data: None.into(),
     discord_data: None.into(),
@@ -168,9 +172,9 @@ async fn gen_bot(data: Data, args: Args) -> Client {
         bk_week_cmds::bk_week_add(),
         bk_week_cmds::bk_week_remove(),
         bk_week_cmds::bk_week_approve(),
-        bk_week_cmds::bk_week_disapprove(),
-        bk_week_cmds::bk_week_bind(),
-        bk_week_cmds::bk_week_update()
+        bk_week_cmds::bk_admin_bind(),
+        bk_week_cmds::bk_week_update(),
+        bk_week_cmds::bk_week_vote()
       ],
       event_handler: events::event_handler,
       ..Default::default()

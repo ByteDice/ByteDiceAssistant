@@ -12,17 +12,19 @@ BK_WEEKLY: Final[str] = "bk_weekly_art_posts"
 class PostData:
   def __init__(
     self,
-    url: str,
-    title: str,
-    upvotes: int,
-    date_unix: int,
-    media_type: str,
-    media_urls: list[str],
-    nominated_by_human: bool = False,
-    added_by_human: bool = False,
-    added_by_bot: bool = False,
+    url:               str,
+    title:             str,
+    upvotes:           int,
+    date_unix:         int,
+    media_type:        str,
+    media_urls:        list[str],
+    voters_re:         list[str] = [],
+    voters_dc:         list[int] = [],
+    mod_voters:        list[int] = [],
+    added_by_human:    bool = False,
+    added_by_bot:      bool = False,
     approved_by_human: bool = False,
-    approved_by_ris: bool = False
+    approved_by_ris:   bool = False
   ):
     self.url                = url
     self.title              = title
@@ -30,7 +32,9 @@ class PostData:
     self.date_unix          = date_unix
     self.media_type         = media_type
     self.media_urls         = media_urls
-    self.nominated_by_human = nominated_by_human
+    self.voters_re          = voters_re
+    self.voters_dc          = voters_dc
+    self.mod_voters         = mod_voters
     self.added_by_human     = added_by_human
     self.added_by_bot       = added_by_bot
     self.approved_by_human  = approved_by_human
@@ -45,7 +49,11 @@ class PostData:
         "media_type": self.media_type,
         "media_urls": self.media_urls
       },
-      "nominated_by_human": self.nominated_by_human,
+      "votes": {
+        "voters_re": self.voters_re,
+        "voters_dc": self.voters_dc,
+        "mod_voters": self.mod_voters
+      },
       "added": {
         "by_human": self.added_by_human,
         "by_bot": self.added_by_bot
@@ -83,9 +91,6 @@ def read_data(bot: botPy.Bot) -> bool:
   data_str = bot.data_f.read()
   json_data = json.loads(data_str)
   bot.data = json_data
-
-  if not bot.data["file_created_correctly"]:
-    raise Exception("reddit_data.json file wasn't created properly. Delete the file and retry.")
   
   return True
 
@@ -104,22 +109,20 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
       py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
 
+  # not sure what this is for
   updated = False
-  if "removed" not in bot.data[BK_WEEKLY][new_data.url]:
-    updated = new_data.upvotes != bot.data[BK_WEEKLY][new_data.url]["post_data"]
 
   if new_data.url not in bot.data[BK_WEEKLY] or updated:
     bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
     if bot.args["dev"]:
       py_print(f"Added post \"{new_data.url}\"")
     return True
-  
-  elif "removed" in bot.data[BK_WEEKLY][new_data.url]:
-    py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
-    return False
+
+  if "removed" not in bot.data[BK_WEEKLY][new_data.url]:
+    updated = new_data.upvotes != bot.data[BK_WEEKLY][new_data.url]["post_data"]
   
   else:
-    py_print(f"Failed to add post \"{new_data.url}\": Already exists.")
+    py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
     return False
   
 
@@ -131,9 +134,44 @@ def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
   return False
 
 
-def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN") -> bool:
+def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: str = "None") -> bool:
   if url in bot.data[BK_WEEKLY]:
-    bot.data[BK_WEEKLY][url] = { "removed": True, "removed_by": removed_by }
+    bot.data[BK_WEEKLY][url] = { "removed": True, "removed_by": removed_by, "remove_reason": reason }
     return True
   else:
     return False
+  
+
+def set_vote_post(
+  bot: botPy.Bot,
+  url: str,
+  user: str | int,
+  mod_vote: bool = False,
+  from_dc: bool = False,
+  remove_vote: bool = False,
+) -> bool:
+  if url not in bot.data[BK_WEEKLY]:
+    return False
+
+  votes = bot.data[BK_WEEKLY][url]["votes"]
+  re_voters: set[str] = set(votes["voters_re"])
+  dc_voters: set[int] = set(votes["voters_dc"])
+  mod_voters: set[int] = set(votes["mod_voters"])
+
+  target_voters = mod_voters if mod_vote else (dc_voters if from_dc else re_voters)
+
+  if remove_vote:
+    if user not in target_voters:
+      return False
+    target_voters.remove(user)
+    
+  else:
+    if user in target_voters:
+      return False
+    target_voters.add(user)
+
+  bot.data[BK_WEEKLY][url]["votes"]["voters_re"] = list(re_voters)
+  bot.data[BK_WEEKLY][url]["votes"]["voters_dc"] = list(dc_voters)
+  bot.data[BK_WEEKLY][url]["votes"]["mod_voters"] = list(mod_voters)
+
+  return True

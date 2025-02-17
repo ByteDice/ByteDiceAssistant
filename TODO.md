@@ -5,11 +5,13 @@
   <!-- - [x] ~~Scrape the data~~ -->
   <!-- - [x] ~~Put it in a JSON~~ -->
   <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->¨
-  - [ ] Security that only allows bk mods to run these commands
+  <!-- - [x] Security that only allows bk mods to run these commands. -->
+  <!-- - [x] Some kind of voting system. -->
   - [ ] Allow updating the data autonomously and via manual commands.
-    - [ ] 30-minute schedule
+    - [ ] 30-minute schedule when bot adds posts
     - [ ] Manually add posts 
       - [ ] via `u/[bot] add`
+      - [ ] 5 minute schedule when user adds post
       <!-- - [x] ~~via `/bk_week_add [url]`~~ -->
     <!-- - [x] ~~Manually remove posts via `/bk_week_remove [url]`~~ -->
     <!-- - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~ -->
@@ -18,7 +20,7 @@
     - [ ] Automatically remove posts older than 7 days from JSON
       - [x] ~~Function~~
       - [ ] Automate
-    - [ ] Automatically approve posts that dont get caught by reverse image search (ris)
+    - [ ] Automatically approve posts that don't get caught by reverse image search (ris)
     <!-- - [x] Log all posts in a Discord thread -->
       <!-- - [x] ~~`/bk_week_bind` to bind a channel for bk_week logs~~ -->
       <!-- - [x] Add post if it exists in data but not in channel -->
@@ -29,9 +31,9 @@
 
 ### Medium priority:
 <!-- - [x] ~~JSON -> Rules list~~ -->
-- [ ] View single rule (/rule {rulename})
+- [ ] View single rule (/rule {rule_name})
 - [ ] Postfix calculator
-- [ ] Postfic generator
+- [ ] Postfix generator
 - [ ] JSON -> BPS class init
 - [ ] BPS args -> JSON
 - [ ] Random tip (from ByteDice.net/data/loadingScreenTips.json)
@@ -44,7 +46,7 @@
 - [ ] Weekly coding competition
   * Same as particle of the week but with coding
 - [ ] Content update sender
-  * Automatically sends sneek peeks (like commit history or manual) of projects when theyre updated
+  * Automatically sends sneak peeks (like commit history or manual) of projects when they're updated
 - [ ] Language TLDR command
   * Shows a TLDR with pros/cons on a programming language
 - [ ] PowerPlate info viewer

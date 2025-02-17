@@ -17,6 +17,20 @@ enum HelpOptions {
 }
 
 
+fn is_bk_mod(mod_list: Value, uid: u64) -> bool {
+  let obj = mod_list.as_object().unwrap();
+  let bk1_arr = obj["bk1"]["discord"].as_array().unwrap();
+  let bk2_arr = obj["bk2"]["discord"].as_array().unwrap();
+
+  return bk1_arr.contains(&json!(uid)) || bk2_arr.contains(&json!(uid));
+}
+
+
+async fn not_bk_mod_msg(ctx: Context<'_>) {
+  send_msg(ctx, "Permission denied: You are not a moderator of r/boykisser or r/boykisser2".to_string(), true, true).await;
+}
+
+
 #[poise::command(
   slash_command,
   prefix_command
@@ -48,11 +62,11 @@ pub async fn bk_week_help(
 
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
+#[poise::command(slash_command, prefix_command)]
 /// Retrieves the data of a single post just for you. The data has to be within the database to work.
 pub async fn bk_week_get(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: String
+  #[description = "The post URL."] url: String
 ) -> Result<(), Error>
 {
   data::update_re_data(ctx.data()).await;
@@ -68,10 +82,10 @@ pub async fn bk_week_get(
 
 async fn get_reddit_data(ctx: Context<'_>) -> Result<Value, Error> {
   let data_lock = ctx.data().reddit_data.lock().await;
-  match data_lock.as_ref() {
+  return match data_lock.as_ref() {
     Some(data) => Ok(data.clone()),
     None => Err("Reddit data is corrupted".into()),
-  }
+  };
 }
 
 
@@ -146,14 +160,19 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
+#[poise::command(slash_command, prefix_command)]
 /// Fetches a post from Reddit and adds it to the database.
 pub async fn bk_week_add(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: String,
+  #[description = "The post URL."] url: String,
   #[description = "Wether to approve it after adding it"] approve: Option<bool>
 ) -> Result<(), Error>
 {
+  if !is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get()) {
+    not_bk_mod_msg(ctx).await;
+    return Ok(());
+  }
+
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_reddit_data(ctx).await.unwrap();
 
@@ -206,15 +225,21 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
+#[poise::command(slash_command, prefix_command)]
 /// Removes a post from the database. It will show who last removed it.
 pub async fn bk_week_remove(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: String
+  #[description = "The post URL."] url: String,
+  #[description = "The reason of the removal."] reason: Option<String>
 ) -> Result<(), Error>
 {
+  if !is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get()) {
+    not_bk_mod_msg(ctx).await;
+    return Ok(());
+  }
+
   let auth = &ctx.author().name;
-  let r = send_cmd_json("remove_post_url", json!([&url, &auth])).await.unwrap();
+  let r = send_cmd_json("remove_post_url", json!([&url, &auth, &reason])).await.unwrap();
 
   if r["value"].as_bool().unwrap() {
     send_msg(
@@ -234,17 +259,23 @@ pub async fn bk_week_remove(
 
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
+#[poise::command(slash_command, prefix_command)]
 /// Approves a post in the database. Approving posts tells the bot that it's original.
 pub async fn bk_week_approve(
   ctx: Context<'_>,
-  #[description = "The post URL"] url: String
+  #[description = "The post URL."] url: String,
+  #[description = "Wether to approve or disapprove the post"] disapprove: Option<bool>
 ) -> Result<(), Error>
 {
+  if !is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get()) {
+    not_bk_mod_msg(ctx).await;
+    return Ok(());
+  }
+
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_reddit_data(ctx).await.unwrap();
 
-  approve_cmd(ctx, &url, &reddit_data, true).await;
+  approve_cmd(ctx, &url, &reddit_data, !disapprove.unwrap_or_else(|| false)).await;
   
   return Ok(());
 }
@@ -277,27 +308,9 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
 
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
-/// Opposite effects of `/bk_week_approve`.
-pub async fn bk_week_disapprove(
-  ctx: Context<'_>,
-  #[description = "The post URL"] url: String
-) -> Result<(), Error>
-{
-  data::update_re_data(ctx.data()).await;
-  let reddit_data = get_reddit_data(ctx).await.unwrap();
-
-  approve_cmd(ctx, &url, &reddit_data, false).await;
-
-  return Ok(());
-}
-
-
-
-
 #[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
 /// Sets the channel where the bot will dump all log info. It's recommended to only run this once.
-pub async fn bk_week_bind(
+pub async fn bk_admin_bind(
   ctx: Context<'_>
 ) -> Result<(), Error>
 {
@@ -333,23 +346,23 @@ pub async fn bk_week_update(
   let progress = send_msg(ctx, p_text.clone(), true, true).await;
 
   send_cmd_json("add_new_posts", json!([])).await;
+  data::update_re_data(ctx.data()).await;
   let r_data = get_reddit_data(ctx).await.unwrap();
 
   let c_id = get_c_id(ctx).await.unwrap_or_else(|| 0);
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
   
   if c_id == 0 {
-    send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run `/bk_week_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
+    send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run (or tell an admin to run) `/bk_admin_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
     return Ok(());
   }
 
+  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
   let msgs = read_msgs(ctx, c_id).await;
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
   let msgs_json = msgs_to_json(msgs, &r_data).await;
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
-
   let weekly_art = r_data["bk_weekly_art_posts"].as_object().unwrap();
   
   for url in weekly_art.keys() {
@@ -399,6 +412,7 @@ pub async fn bk_week_update(
   }
 
   update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
+
   return Ok(());
 }
 
@@ -458,6 +472,8 @@ async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
 }
 
 
+// TODO: all posts get updated for some reason (i think, debug print pls)
+// TODO: also doesn't edit messages if they got removed
 async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
   let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}});
 
@@ -506,9 +522,10 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
       }
     }
 
-    if u_json["added"]     != re_url["added"]
-    || u_json["approved"]  != re_url["approved"]
+    if u_json["added"]                != re_url["added"]
+    || u_json["approved"]             != re_url["approved"]
     || u_json["post_data"]["upvotes"] != re_url["post_data"]["upvotes"]
+    || u_json["votes"]                != re_url["votes"]
     {
       u_json.as_object_mut().unwrap().insert("msg_id".to_string(), Value::String(msg.id.clone().to_string()));
 
@@ -525,4 +542,60 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
   }
 
   return msgs_json;
+}
+
+
+
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn bk_week_vote(
+  ctx: Context<'_>,
+  #[description = "The post URL."] url: String,
+  #[description = "Wether to undo your vote or not"] un_vote: Option<bool>
+) -> Result<(), Error>
+{
+  data::update_re_data(ctx.data()).await;
+  let uid = ctx.author().id.get();
+  let re_data = get_reddit_data(ctx).await.unwrap();
+  let post_data = re_data["bk_weekly_art_posts"].clone();
+  let unw_vote = un_vote.unwrap_or_else(|| false);
+  
+  if post_data.get(&url).is_none() {
+    send_post_not_found_message(ctx, &url).await;
+    return Ok(());
+  }
+
+  let url_data = &post_data[&url];
+  
+  let is_mod = is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get());
+  let voters_dc = url_data["votes"]["voters_dc"].as_array().unwrap();
+  let mod_voters = url_data["votes"]["mod_voters"].as_array().unwrap();
+  let voters = if is_mod { mod_voters } else { voters_dc };
+
+  if voters.contains(&json!(uid)) && !unw_vote {
+    send_msg(ctx, "Couldn't cast a vote: You have already voted on this post!".to_string(), true, true).await;
+    return Ok(());
+  }
+  else if !voters.contains(&json!(uid)) && unw_vote {
+    send_msg(ctx, "Couldn't remove your vote: You haven't voted on this post yet!".to_string(), true, true).await;
+    return Ok(());
+  }
+
+  let r = send_cmd_json("set_vote_post", json!([url, uid, is_mod, true, unw_vote])).await.unwrap();
+  let unw_r = r["value"].as_bool().unwrap();
+
+  if unw_r && !unw_vote && is_mod {
+    send_msg(ctx, "Successfully voted (as moderator vote)!".to_string(), true, true).await;
+  }
+  else if unw_r && !unw_vote && !is_mod {
+    send_msg(ctx, "Successfully voted!".to_string(), true, true).await;
+  }
+  else if unw_r && unw_vote {
+    send_msg(ctx, "Successfully removed vote!".to_string(), true, true).await;
+  }
+  else {
+    send_msg(ctx, "Failed to vote/un-vote: Unknown internal error".to_string(), true, true).await;
+  }
+
+  return Ok(());
 }
