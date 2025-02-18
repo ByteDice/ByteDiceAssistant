@@ -472,8 +472,6 @@ async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
 }
 
 
-// TODO: all posts get updated for some reason (i think, debug print pls)
-// TODO: also doesn't edit messages if they got removed
 async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
   let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}});
 
@@ -488,8 +486,9 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
       .any(|key| msgs_json[key].as_object().unwrap().contains_key(&url))
     {
       let dupes_mut = msgs_json["duplicates"].as_object_mut().unwrap();
-      if !dupes_mut.contains_key(&url) { dupes_mut.insert(url.clone(), json!([])); }
-      dupes_mut[&url].as_array_mut().unwrap().push(json!(msg.id.get()));
+      if !dupes_mut.contains_key(&url) { 
+        dupes_mut.insert(url.clone(), json!(msg.id.get()));
+      }
       continue;
     }
 
@@ -508,10 +507,9 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
     let re_url = &reddit_data["bk_weekly_art_posts"][&url];
 
     if re_url.get("removed").is_some() {
-      if msgs_json.get("removed").is_some() {
+      if u_json.get("removed").is_some() {
         if let Some(obj) = msgs_json["no_change"].as_object_mut() {
           obj.insert(url.clone(), json!(msg.id.get()));
-          obj.insert(url.clone(), u_json.clone());
           continue;
         }
       }
@@ -525,7 +523,7 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
     if u_json["added"]                != re_url["added"]
     || u_json["approved"]             != re_url["approved"]
     || u_json["post_data"]["upvotes"] != re_url["post_data"]["upvotes"]
-    || u_json["votes"]                != re_url["votes"]
+    || u_json["votes"]["mod_voters"]  != re_url["votes"]["mod_voters"]
     {
       u_json.as_object_mut().unwrap().insert("msg_id".to_string(), Value::String(msg.id.clone().to_string()));
 
@@ -537,7 +535,6 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
 
     if let Some(obj) = msgs_json["no_change"].as_object_mut() {
       obj.insert(url.clone(), json!(msg.id.get()));
-      obj.insert(url, u_json);
     }
   }
 
@@ -562,6 +559,10 @@ pub async fn bk_week_vote(
   
   if post_data.get(&url).is_none() {
     send_post_not_found_message(ctx, &url).await;
+    return Ok(());
+  }
+  if post_data[&url].get("removed").is_some() {
+    send_post_removed_message(ctx, &url, post_data[&url]["removed_by"].as_str().unwrap()).await;
     return Ok(());
   }
 

@@ -159,8 +159,6 @@ pub async fn send_dm(msg: String, args: Args) {
 
 pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
   let media_type = &post_data["post_data"]["media_type"];
-  let re_votes = &post_data["votes"]["voters_re"].as_array().unwrap().len();
-  let dc_votes = &post_data["votes"]["voters_dc"].as_array().unwrap().len();
 
   let desc_str = format!(
     r#"Sorted by what I think will be most important
@@ -168,28 +166,16 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     ## Post Data:
     **Media type:** `{}`
     **Post upvotes:** ||`{:>6}`||
-    **URL:** ||<{}>||
-    **Media URLS:**
-    {}
-
-    ## Voting data:
     **Moderator votes:** ||`{:>6}`||
-    **Community votes:** ||`{:>6}`||
-    * ||**From Reddit:** `{:>6}`||
-    * ||**From Discord:** `{:>6}`||
+    **URL:** ||<{}>||
 
     ## Listing Data:
     **Added by:** `{{ human: {}, bot: {} }}`
     **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
     if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
-    url,
-    post_data["post_data"]["media_urls"].as_array().unwrap().iter().map(|s| format!("* ||<{}>||", s.as_str().unwrap())).collect::<Vec<_>>().join("\n"),
-
     post_data["votes"]["mod_voters"].as_array().unwrap().len(),
-    re_votes + dc_votes,
-    re_votes,
-    dc_votes,
+    url,
 
     if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
     if post_data["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
@@ -202,7 +188,12 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     .collect::<Vec<_>>()
     .join("\n");
 
-  let json_min = json!({"post_data": json!({ "upvotes": post_data["post_data"]["upvotes"] }), "added": post_data["added"], "approved": post_data["approved"]});
+  let json_min = json!(
+    {"post_data": json!({ "upvotes": post_data["post_data"]["upvotes"] }),
+    "added": post_data["added"],
+    "approved": post_data["approved"],
+    "votes": json!({"mod_voters": post_data["votes"]["mod_voters"]})}
+  );
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
 
   return EmbedOptions { 
@@ -224,9 +215,11 @@ pub fn embed_post_removed(post_data: &Value, url: &str, empheral: bool) -> Embed
   return EmbedOptions { 
     title: Some("REMOVED!".to_string()),
     desc: format!(
-      "## Removed by `{}`\n**Reason:** {}\n\nJSON: ||`{}`||",
+      "## Removed by `{}`\n**Reason:** {}\nURL: ||<{}>||\n\nJSON: ||`{}`||",
       post_data["removed_by"].as_str().unwrap(),
-      post_data["remove_reason"].as_str().unwrap(),
+      if !post_data["remove_reason"].is_null() { post_data["remove_reason"].as_str().unwrap() }
+        else { "None" },
+      url,
       serde_json::to_string(&post_data).unwrap()
     ),
     col: Some(REMOVED_DC_COL),

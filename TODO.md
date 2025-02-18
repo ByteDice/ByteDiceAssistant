@@ -7,6 +7,7 @@
   <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->¨
   <!-- - [x] Security that only allows bk mods to run these commands. -->
   <!-- - [x] Some kind of voting system. -->
+  - [ ] `/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] 30-minute schedule when bot adds posts
     - [ ] Manually add posts 
