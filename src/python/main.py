@@ -1,13 +1,11 @@
 import sys
 import asyncio
-import threading
 import time
 
 from macros import *
 import bot as botPy
 import data
 import py_websocket
-import posts
 
 
 async def main():

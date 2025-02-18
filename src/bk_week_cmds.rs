@@ -77,7 +77,7 @@ pub async fn bk_week_get(
     send_embed_for_post(ctx, post, &url).await?;
   }
 
-  Ok(())
+  return Ok(());
 }
 
 async fn get_reddit_data(ctx: Context<'_>) -> Result<Value, Error> {
@@ -178,7 +178,7 @@ pub async fn bk_week_add(
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     let a = approve.unwrap_or_else(|| false);
-    let r = websocket::send_cmd_json("add_post_url", json!([&url, a, true])).await.unwrap();
+    let r = websocket::send_cmd_json("add_post_url", Some(json!([&url, a, true]))).await.unwrap();
 
     if !r["value"].as_bool().unwrap() {
       send_msg(
@@ -239,7 +239,7 @@ pub async fn bk_week_remove(
   }
 
   let auth = &ctx.author().name;
-  let r = send_cmd_json("remove_post_url", json!([&url, &auth, &reason])).await.unwrap();
+  let r = send_cmd_json("remove_post_url", Some(json!([&url, &auth, &reason]))).await.unwrap();
 
   if r["value"].as_bool().unwrap() {
     send_msg(
@@ -287,7 +287,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
       send_post_removed_message(ctx, &url, post.get("removed_by").unwrap().as_str().unwrap()).await;
     }
 
-    let r = websocket::send_cmd_json("set_approve_post", json!([approve, &url])).await.unwrap();
+    let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, &url]))).await.unwrap();
     if r.get("value").is_some() {
       if approve {
         send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
@@ -345,7 +345,7 @@ pub async fn bk_week_update(
   let mut p_text = "Fetching new posts & updating data file...".to_string();
   let progress = send_msg(ctx, p_text.clone(), true, true).await;
 
-  send_cmd_json("add_new_posts", json!([])).await;
+  send_cmd_json("add_new_posts", None).await;
   data::update_re_data(ctx.data()).await;
   let r_data = get_reddit_data(ctx).await.unwrap();
 
@@ -363,7 +363,7 @@ pub async fn bk_week_update(
   let msgs_json = msgs_to_json(msgs, &r_data).await;
 
   p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
-  let weekly_art = r_data["bk_weekly_art_posts"].as_object().unwrap();
+  let weekly_art = r_data[BK_WEEK].as_object().unwrap();
   
   for url in weekly_art.keys() {
     if ["no_change", "updated", "removed"]
@@ -504,7 +504,7 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
     if msg_json.is_err() { continue; }
 
     let mut u_json: Value = msg_json.unwrap();
-    let re_url = &reddit_data["bk_weekly_art_posts"][&url];
+    let re_url = &reddit_data[BK_WEEK][&url];
 
     if re_url.get("removed").is_some() {
       if u_json.get("removed").is_some() {
@@ -545,6 +545,7 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
 
 
 #[poise::command(slash_command, prefix_command)]
+/// Adds/removes a vote from a post. These votes are not tied to Reddit upvotes.
 pub async fn bk_week_vote(
   ctx: Context<'_>,
   #[description = "The post URL."] url: String,
@@ -554,7 +555,7 @@ pub async fn bk_week_vote(
   data::update_re_data(ctx.data()).await;
   let uid = ctx.author().id.get();
   let re_data = get_reddit_data(ctx).await.unwrap();
-  let post_data = re_data["bk_weekly_art_posts"].clone();
+  let post_data = re_data[BK_WEEK].clone();
   let unw_vote = un_vote.unwrap_or_else(|| false);
   
   if post_data.get(&url).is_none() {
@@ -582,7 +583,7 @@ pub async fn bk_week_vote(
     return Ok(());
   }
 
-  let r = send_cmd_json("set_vote_post", json!([url, uid, is_mod, true, unw_vote])).await.unwrap();
+  let r = send_cmd_json("set_vote_post", Some(json!([url, uid, is_mod, true, unw_vote]))).await.unwrap();
   let unw_r = r["value"].as_bool().unwrap();
 
   if unw_r && !unw_vote && is_mod {

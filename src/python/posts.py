@@ -119,7 +119,7 @@ def get_post_details(post: models.Submission, added_by_h: bool = False) -> data.
   )
 
 
-async def add_post_url(bot, url: str, approve: bool, added_by_h: bool = False) -> bool:
+async def add_post_url(bot, url: str, approve: bool = False, added_by_h: bool = False) -> bool:
   result, post = await from_url(bot, url)
 
   if not result:

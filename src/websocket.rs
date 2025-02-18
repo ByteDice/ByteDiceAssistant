@@ -6,7 +6,7 @@ use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::{accept_async, tungstenite};
 use futures::StreamExt;
 use std::sync::Arc;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::messages::send_dm;
 use crate::rs_println;
@@ -46,15 +46,17 @@ pub async fn send_msg(msg: &str) {
 
 
 #[allow(static_mut_refs)]
-pub async fn send_cmd_json(func_name: &str, func_args: Value) -> Option<Value> {
+pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<Value> {
   unsafe {
     let Some(sender) = &GLOBAL_SENDER else { return None };
     let mut sender = sender.lock().await;
     let Some(s) = sender.as_mut() else { return None };
 
+    let unw_args = if func_args.is_some() { func_args.unwrap() } else { json!([]) };
+
     let json_str = format!(
       "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
-      func_name, func_args
+      func_name, unw_args
     );
 
     if s.send(tungstenite::Message::Text(json_str.into())).await.is_err() {

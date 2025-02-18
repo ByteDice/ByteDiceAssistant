@@ -8,7 +8,6 @@ use crate::messages::{edit_msg, send_embed, send_msg, Author, EmbedOptions};
 use poise::serenity_prelude::{OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
-use serde_json::json;
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -40,7 +39,7 @@ pub async fn stop(
     let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
     data::write_dc_data(ctx.data()).await;
     data::write_re_data().await;
-    send_cmd_json("stop_praw", json!([])).await;
+    send_cmd_json("stop_praw", None).await;
 
     edit_msg(ctx, msg, "Saving data... Done!\nShutting down...".to_string()).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
@@ -153,18 +152,29 @@ pub async fn re_shorturl(
   #[description = "A Reddit post URL"] url: String
 ) -> Result<(), Error>
 {
-  let re = Regex::new(r"comments/([a-zA-Z0-9]+)").unwrap();
-    
-  if let Some(caps) = re.captures(&url) {
-    let post_id = &caps[1];
-    let short_url = format!("https://redd.it/{}", post_id);
-    send_msg(ctx, format!("ShortURL: <{}>", short_url), true, true).await;
+  let shorturl = to_shorturl(&url);
+
+  if shorturl.is_ok() {
+    send_msg(ctx, format!("ShortURL: <{}>", shorturl.unwrap()), true, true).await;
   }
   else {
     send_msg(ctx, "Couldn't convert to shortURL: Invalid URL".to_string(), true, true).await;
   }
 
   return Ok(());
+}
+
+
+fn to_shorturl(url: &str) -> Result<String, &str> {
+  let re = Regex::new(r"comments/([a-zA-Z0-9]+)").unwrap();
+    
+  if let Some(caps) = re.captures(url) {
+    let post_id = &caps[1];
+    let short_url = format!("https://redd.it/{}", post_id);
+    return Ok(short_url);
+  }
+
+  return Err("Invalid URL");
 }
 
 

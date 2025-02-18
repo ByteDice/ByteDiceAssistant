@@ -6,6 +6,7 @@ from macros import *
 import bot as botPy
 import data
 import posts
+import cmds
 
 ws_global = None
 is_connected = False
@@ -66,26 +67,25 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
     return
 
   value_supported = True
-  result = {"type": "result", "value": False}
+  r = False
 
   match v["value"]:
-    case "update_data_file": result = result_json(data.write_data(bot))
-    case "add_new_posts": result = result_json(await posts.add_new_posts(bot))
-    case "add_post_url": result = result_json(await posts.add_post_url(bot, *v["args"]))
-    case "remove_post_url": result = result_json(data.remove_post(bot, *v["args"]))
-    case "set_approve_post": result = result_json(data.set_approve_post(bot, *v["args"]))
-    case "set_vote_post": result = result_json(data.set_vote_post(bot, *v["args"]))
-    case "stop_praw": result = result_json(await bot.stop())
+    case "update_data_file": r =       data .write_data        (bot)
+    case "add_new_posts":    r = await posts.add_new_posts     (bot)
+    case "add_post_url":     r = await posts.add_post_url      (bot, *v["args"])
+    case "remove_post_url":  r =       data .remove_post       (bot, *v["args"])
+    case "set_approve_post": r =       data .set_approve_post  (bot, *v["args"])
+    case "set_vote_post":    r =       data .set_vote_post     (bot, *v["args"])
+    case "respond_mentions": r = await cmds .respond_to_mention(bot)
+    case "stop_praw":        r = await bot  .stop()
     case _: value_supported = False
 
-  if not isinstance(result.get("value"), bool):
-    py_print("Result JSON is invalid:", str(result))
-
-  if bot.args["dev"] and not value_supported:
+  if not value_supported:
     val = v["value"]
     py_print(f"Value \"{val}\" is not supported")
+    return {"type": "result", "value": False}
 
-  return result
+  return result_json(r)
 
 
 def result_json(bool: bool) -> dict:

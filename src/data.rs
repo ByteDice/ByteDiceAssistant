@@ -96,13 +96,13 @@ fn generate_re_data() {
 
 
 pub async fn update_re_data(data: &Data) {
-  send_cmd_json("update_data_file", json!([])).await;
+  send_cmd_json("update_data_file", None).await;
   read_re_data(data, false).await;
 }
 
 
 pub async fn write_re_data() {
-  send_cmd_json("update_data_file", json!([])).await;
+  send_cmd_json("update_data_file", None).await;
 }
 
 
