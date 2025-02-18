@@ -16,6 +16,12 @@ async def send_message(message: str):
     await ws_global.send(message)
 
 
+async def send_internal_error(e: Exception):
+  global ws_global
+  if ws_global:
+    await ws_global.send(f"json:{{\"error\":\"Internal Python error: {e}\"}}")
+
+
 async def websocket_client(bot: botPy.Bot):
   global ws_global, is_connected
   port = bot.args["port"]

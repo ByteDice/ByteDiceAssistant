@@ -6,7 +6,7 @@ Adds the post to the list of posts.
 - **Only moderators of a subreddit or the OP (Original Poster) can use this command.**
 ## `bk_week_vote`
 Adds a vote to the post. (see `/bk_week_vote` in the Discord help).
-- **Anyone can use this command.**
+- **Anyone can use this command. If a moderator uses it the vote will be flagged as a moderator vote.**
 ### **Examples**
 ```
 "u/ByteDiceAssistant bk_week_add"

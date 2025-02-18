@@ -8,6 +8,7 @@ use futures::StreamExt;
 use std::sync::Arc;
 use serde_json::Value;
 
+use crate::messages::send_dm;
 use crate::rs_println;
 use crate::Args;
 
@@ -124,6 +125,13 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
   match msg {
     tungstenite::Message::Text(text) => {
       rs_println!("Received from Python: {}", text);
+
+      if text.starts_with("json:") {
+        let t_json: Value = serde_json::from_str(&text[5..]).unwrap();
+        if t_json.get("error").is_some() {
+          send_dm("Internal Python error!".to_string(), args).await;
+        }
+      }
 
       unsafe {
         if !REPLY_HELLO {

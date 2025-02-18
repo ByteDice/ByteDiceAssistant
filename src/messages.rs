@@ -1,8 +1,10 @@
-use crate::Context;
+use std::env;
+
+use crate::{Args, Context};
 
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
-use poise::serenity_prelude::{Color, CreateEmbed, CreateEmbedAuthor, Timestamp};
+use poise::serenity_prelude::{Color, CreateEmbed, CreateEmbedAuthor, Http, Timestamp, UserId};
 use serde_json::json;
 
 
@@ -132,6 +134,26 @@ pub async fn edit_msg(
   };
 
   let _ = msg.edit(ctx, r).await;
+}
+
+
+pub async fn send_dm(msg: String, args: Args) {
+  let uid = env::var("ASSISTANT_DM_USER").expect("Missing ASSISTANT_DM_USER env var!").parse::<u64>().unwrap();
+  let user = UserId::new(uid);
+
+  let token: String;
+  if !args.test {
+    token = std::env::var("ASSISTANT_TOKEN").expect("Missing ASSISTANT_TOKEN env var!");
+  }
+  else {
+    token = std::env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!");
+  };
+
+  let http = Http::new(&token);
+
+  let c_msg = CreateMessage::new().content(msg);
+
+  let _ = user.dm(http, c_msg).await;
 }
 
 
