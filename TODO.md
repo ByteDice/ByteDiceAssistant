@@ -4,16 +4,16 @@
   <!-- - [x] ~~Discord bot /bk_help command~~ -->
   <!-- - [x] ~~Scrape the data~~ -->
   <!-- - [x] ~~Put it in a JSON~~ -->
-  <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->¨
+  <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->
   <!-- - [x] Security that only allows bk mods to run these commands. -->
   <!-- - [x] Some kind of voting system. -->
   - [ ] `/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)
   - [ ] Allow updating the data autonomously and via manual commands.
     - [ ] 10-minute schedule for updating Discord channel
-    - [ ] Manually add posts
-      - [ ] via `u/[bot] add`
-      - [ ] 2 minute schedule for responding to commands
+    <!-- - [x] ~~Manually add posts~~ -->
+      <!-- - [x] ~~via `u/[bot] add`~~ -->
       <!-- - [x] ~~via `/bk_week_add [url]`~~ -->
+      <!-- - [x] ~~2 minute schedule for responding to commands~~ -->
     <!-- - [x] ~~Manually remove posts via `/bk_week_remove [url]`~~ -->
     <!-- - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~ -->
     <!-- - [x] ~~Manually un-approve posts via `/bk_week_disapprove [url]`~~ -->

@@ -18,6 +18,7 @@ type Receiver = Arc<Mutex<Option<SplitStream<WebSocketStream<TcpStream>>>>>;
 static mut GLOBAL_SENDER: Option<Sender> = None;
 static mut GLOBAL_RECEIVER: Option<Receiver> = None;
 static mut REPLY_HELLO: bool = false;
+pub static mut HAS_CONNECTED: bool = false;
 
 
 async fn set_sender(sender: Sender) {
@@ -139,6 +140,7 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
         if !REPLY_HELLO {
           send_msg("[Connection test] Hello from Rust!").await;
           REPLY_HELLO = true;
+          HAS_CONNECTED = true;
         }
       }
     }

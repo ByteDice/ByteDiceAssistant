@@ -9,8 +9,11 @@ mod macros;
 mod websocket;
 mod data;
 
+use std::future::Future;
+use std::pin::Pin;
 use std::process;
 use std::thread;
+use std::time::Duration;
 
 use clap::Parser;
 use poise::serenity_prelude as serenity;
@@ -20,6 +23,9 @@ use serde_json::Value;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use serde_json;
+use tokio::task::JoinHandle;
+use tokio::time;
+use websocket::send_cmd_json;
 
 
 // TODO: bot command permissions
@@ -43,6 +49,11 @@ struct Args {
   noping: bool
 }
 
+
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
+
+
 struct Data {
   ball_prompts: [Vec<String>; 2],
   byte_dice_id: u64,
@@ -50,10 +61,7 @@ struct Data {
   discord_data: Mutex<Option<Value>>,
   bk_mods_json: Value,
   args: Args
-  // TODO: schedules
 }
-type Error = Box<dyn std::error::Error + Send + Sync>;
-type Context<'a> = poise::Context<'a, Data, Error>;
 
 
 static BK_WEEK: &str = "bk_weekly_art_posts";
@@ -99,6 +107,13 @@ async fn main() {
   let python = thread::spawn(|| {
     let _ = python::start(python_args);
   });
+
+  let schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)> = vec![
+    (Duration::from_secs(/* 2 * 60 */ 30), || Box::pin(read_reddit_inbox())),
+    (Duration::from_secs(/* 10 * 60 */ 60), || Box::pin(update_post_channels()))
+  ];
+
+  run_schedules(schedules).await;
 
   rust.join().unwrap();
   python.join().unwrap();
@@ -191,4 +206,38 @@ async fn gen_bot(data: Data, args: Args) -> Client {
     .framework(framework)
     .await
     .unwrap();
+}
+
+
+async fn run_schedule<F: Fn() -> Pin<Box<dyn Future<Output = ()> + Send>>>(d: Duration, f: F) {
+  let mut ticker = time::interval(d);
+  loop {
+    ticker.tick().await;
+    f().await;
+  }
+}
+
+
+async fn run_schedules(schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)>) {
+  let mut handles: Vec<JoinHandle<()>> = vec![];
+
+  rs_println!("Starting schedules...");
+  for (d, f) in schedules {
+    let handle = tokio::spawn(run_schedule(d, f));
+    handles.push(handle);
+  }
+
+  for handle in handles {
+    let _ = handle.await;
+  }
+}
+
+
+async fn read_reddit_inbox() {
+  unsafe { if !websocket::HAS_CONNECTED { return; } }
+  send_cmd_json("respond_mentions", None).await;
+}
+
+async fn update_post_channels() {
+  println!("simulated update post channels");
 }
