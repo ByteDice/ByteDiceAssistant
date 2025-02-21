@@ -4,7 +4,7 @@ use crate::{Args, Context};
 
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
-use poise::serenity_prelude::{Color, CreateEmbed, CreateEmbedAuthor, Http, Timestamp, UserId};
+use poise::serenity_prelude::{ChannelId, Color, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, Timestamp, UserId};
 use serde_json::json;
 
 
@@ -45,6 +45,7 @@ impl Default for EmbedOptions {
 
 static DEFAULT_DC_COL: u32 = 5793266;
 static REMOVED_DC_COL: u32 = 16716032;
+pub static MANDATORY_MSG: &str = "Mandatory response, please ignore.";
 
 
 fn none_to_empty(string: Option<String>) -> String {
@@ -76,6 +77,20 @@ pub async fn send_msg(
 }
 
 
+pub async fn http_send_msg(
+  http: &Http,
+  c_id: ChannelId,
+  t: String
+) -> Option<Message>
+{
+  let r = CreateMessage::new().content(t);
+
+  let msg = c_id.send_message(http, r).await;
+
+  return msg.ok();
+}
+
+
 pub async fn send_embed(
   ctx: Context<'_>,
   options: EmbedOptions,
@@ -103,6 +118,21 @@ pub async fn send_embed(
 }
 
 
+pub async fn http_send_embed(
+  http: &Http,
+  c_id: ChannelId,
+  options: EmbedOptions
+) -> Option<Message>
+{
+  let embed = embed_from_options(options.clone());
+
+  let r = CreateMessage::new().embeds(vec![embed]);
+
+  let msg = c_id.send_message(http, r).await;
+  return msg.ok();
+}
+
+
 pub fn embed_from_options(options: EmbedOptions) -> CreateEmbed {
   let mut author: Option<CreateEmbedAuthor> = None;
   if let Some(o_author) = options.author {
@@ -123,7 +153,7 @@ pub fn embed_from_options(options: EmbedOptions) -> CreateEmbed {
 }
 
 
-pub async fn edit_msg(
+pub async fn edit_reply(
   ctx: Context<'_>,
   msg: ReplyHandle<'_>,
   new_text: String
@@ -134,6 +164,15 @@ pub async fn edit_msg(
   };
 
   let _ = msg.edit(ctx, r).await;
+}
+
+
+pub async fn http_edit_msg(
+  http: &Http,
+  mut msg: Message,
+  new_msg: EditMessage
+) {
+  let _ = msg.edit(http, new_msg).await;
 }
 
 

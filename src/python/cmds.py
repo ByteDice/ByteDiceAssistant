@@ -7,7 +7,7 @@ import data
 import posts
 
 
-BOT_ACTION_POSTFIX = "\n\n^(I am not an AI, I am just a bot. This action was preformed automatically by the way.)"
+BOT_ACTION_POSTFIX = "\n\n^(I am not an AI, I am just a bot. This action was performed automatically by the way.)"
 
 
 async def make_cmd(cmd: str, bot: botPy.Bot) -> str:
@@ -55,14 +55,14 @@ async def bk_week_add(mention: models.Comment, bot: botPy.Bot):
 
   r = ""
   bd = bot.data[data.BK_WEEKLY]
-
+  # TODO: ask if the messages should be changed
   if short_url not in bd:
     posts.add_post_url(bot, short_url)
     r = "Successfully added this post to the data!"
 
   if short_url in bd and is_mod:
     if "removed" in bd[short_url]:
-      r = "(Mod action) Successfully un-removed this post from the data! Glad to see you back!"
+      r = "(Mod action) Successfully un-removed this post from the data!"
     else:
       r = "(Mod action) Successfully added this post to the data!"
 

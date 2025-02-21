@@ -1,13 +1,12 @@
 use crate::websocket::send_cmd_json;
-use crate::{rs_println, websocket, Context, Error, BK_WEEK};
-use crate::messages::{edit_msg, embed_from_options, embed_post, embed_post_removed, send_embed, send_msg};
+use crate::{rs_println, websocket, Context, Data, Error, BK_WEEK};
+use crate::messages::*;
 use crate::data::{self, dc_bind_bk};
 
 use std::fs;
 
-use poise::serenity_prelude::{ChannelId, EditMessage, GetMessages, Message, MessageId};
-use poise::ReplyHandle;
-use serde_json::{json, Value};
+use poise::serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId};
+use serde_json::{json, Map, Value};
 
 
 #[derive(poise::ChoiceParameter, PartialEq)]
@@ -71,7 +70,7 @@ pub async fn bk_week_get(
 {
   data::update_re_data(ctx.data()).await;
 
-  let reddit_data = get_reddit_data(ctx).await?;
+  let reddit_data = get_reddit_data(ctx.data()).await?;
 
   if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
     send_embed_for_post(ctx, post, &url).await?;
@@ -80,8 +79,8 @@ pub async fn bk_week_get(
   return Ok(());
 }
 
-async fn get_reddit_data(ctx: Context<'_>) -> Result<Value, Error> {
-  let data_lock = ctx.data().reddit_data.lock().await;
+pub async fn get_reddit_data(data: &Data) -> Result<Value, Error> {
+  let data_lock = data.reddit_data.lock().await;
   return match data_lock.as_ref() {
     Some(data) => Ok(data.clone()),
     None => Err("Reddit data is corrupted".into()),
@@ -174,7 +173,7 @@ pub async fn bk_week_add(
   }
 
   data::update_re_data(ctx.data()).await;
-  let reddit_data = get_reddit_data(ctx).await.unwrap();
+  let reddit_data = get_reddit_data(ctx.data()).await.unwrap();
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     let a = approve.unwrap_or_else(|| false);
@@ -273,7 +272,7 @@ pub async fn bk_week_approve(
   }
 
   data::update_re_data(ctx.data()).await;
-  let reddit_data = get_reddit_data(ctx).await.unwrap();
+  let reddit_data = get_reddit_data(ctx.data()).await.unwrap();
 
   approve_cmd(ctx, &url, &reddit_data, !disapprove.unwrap_or_else(|| false)).await;
   
@@ -317,7 +316,7 @@ pub async fn bk_admin_bind(
   let c_id = ctx.channel_id().into();
   let r = dc_bind_bk(ctx.data(), ctx.guild_id().unwrap().into(), c_id).await;
 
-  if r {
+  if r.is_ok() {
     send_msg(ctx, format!("Successfully bound channel ID `{}` as the bk_week channel!", c_id), true, true).await;
   }
   else {
@@ -342,89 +341,80 @@ pub async fn bk_week_update(
   #[description = "Only adds new posts, leaves everything else unchanged."] only_add: Option<bool>
 ) -> Result<(), Error>
 {
-  let mut p_text = "Fetching new posts & updating data file...".to_string();
-  let progress = send_msg(ctx, p_text.clone(), true, true).await;
+  let http = ctx.http();
+
+  let executed = format!("(Executed `/bk_week_update`, author: `{}`)", ctx.author().name);
+  let mut p_text = executed.clone();
+
+  send_msg(ctx, MANDATORY_MSG.to_string(), true, true).await;
+
+  let progress = http_send_msg(http, ctx.channel_id(), p_text.clone()).await.unwrap();
+  p_text = update_progress(ctx.http(), progress.clone(), p_text, "\nFetching new posts & updating data file...".to_string()).await;
 
   send_cmd_json("add_new_posts", None).await;
   data::update_re_data(ctx.data()).await;
-  let r_data = get_reddit_data(ctx).await.unwrap();
+  let r_data = get_reddit_data(ctx.data()).await.unwrap();
 
-  let c_id = get_c_id(ctx).await.unwrap_or_else(|| 0);
+  let c_id_u = get_c_id(ctx).await;
   
-  if c_id == 0 {
+  if c_id_u.is_none() {
     send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run (or tell an admin to run) `/bk_admin_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
     return Ok(());
   }
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
-  let msgs = read_msgs(ctx, c_id).await;
+  let c_id = c_id_u.unwrap();
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
+  // Reading messages
+  p_text = update_progress(http, progress.clone(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
+  let msgs = read_msgs(http, ctx.framework().bot_id, c_id).await;
+
+  // Parsing messages to JSON
+  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
   let msgs_json = msgs_to_json(msgs, &r_data).await;
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
+  // Adding new posts 
+  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
   let weekly_art = r_data[BK_WEEK].as_object().unwrap();
+  add_posts(http, c_id, weekly_art, &msgs_json).await;
   
-  for url in weekly_art.keys() {
-    if ["no_change", "updated", "removed"]
-      .iter()
-      .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
-      { continue; }
-    if msgs_json["duplicates"].as_object().unwrap().contains_key(url) { continue; }
-
-    if weekly_art[url].get("removed").is_some() {
-      send_embed(ctx, embed_post_removed(&weekly_art[url], url, false), false).await;
-      continue;
-    }
-
-    send_embed(ctx, embed_post(&weekly_art[url], url, false), false).await;
-  }
-
+  // Stop if only_add
   if only_add.unwrap_or_else(|| false) {
-    update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
+    send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
+    update_progress(http, progress.clone(), String::new(), executed).await;
     return Ok(());
   }
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
-  for (url, msg_id) in msgs_json["updated"].as_object().unwrap() {
-    let mut msg = ctx.http().get_message(ctx.channel_id(), MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
-    let r = EditMessage::new()
-      .embeds(vec![embed_from_options(embed_post(&weekly_art[url], url, false))]);
-  
-    let _ = msg.edit(ctx, r).await;
-  }
+  // Editing updated posts
+  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
+  edit_posts(http, c_id, weekly_art, &msgs_json).await;
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
-  for (url, msg_id) in msgs_json["removed"].as_object().unwrap() {
-    let mut msg = ctx.http().get_message(ctx.channel_id(), MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
-    let r = EditMessage::new()
-      .embeds(vec![embed_from_options(embed_post_removed(&weekly_art[url], url, false))]);
-  
-    let _ = msg.edit(ctx, r).await;
-  }
+  // Removing removed posts
+  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
+  remove_posts(http, c_id, weekly_art, &msgs_json).await;
 
-  p_text = update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
-  for (_url, msgs) in msgs_json["duplicates"].as_object().unwrap() {
-    for msg_id in msgs.as_array().unwrap() {
-      let msg = ctx.http().get_message(ctx.channel_id(), MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
-      let _ = msg.delete(ctx.http()).await;
-    }
-  }
+  // Removing duplicate posts
+  update_progress(http, progress.clone(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
+  remove_dupes(http, c_id, &msgs_json).await;
 
-  update_progress(ctx, progress.clone().unwrap(), p_text.clone(), "✅\n## Done!".to_string()).await;
+  // Done
+  send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
+  update_progress(http, progress.clone(), String::new(), executed).await;
 
   return Ok(());
 }
 
 
-async fn update_progress(ctx: Context<'_>, p: ReplyHandle<'_>, t: String, a_t: String) -> String {
-  let p_text = format!("{} {}", t, a_t);
-  edit_msg(ctx, p, p_text.clone()).await;
+async fn update_progress(http: &Http, p: Message, t: String, added_t: String) -> String {
+  let p_text = format!("{} {}", t, added_t);
+
+  let new_msg = EditMessage::new().content(&p_text);
+
+  http_edit_msg(http, p, new_msg).await;
   return p_text;
 }
 
 
-async fn get_c_id(ctx: Context<'_>) -> Option<u64> {
+async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
   if !data::dc_contains_server(ctx.data(), ctx.guild_id().unwrap().into()).await {
     send_server_not_in_data_msg(ctx).await;
     return None;
@@ -432,27 +422,27 @@ async fn get_c_id(ctx: Context<'_>) -> Option<u64> {
 
   let d_lock = ctx.data().discord_data.lock().await;
   let d = d_lock.as_ref().unwrap();
-  let c_id =
+  let c_id_u =
     d["servers"]
      [ctx.guild_id().unwrap().to_string()]
      ["bk_week_channel"].as_u64().unwrap();
+
+  let c_id = ChannelId::new(c_id_u);
 
   return Some(c_id);
 }
 
 
-async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
-  let c = ChannelId::new(c_id);
-
+pub async fn read_msgs(http: &Http, bot_id: UserId, c_id: ChannelId) -> Vec<Message> {
   let b = GetMessages::new().limit(100);
-  let mut msgs = c.messages(ctx.http(), b).await.unwrap();
-  msgs = msgs.into_iter().filter(|item| item.author.id == ctx.framework().bot_id).collect();
+  let mut msgs = c_id.messages(http, b).await.unwrap();
+  msgs = msgs.into_iter().filter(|item| item.author.id == bot_id).collect();
 
   let mut last_msg: Option<Message> = msgs.last().cloned();
 
   while last_msg.is_some() {
     let new_b = GetMessages::new().limit(100).before(last_msg.clone().unwrap());
-    let new_msgs = c.messages(ctx.http(), new_b).await.unwrap();
+    let new_msgs = c_id.messages(http, new_b).await.unwrap();
 
     last_msg = new_msgs.last().cloned();
 
@@ -462,7 +452,7 @@ async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
 
     let filtered_msgs: Vec<Message> = new_msgs
       .into_iter()
-      .filter(|item| item.author.id == ctx.framework().bot_id)
+      .filter(|item| item.author.id == bot_id)
       .collect();
 
     msgs.extend(filtered_msgs);
@@ -472,7 +462,7 @@ async fn read_msgs(ctx: Context<'_>, c_id: u64) -> Vec<Message> {
 }
 
 
-async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
+pub async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
   let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}});
 
   for msg in msgs {
@@ -542,6 +532,54 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
 }
 
 
+pub async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+  for url in r_data.keys() {
+    if ["no_change", "updated", "removed"]
+      .iter()
+      .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
+      { continue; }
+    if msgs_json["duplicates"].as_object().unwrap().contains_key(url) { continue; }
+
+    if r_data[url].get("removed").is_some() {
+      http_send_embed(http, c_id, embed_post_removed(&r_data[url], url, false)).await;
+      continue;
+    }
+
+    http_send_embed(http, c_id, embed_post(&r_data[url], url, false)).await;
+  }
+}
+
+
+pub async fn edit_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+  for (url, msg_id) in msgs_json["updated"].as_object().unwrap() {
+    let mut msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+    let r = EditMessage::new()
+      .embeds(vec![embed_from_options(embed_post(&r_data[url], url, false))]);
+  
+    let _ = msg.edit(http, r).await;
+  }
+}
+
+
+pub async fn remove_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+  for (url, msg_id) in msgs_json["removed"].as_object().unwrap() {
+    let mut msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+    let r = EditMessage::new()
+      .embeds(vec![embed_from_options(embed_post_removed(&r_data[url], url, false))]);
+  
+    let _ = msg.edit(http, r).await;
+  }
+}
+
+
+pub async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
+  for (_url, msgs) in msgs_json["duplicates"].as_object().unwrap() {
+    for msg_id in msgs.as_array().unwrap() {
+      let msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+      let _ = msg.delete(http).await;
+    }
+  }
+}
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -554,7 +592,7 @@ pub async fn bk_week_vote(
 {
   data::update_re_data(ctx.data()).await;
   let uid = ctx.author().id.get();
-  let re_data = get_reddit_data(ctx).await.unwrap();
+  let re_data = get_reddit_data(ctx.data()).await.unwrap();
   let post_data = re_data[BK_WEEK].clone();
   let unw_vote = un_vote.unwrap_or_else(|| false);
   

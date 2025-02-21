@@ -11,6 +11,7 @@ An automation tool for Byte Dice. It's both a Discord and Reddit bot in one prog
 
 ## How to run
 **Dependecies:** This program uses Rust (v1.82.0) and Python (v3.11.4), you can likely use other versions if they are compatible. This program also uses these Python modules:
+<!-- TODO: update with all python modules (not just external) -->
 * sys
 * io
 * asyncpraw

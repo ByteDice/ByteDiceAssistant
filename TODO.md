@@ -9,7 +9,7 @@
   <!-- - [x] Some kind of voting system. -->
   - [ ] `/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)
   - [ ] Allow updating the data autonomously and via manual commands.
-    - [ ] 10-minute schedule for updating Discord channel
+    <!-- - [ ] 10-minute schedule for updating Discord channel (IMPOSSIBLE / REALLY FUCKING HARD) -->
     <!-- - [x] ~~Manually add posts~~ -->
       <!-- - [x] ~~via `u/[bot] add`~~ -->
       <!-- - [x] ~~via `/bk_week_add [url]`~~ -->

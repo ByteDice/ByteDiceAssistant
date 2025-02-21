@@ -3,7 +3,7 @@ use std::process;
 use crate::data::dc_add_server;
 use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
-use crate::messages::{edit_msg, send_embed, send_msg, Author, EmbedOptions};
+use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
 
 use poise::serenity_prelude::{OnlineStatus, Timestamp, UserId};
 use rand::{seq::IteratorRandom, Rng};
@@ -41,7 +41,7 @@ pub async fn stop(
     data::write_re_data().await;
     send_cmd_json("stop_praw", None).await;
 
-    edit_msg(ctx, msg, "Saving data... Done!\nShutting down...".to_string()).await;
+    edit_reply(ctx, msg, "Saving data... Done!\nShutting down...".to_string()).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
     ctx.framework().shard_manager.shutdown_all().await;
 
@@ -97,7 +97,7 @@ pub async fn embed(
   ).await;
 
   if !reply_unwrap {
-    send_msg(ctx, "Mandatory success response, please ignore.".to_string(), true, true).await;
+    send_msg(ctx, MANDATORY_MSG.to_string(), true, true).await;
   }
 
   return Ok(());
@@ -117,7 +117,7 @@ pub async fn send(
 ) -> Result<(), Error>
 {
   send_msg(ctx, msg.replace("\\n", "\n"), false, false).await;
-  send_msg(ctx, "Mandatory success response, please ignore.".to_string(), true, true).await;
+  send_msg(ctx, MANDATORY_MSG.to_string(), true, true).await;
   return Ok(());
 }
 
@@ -186,7 +186,7 @@ pub async fn add_server(
 {
   let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into()).await;
 
-  if r {
+  if r.is_ok() {
     send_msg(ctx, "Added your server to my data! Thanks for letting me steal it! (/s)".to_string(), true, true).await;
   }
   else {

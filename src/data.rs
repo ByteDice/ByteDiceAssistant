@@ -55,10 +55,11 @@ pub async fn write_dc_data(data: &Data) {
     .open(DATA_PATH_DC)
     .unwrap();
 
+
   let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
   let json_str = serde_json::to_string_pretty(dc_data).unwrap();
-
+  
   file.write_all(json_str.as_bytes()).unwrap();
 }
 
@@ -106,39 +107,43 @@ pub async fn write_re_data() {
 }
 
 
-pub async fn dc_add_server(data: &Data, server_id: u64) -> bool {
+pub async fn dc_add_server(data: &Data, server_id: u64) -> Result<(), ()> {
   let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
 
-  if dc_data.get("servers").is_none() { return false; }
+  if dc_data.get("servers").is_none() { return Err(()); }
 
   let servers = dc_data["servers"].as_object_mut().unwrap();
 
   if !servers.contains_key(&server_id.to_string()) {
     servers.insert(server_id.to_string(), json!({ "bk_week_channel": 0, "bk_mod_role": "bk mod", "bk_mods": [] }));
   }
+  println!("moo");
+  write_dc_data(data).await;
+  println!("muu");
 
-  return true;
+  return Ok(());
 }
 
 
-pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> bool {
+pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<(), ()> {
   let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
 
-  if dc_data.get("servers").is_none() { return false; }
+  if dc_data.get("servers").is_none() { return Err(()); }
 
   let servers = dc_data["servers"].as_object_mut().unwrap();
 
   if !servers.contains_key(&server_id.to_string()) {
-    return false;
+    return Err(());
   }
 
   let server = servers[&server_id.to_string()].as_object_mut().unwrap();
 
   server.insert("bk_week_channel".to_string(), channel_id.into());
+  write_dc_data(data).await;
 
-  return true;
+  return Ok(());
 }
 
 

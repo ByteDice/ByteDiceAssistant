@@ -6,6 +6,7 @@ mod events;
 mod messages;
 mod python;
 mod macros;
+#[allow(unknown_lints)]
 mod websocket;
 mod data;
 
@@ -14,6 +15,7 @@ use std::pin::Pin;
 use std::process;
 use std::thread;
 use std::time::Duration;
+use std::vec;
 
 use clap::Parser;
 use poise::serenity_prelude as serenity;
@@ -46,7 +48,9 @@ struct Args {
   #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
   test: bool,
   #[arg(long, help = "Removes the annoying ping prints.")]
-  noping: bool
+  noping: bool,
+  #[arg(long, help = "Makes the program not use the schedules.")]
+  nosched: bool
 }
 
 
@@ -75,6 +79,7 @@ async fn main() {
   if args.test { println!("----- USING TEST BOT -----"); }
   if args.dev { println!("----- DEV MODE ENABLED -----"); }
   if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
+  if args.nosched { println!("----- NO SCHEDULES -----") }
 
   if args.py && !args.rs {
     println!("----- PYTHON ONLY MODE -----");
@@ -96,11 +101,12 @@ async fn main() {
 
   let rt = Runtime::new().unwrap();
   let python_args = args_str;
+  let rust_args = args.clone();
 
   let rust = thread::spawn(move || {
     rt.block_on(async {
-      websocket::start(args.clone()).await;
-      start(args).await;
+      websocket::start(rust_args.clone()).await;
+      start(rust_args).await;
     });
   });
 
@@ -108,12 +114,13 @@ async fn main() {
     let _ = python::start(python_args);
   });
 
-  let schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)> = vec![
-    (Duration::from_secs(/* 2 * 60 */ 30), || Box::pin(read_reddit_inbox())),
-    (Duration::from_secs(/* 10 * 60 */ 60), || Box::pin(update_post_channels()))
-  ];
+  if !args.nosched {
+    let schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)> = vec![
+      (Duration::from_secs(/* 2 * 60 */ 30), || Box::pin(read_reddit_inbox()))
+    ];
 
-  run_schedules(schedules).await;
+    run_schedules(schedules).await;
+  }
 
   rust.join().unwrap();
   python.join().unwrap();
@@ -236,8 +243,4 @@ async fn run_schedules(schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Outp
 async fn read_reddit_inbox() {
   unsafe { if !websocket::HAS_CONNECTED { return; } }
   send_cmd_json("respond_mentions", None).await;
-}
-
-async fn update_post_channels() {
-  println!("simulated update post channels");
 }
