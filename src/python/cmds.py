@@ -1,4 +1,3 @@
-import asyncpraw as praw
 import asyncpraw.models as models
 
 from macros import *
@@ -40,6 +39,10 @@ async def respond_to_mention(bot: botPy.Bot) -> bool:
 
 
 async def bk_week_add(mention: models.Comment, bot: botPy.Bot):
+  if not mention.subreddit.display_name not in bot.sr:
+    await mention.mark_read()
+    return
+
   await mention.submission.load()
 
   author = mention.author

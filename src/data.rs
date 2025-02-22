@@ -118,9 +118,6 @@ pub async fn dc_add_server(data: &Data, server_id: u64) -> Result<(), ()> {
   if !servers.contains_key(&server_id.to_string()) {
     servers.insert(server_id.to_string(), json!({ "bk_week_channel": 0, "bk_mod_role": "bk mod", "bk_mods": [] }));
   }
-  println!("moo");
-  write_dc_data(data).await;
-  println!("muu");
 
   return Ok(());
 }
@@ -141,7 +138,6 @@ pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<
   let server = servers[&server_id.to_string()].as_object_mut().unwrap();
 
   server.insert("bk_week_channel".to_string(), channel_id.into());
-  write_dc_data(data).await;
 
   return Ok(());
 }

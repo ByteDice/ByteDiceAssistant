@@ -1,5 +1,5 @@
 use crate::websocket::send_cmd_json;
-use crate::{rs_println, websocket, Context, Data, Error, BK_WEEK};
+use crate::{cmds, rs_println, websocket, Context, Data, Error, BK_WEEK};
 use crate::messages::*;
 use crate::data::{self, dc_bind_bk};
 
@@ -172,35 +172,38 @@ pub async fn bk_week_add(
     return Ok(());
   }
 
+  let shorturl_u = cmds::to_shorturl(&url);
+  let shorturl = if shorturl_u.is_ok() { shorturl_u.unwrap() } else { url };
+
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_reddit_data(ctx.data()).await.unwrap();
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     let a = approve.unwrap_or_else(|| false);
-    let r = websocket::send_cmd_json("add_post_url", Some(json!([&url, a, true]))).await.unwrap();
+    let r = websocket::send_cmd_json("add_post_url", Some(json!([&shorturl, a, true]))).await.unwrap();
 
     if !r["value"].as_bool().unwrap() {
       send_msg(
         ctx,
         r#"Unknown error!
         Error trace: `bk_week_cmds.rs -> bk_week_add() -> Unknown error`.
-        Common reason: The URL provided was likely invalid."#.to_string(),
+        Common reasons: The URL provided was likely invalid or 403: forbidden (e.g a private subreddit)."#.to_string(),
         true,
         true
       ).await;
       return Ok(());
     }
 
-    if let Some(post) = bk_week.get(&url) {
+    if let Some(post) = bk_week.get(&shorturl) {
       if post.get("removed").is_some() {
-        send_unremove_msg(ctx, &url).await;
+        send_unremove_msg(ctx, &shorturl).await;
       }
       else {
-        send_updated_msg(ctx, &url).await;
+        send_updated_msg(ctx, &shorturl).await;
       }
     }
     else {
-      send_msg(ctx, format!("Added post with URL \"<{}>\"!", &url), true, true).await;
+      send_msg(ctx, format!("Added post with URL \"<{}>\"!", &shorturl), true, true).await;
     }
 
     if a {
@@ -284,6 +287,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
   if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(&url) {
     if post.get("removed").is_some() {
       send_post_removed_message(ctx, &url, post.get("removed_by").unwrap().as_str().unwrap()).await;
+      return;
     }
 
     let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, &url]))).await.unwrap();

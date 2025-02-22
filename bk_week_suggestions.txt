@@ -1,0 +1,1 @@
+/bk_week_top - get the top posts in a category

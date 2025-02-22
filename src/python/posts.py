@@ -97,7 +97,7 @@ async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
   try:
     post: models.Submission = await bot.r.submission(url=url)
     return True, post
-  except (prawcore.NotFound, prawcore.BadRequest, exc.InvalidURL):
+  except (prawcore.NotFound, prawcore.BadRequest, exc.InvalidURL, prawcore.Forbidden):
     return False, None
   except Exception as e:
     py_error(f"Unexpected error at posts.py -> from_url():\n{e}")

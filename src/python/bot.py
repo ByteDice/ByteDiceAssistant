@@ -28,7 +28,7 @@ class Bot:
     self.data: dict = {}
 
   async def initialize(self):
-    self.sr = await self.r.subreddit("bytedicetesting")#boykisser")
+    self.sr = await self.r.subreddit("bytedicetesting")
 
   async def set_args(self, args: dict):
     self.args = args

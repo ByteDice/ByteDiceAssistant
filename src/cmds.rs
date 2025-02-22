@@ -165,7 +165,7 @@ pub async fn re_shorturl(
 }
 
 
-fn to_shorturl(url: &str) -> Result<String, &str> {
+pub fn to_shorturl(url: &str) -> Result<String, &str> {
   let re = Regex::new(r"comments/([a-zA-Z0-9]+)").unwrap();
     
   if let Some(caps) = re.captures(url) {
