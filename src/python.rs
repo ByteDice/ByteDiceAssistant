@@ -36,6 +36,6 @@ pub fn start(args: String) -> PyResult<()> {
 
 fn get_code(path: &str) -> String {
   return fs::read_to_string(path)
-    .expect("Failed to read Python file.")
+    .expect(&format!("Failed to read Python file.\nPath: {}", path))
     .to_string();
 }
