@@ -116,7 +116,7 @@ async fn main() {
 
   if !args.nosched {
     let schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)> = vec![
-      (Duration::from_secs(/* 2 * 60 */ 30), || Box::pin(read_reddit_inbox()))
+      (Duration::from_secs(2 * 60), || Box::pin(read_reddit_inbox()))
     ];
 
     run_schedules(schedules).await;
