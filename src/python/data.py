@@ -68,25 +68,26 @@ class PostData:
 def read_data(bot: botPy.Bot) -> bool:
   # Intentionally unreadable >:]
   data_path = os.path.abspath(os.path.join(os.path.join(os.getcwd(), "data")))
+  r_path = os.path.join(data_path, "reddit_data.json")
 
-  if os.path.isfile(data_path + "\\reddit_data.json"):
-    bot.data_f = open(data_path + "\\reddit_data.json", "r+")
+  if os.path.isfile(r_path):
+    bot.data_f = open(r_path, "r+")
 
   else:
     if not bot.args["py"]:
       return False
 
     py_print("reddit_data.json not found, creating new from preset...")
-    with open(data_path + "\\reddit_data_preset.json", "r") as f:
+    with open(os.path.join(data_path, "reddit_data_preset.json", "r")) as f:
       data_preset_json = json.load(f)
 
     data_preset_json[BK_WEEKLY].pop("EXAMPLE VALUE", None)
     data_preset_json[BK_WEEKLY].pop("EXAMPLE VALUE DELETED", None)
 
-    with open(data_path + "\\reddit_data.json", "w") as f:
+    with open(r_path, "w") as f:
       json.dump(data_preset_json, f, indent = 2)
 
-    bot.data_f = open(data_path + "\\reddit_data.json", "r+")
+    bot.data_f = open(r_path, "r+")
 
   data_str = bot.data_f.read()
   json_data = json.loads(data_str)
