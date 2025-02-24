@@ -6,9 +6,16 @@ from macros import *
 
 
 class Bot:
-  args: dict = {"NO_RUST": True, "dev": True, "py": True, "port": 2920}
+  args:     dict = {"NO_RUST": True, "dev": True, "py": True, "port": 2920}
+  r_id:     str = os.environ.get("ASSISTANT_R_ID")
+  secret:   str = os.environ.get("ASSISTANT_R_TOKEN")
+  username: str = os.environ.get("ASSISTANT_R_NAME")
   password: str = os.environ.get("ASSISTANT_R_PASS")
-  secret: str = os.environ.get("ASSISTANT_R_TOKEN")
+
+  useragent: str =\
+    f"{username} by u/RandomPersonDotExe aka u/Byte_Dice"\
+      if r_id == "YmZjr4zLr2qtHdpQXtj0sBOOdJzrXQ"\
+    else f"{username} (original program by u/RandomPersonDotExe aka u/Byte_Dice)"
 
   if password is None:
     py_error("Environment variable \"ASSISTANT_R_PASS\" is null!")
@@ -17,11 +24,11 @@ class Bot:
 
   def __init__(self):
     self.r: praw.Reddit = praw.Reddit(
-      client_id="iCSRWS6PMlTLwmylCJRYmA",
-      client_secret=self.secret,
-      username="ByteDiceAssistant",
-      password=self.password,
-      user_agent="Byte Dice Assistant by u/RandomPersonDotExe aka u/Byte_Dice"
+      client_id =     self.r_id,
+      client_secret = self.secret,
+      username =      self.username,
+      password =      self.password,
+      user_agent =    self.useragent
     )
     self.sr = None
     self.data_f: TextIOWrapper = None

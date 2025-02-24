@@ -24,6 +24,17 @@ An automation tool for Byte Dice. It's both a Discord and Reddit bot in one prog
 * typing
 * websockets
 
+**Environment variables:**
+| **Name** | **Description** |
+| --- | --- |
+| `ASSISTANT_TOKEN` | The Discord bot token. |
+| `ASSISTANT_TOKEN_TEST` | (Optional) A testing Discord bot token. This is only needed when the program is ran with `-t` or `--test`. |
+| `ASSISTANT_DM_USER` | (Optional) Your Discord user id. The assistant will DM this user when *certain* errors occur. |
+| `ASSISTANT_R_ID` | The id for the Reddit bot/account. |
+| `ASSISTANT_R_TOKEN` | The token for the Reddit bot/account. |
+| `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
+| `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
+
 You can install Python modules by running `$ pip install {module}` or `$ python -m pip install {module}` in a terminal.
 
 **How to run:**

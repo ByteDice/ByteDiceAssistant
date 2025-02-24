@@ -177,8 +177,10 @@ pub async fn http_edit_msg(
 
 
 pub async fn send_dm(msg: String, args: Args) {
-  let uid = env::var("ASSISTANT_DM_USER").expect("Missing ASSISTANT_DM_USER env var!").parse::<u64>().unwrap();
-  let user = UserId::new(uid);
+  let uid = env::var("ASSISTANT_DM_USER");
+  if uid.is_err() { return; }
+
+  let user = UserId::new(uid.unwrap().parse::<u64>().unwrap());
 
   let token: String;
   if !args.test {
