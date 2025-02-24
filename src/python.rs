@@ -11,9 +11,12 @@ use pyo3::types::PyList;
 pub fn start(args: String) -> PyResult<()> { 
   rs_println!("Running Python program...");
 
-  let path = concat!(env!("CARGO_MANIFEST_DIR"), "\\src\\python");
+  let slash = if cfg!(windows) { "\\" } else if cfg!(unix) { "/" } else { "" };
+  if slash == "" { errln!("Man what kinda OS do you have? Neither unix or windows, what the hell!? I can't process this anymore, you're too weird!"); }
 
-  let code = get_code(&(path.to_owned() + "\\main.py"));
+  let path = format!("{0}{1}src{1}python", env!("CARGO_MANIFEST_DIR"), slash);
+
+  let code = get_code(&format!("{}{}main.py", path, slash));
   let py_args = args.replace(":true", ":True").replace(":false", ":False");
   let app_path = CString::new(format!("args = {}\n{}", py_args, code)).unwrap();
   
