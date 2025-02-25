@@ -35,7 +35,8 @@ async def websocket_client(bot: botPy.Bot):
 
     while True:
       response = await ws.recv()
-      py_print(f"Received from Rust: {response}")
+      if not response.startswith("json:"):
+        py_print(f"Received from Rust: {response}")
       await parse_json(response, bot)
 
 
@@ -44,6 +45,9 @@ async def parse_json(response: str, bot: botPy.Bot):
     json_str = response[5:]
     try:
       json_response = json.loads(json_str)
+      if json_response["value"] not in ["respond_mentions"] or bot.args["dev"]:
+        py_print(f"Received from Rust: {response}")
+
       result = await json_to_func(json_response, bot)
       await ws_global.ping()
       await send_message(f"json:{json.dumps(result)}")
@@ -72,12 +76,13 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
   match v["value"]:
     case "update_data_file": r =       data .write_data        (bot)
     case "add_new_posts":    r = await posts.add_new_posts     (bot)
+    case "respond_mentions": r = await cmds .respond_to_mention(bot)
     case "add_post_url":     r = await posts.add_post_url      (bot, *v["args"])
     case "remove_post_url":  r =       data .remove_post       (bot, *v["args"])
     case "set_approve_post": r =       data .set_approve_post  (bot, *v["args"])
     case "set_vote_post":    r =       data .set_vote_post     (bot, *v["args"])
-    case "respond_mentions": r = await cmds .respond_to_mention(bot)
-    case "stop_praw":        r = await bot  .stop()
+    case "change_sr":        r = await bot  .change_sr         (*v["args"])
+    case "stop_praw":        r = await bot  .stop              ()
     case _: value_supported = False
 
   if not value_supported:

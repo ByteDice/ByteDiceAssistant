@@ -189,14 +189,18 @@ async fn gen_bot(data: Data, args: Args) -> Client {
         cmds::re_shorturl(),
         cmds::add_server(),
         //cmds::rule(),
+        // bk_week
         bk_week_cmds::bk_week_help(),
         bk_week_cmds::bk_week_get(),
         bk_week_cmds::bk_week_add(),
         bk_week_cmds::bk_week_remove(),
         bk_week_cmds::bk_week_approve(),
-        bk_week_cmds::bk_admin_bind(),
         bk_week_cmds::bk_week_update(),
-        bk_week_cmds::bk_week_vote()
+        bk_week_cmds::bk_week_vote(),
+        // bk_admin
+        bk_week_cmds::bk_admin_bind(),
+        // bk_cfg
+        bk_week_cmds::bk_cfg_sr()
       ],
       event_handler: events::event_handler,
       ..Default::default()

@@ -65,8 +65,10 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
     }
 
     let r = receive_response().await;
-    rs_println!("Received from Python: [RESPONSE] {:?}", r);
-    
+    if !["respond_mentions"].contains(&func_name) || <Args as clap::Parser>::parse().dev {
+      rs_println!("Received from Python: [RESPONSE] {:?}", r);
+    }
+
     if r.is_none() {
       rs_println!("--- Response from Python is None!");
     }

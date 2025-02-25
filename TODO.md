@@ -8,6 +8,7 @@
   <!-- - [x] Security that only allows bk mods to run these commands. -->
   <!-- - [x] Some kind of voting system. -->
   - [ ] `/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)
+  <!-- - [x] ~~`/bk_cfg_sr [subreddit]` to change the target subreddit(s)~~ -->
   - [ ] Allow updating the data autonomously and via manual commands.
     <!-- - [ ] 10-minute schedule for updating Discord channel (IMPOSSIBLE / REALLY FUCKING HARD) -->
     <!-- - [x] ~~Manually add posts~~ -->

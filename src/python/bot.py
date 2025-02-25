@@ -47,3 +47,7 @@ class Bot:
       return True
     
     return False
+  
+  async def change_sr(self, new_sr) -> bool:
+    self.sr = await self.r.subreddit(new_sr)
+    return True

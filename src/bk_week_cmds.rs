@@ -643,3 +643,26 @@ pub async fn bk_week_vote(
 
   return Ok(());
 }
+
+
+
+
+#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR")]
+/// Changes the subreddit(s) the bot patrols in. 
+pub async fn bk_cfg_sr(ctx: Context<'_>, sr: String) -> Result<(), Error> {
+  if !cmds::is_creator(ctx) {
+    send_msg(ctx, "Failed to update subreddits: Invalid permissions.".to_string(), true, true).await;
+  }
+
+  let r = send_cmd_json("change_sr", Some(json!([sr]))).await;
+
+  if r.is_some() {
+    if r.unwrap()["value"].as_bool().unwrap() {
+      send_msg(ctx, "Successfully updated subreddits!".to_string(), true, true).await;
+      return Ok(());
+    }
+  }
+
+  send_msg(ctx, "Failed to update subreddits: Failed-type response from Python.".to_string(), true, true).await;
+  return Ok(());
+}

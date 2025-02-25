@@ -33,7 +33,7 @@ pub async fn stop(
   let should_stop = ctx.data().args.dev
     || confirmation.unwrap_or_else(|| "".to_string()).to_lowercase() == "i want to stop the bot now";
 
-  let is_creator = ctx.author().id == UserId::new(ctx.data().byte_dice_id);
+  let is_creator = is_creator(ctx);
 
   if should_stop && is_creator {
     let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
@@ -55,6 +55,11 @@ pub async fn stop(
   }
 
   return Ok(());
+}
+
+
+pub fn is_creator(ctx: Context<'_>) -> bool {
+  return ctx.author().id == UserId::new(ctx.data().byte_dice_id);
 }
 
 
