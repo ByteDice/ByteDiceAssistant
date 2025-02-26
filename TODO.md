@@ -19,7 +19,7 @@
     <!-- - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~ -->
     <!-- - [x] ~~Manually un-approve posts via `/bk_week_disapprove [url]`~~ -->
     <!-- - [x] ~~Automatically add scraped posts to JSON~~ -->
-    <!-- - [x] ~~Remove posts (from data) that are older than 7 days~~ --> // need python function to remove data about them
+    <!-- - [x] ~~Remove posts (from data) that are older than 7 days~~ -->
     - [ ] Automatically approve posts that don't get caught by reverse image search (ris)
     <!-- - [x] Log all posts in a Discord thread -->
       <!-- - [x] ~~`/bk_week_bind` to bind a channel for bk_week logs~~ -->
