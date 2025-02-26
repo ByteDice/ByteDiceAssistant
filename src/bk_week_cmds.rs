@@ -3,9 +3,12 @@ use crate::{cmds, rs_println, websocket, Context, Data, Error, BK_WEEK};
 use crate::messages::*;
 use crate::data::{self, dc_bind_bk};
 
+use std::collections::HashMap;
 use std::fs;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use poise::serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId};
+use poise::ReplyHandle;
 use serde_json::{json, Map, Value};
 
 
@@ -13,6 +16,13 @@ use serde_json::{json, Map, Value};
 enum HelpOptions {
   Discord,
   Reddit
+}
+#[derive(poise::ChoiceParameter, PartialEq)]
+enum TopCategory {
+  Upvotes,
+  ModVotes,
+  Oldest,
+  Newest
 }
 
 
@@ -342,20 +352,21 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
 /// Updates all logs
 pub async fn bk_week_update(
   ctx: Context<'_>,
-  #[description = "Only adds new posts, leaves everything else unchanged."] only_add: Option<bool>
+  #[description = "Only adds new posts, leaves everything else unchanged."] only_add: Option<bool>,
+  #[description = "The max age of a post (in days). Any post older than this will be removed. (0 is infinite.)"] max_age: Option<u16>
 ) -> Result<(), Error>
 {
   let http = ctx.http();
 
-  let executed = format!("(Executed `/bk_week_update`, author: `{}`)", ctx.author().name);
-  let mut p_text = executed.clone();
+  let mut p_text = "`/bk_week_update`:".to_string();
 
-  send_msg(ctx, MANDATORY_MSG.to_string(), true, true).await;
+  let progress = send_msg(ctx, p_text.clone(), true, true).await.unwrap();
+  p_text = update_progress(ctx, progress.clone(), p_text, "\nFetching new posts & updating data file...".to_string()).await;
 
-  let progress = http_send_msg(http, ctx.channel_id(), p_text.clone()).await.unwrap();
-  p_text = update_progress(ctx.http(), progress.clone(), p_text, "\nFetching new posts & updating data file...".to_string()).await;
+  let max_age_u = max_age.unwrap_or_else(|| 8);
+  let max_age_secs = max_age_u as u64 * (60 * 60 * 24);
 
-  send_cmd_json("add_new_posts", None).await;
+  send_cmd_json("add_new_posts", Some(json!([max_age_secs]))).await;
   data::update_re_data(ctx.data()).await;
   let r_data = get_reddit_data(ctx.data()).await.unwrap();
 
@@ -369,51 +380,56 @@ pub async fn bk_week_update(
   let c_id = c_id_u.unwrap();
 
   // Reading messages
-  p_text = update_progress(http, progress.clone(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
   let msgs = read_msgs(http, ctx.framework().bot_id, c_id).await;
 
   // Parsing messages to JSON
-  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
-  let msgs_json = msgs_to_json(msgs, &r_data).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
+  let msgs_json = msgs_to_json(msgs, &r_data, max_age_secs).await;
 
   // Adding new posts 
-  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
   let weekly_art = r_data[BK_WEEK].as_object().unwrap();
   add_posts(http, c_id, weekly_art, &msgs_json).await;
   
   // Stop if only_add
   if only_add.unwrap_or_else(|| false) {
     send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
-    update_progress(http, progress.clone(), String::new(), executed).await;
+    update_progress(ctx, progress.clone(), p_text, "✅\n## Done!".to_string()).await;
     return Ok(());
   }
 
   // Editing updated posts
-  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
   edit_posts(http, c_id, weekly_art, &msgs_json).await;
 
   // Removing removed posts
-  p_text = update_progress(http, progress.clone(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
   remove_posts(http, c_id, weekly_art, &msgs_json).await;
 
+  // Removing old posts
+  if max_age_u > 0 {
+    p_text = update_progress(ctx, progress.clone(), p_text.clone(), format!("✅\nRemoving old posts (threshold: {}d)...", max_age_u)).await;
+    remove_old(http, c_id, &msgs_json).await;
+    send_cmd_json("remove_old_posts", Some(json!([max_age_secs]))).await;
+  }
+
   // Removing duplicate posts
-  update_progress(http, progress.clone(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
   remove_dupes(http, c_id, &msgs_json).await;
 
   // Done
+  update_progress(ctx, progress.clone(), p_text, "✅\n## Done!".to_string()).await;
   send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
-  update_progress(http, progress.clone(), String::new(), executed).await;
 
   return Ok(());
 }
 
 
-async fn update_progress(http: &Http, p: Message, t: String, added_t: String) -> String {
+async fn update_progress(ctx: Context<'_>, p: ReplyHandle<'_>, t: String, added_t: String) -> String {
   let p_text = format!("{} {}", t, added_t);
 
-  let new_msg = EditMessage::new().content(&p_text);
-
-  http_edit_msg(http, p, new_msg).await;
+  edit_reply(ctx, p, p_text.clone()).await;
   return p_text;
 }
 
@@ -437,7 +453,7 @@ async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
 }
 
 
-pub async fn read_msgs(http: &Http, bot_id: UserId, c_id: ChannelId) -> Vec<Message> {
+async fn read_msgs(http: &Http, bot_id: UserId, c_id: ChannelId) -> Vec<Message> {
   let b = GetMessages::new().limit(100);
   let mut msgs = c_id.messages(http, b).await.unwrap();
   msgs = msgs.into_iter().filter(|item| item.author.id == bot_id).collect();
@@ -466,8 +482,12 @@ pub async fn read_msgs(http: &Http, bot_id: UserId, c_id: ChannelId) -> Vec<Mess
 }
 
 
-pub async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Value {
-  let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}});
+async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value, max_age: u64) -> Value {
+  let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}, "old": {}});
+  let now = SystemTime::now()
+    .duration_since(UNIX_EPOCH)
+    .expect("Time went backwards")
+    .as_secs() as u64;
 
   for msg in msgs {
     if msg.embeds.len() == 0 { continue; }
@@ -475,7 +495,8 @@ pub async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Val
 
     let url = msg.embeds[0].url.clone().unwrap();
     
-    if ["no_change", "updated", "removed"]
+    // duplicates
+    if ["no_change", "updated", "removed", "old"]
       .iter()
       .any(|key| msgs_json[key].as_object().unwrap().contains_key(&url))
     {
@@ -500,20 +521,34 @@ pub async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Val
     let mut u_json: Value = msg_json.unwrap();
     let re_url = &reddit_data[BK_WEEK][&url];
 
+    let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or_else(|| 0);
+
+    // old
+    if now - post_date > max_age  {
+      if let Some(obj) = msgs_json["old"].as_object_mut() {
+        obj.insert(url.clone(), json!(msg.id.get()));
+        continue;
+      }
+    }
+
+    // removed
     if re_url.get("removed").is_some() {
       if u_json.get("removed").is_some() {
+        // no change
         if let Some(obj) = msgs_json["no_change"].as_object_mut() {
           obj.insert(url.clone(), json!(msg.id.get()));
           continue;
         }
       }
 
+      // removed
       if let Some(obj) = msgs_json["removed"].as_object_mut() {
         obj.insert(url.clone(), json!(msg.id.get()));
         continue;
       }
     }
 
+    // updated
     if u_json["added"]                != re_url["added"]
     || u_json["approved"]             != re_url["approved"]
     || u_json["post_data"]["upvotes"] != re_url["post_data"]["upvotes"]
@@ -527,6 +562,7 @@ pub async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Val
       }
     }
 
+    // no change
     if let Some(obj) = msgs_json["no_change"].as_object_mut() {
       obj.insert(url.clone(), json!(msg.id.get()));
     }
@@ -536,9 +572,9 @@ pub async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value) -> Val
 }
 
 
-pub async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
   for url in r_data.keys() {
-    if ["no_change", "updated", "removed"]
+    if ["no_change", "updated", "removed", "old"]
       .iter()
       .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
       { continue; }
@@ -554,7 +590,7 @@ pub async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>
 }
 
 
-pub async fn edit_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+async fn edit_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
   for (url, msg_id) in msgs_json["updated"].as_object().unwrap() {
     let mut msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
     let r = EditMessage::new()
@@ -565,7 +601,7 @@ pub async fn edit_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value
 }
 
 
-pub async fn remove_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+async fn remove_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
   for (url, msg_id) in msgs_json["removed"].as_object().unwrap() {
     let mut msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
     let r = EditMessage::new()
@@ -576,7 +612,15 @@ pub async fn remove_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Val
 }
 
 
-pub async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
+async fn remove_old(http: &Http, c_id: ChannelId, msgs_json: &Value) {
+  for (_url, msg_id) in msgs_json["old"].as_object().unwrap() {
+    let msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
+    let _ = msg.delete(http).await;
+  }
+}
+
+
+async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
   for (_url, msgs) in msgs_json["duplicates"].as_object().unwrap() {
     for msg_id in msgs.as_array().unwrap() {
       let msg = http.get_message(c_id, MessageId::new(msg_id.as_u64().unwrap())).await.unwrap();
@@ -642,6 +686,66 @@ pub async fn bk_week_vote(
   }
 
   return Ok(());
+}
+
+
+
+#[poise::command(slash_command, prefix_command)]
+/// Gets the top N (up to 10) posts within a certain category, such as upvotes. (Sorted descending.)
+pub async fn bk_week_top(
+  ctx: Context<'_>,
+  #[description = "The sorting criteria, such as upvotes."] category: TopCategory,
+  #[description = "The amount of posts to show (max 10)."] amount: Option<u8>
+) -> Result<(), Error>
+{
+  let mut all: HashMap<&str, i32> = HashMap::new();
+  let posts = &get_reddit_data(ctx.data()).await.unwrap()[BK_WEEK];
+  let posts_u = posts.as_object().unwrap();
+
+  for (url, dat) in posts_u {
+    if dat.get("removed").is_some() { continue; }
+
+    let val: i32 = match category {
+      TopCategory::Upvotes  => dat["post_data"]["upvotes"].as_i64().unwrap() as i32,
+      TopCategory::ModVotes => dat["votes"]["mod_voters"].as_array().unwrap().len() as i32,
+      TopCategory::Oldest
+      | TopCategory::Newest => dat["post_data"]["date_unix"].as_i64().unwrap() as i32,
+    };
+
+    all.insert(url, val);
+  }
+
+  let amount_u = amount.unwrap_or_else(|| 3);
+  let amount_clamped =
+    if amount_u > 10 { 10 }
+    else if amount_u < 1 { 1 }
+    else { amount_u };
+
+  let top = 
+    if category != TopCategory::Oldest
+         { largest_n (&all, amount_clamped as usize) }
+    else { smallest_n(&all, amount_clamped as usize) };
+
+  for post in top {
+    let url = post.0;
+    let _ = send_embed_for_post(ctx, posts_u[url].clone(), &url).await;
+  }
+
+  return Ok(());
+}
+
+
+fn largest_n<'a>(map: &'a HashMap<&'a str, i32>, n: usize) -> Vec<(&'a str, i32)> {
+  let mut vec: Vec<_> = map.iter().collect();
+  vec.sort_unstable_by(|a, b| b.1.cmp(a.1));
+  vec.into_iter().take(n).map(|(&k, &v)| (k, v)).collect()
+}
+
+
+fn smallest_n<'a>(map: &'a HashMap<&'a str, i32>, n: usize) -> Vec<(&'a str, i32)> {
+  let mut vec: Vec<_> = map.iter().collect();
+  vec.sort_unstable_by(|a, b| a.1.cmp(b.1));
+  vec.into_iter().take(n).map(|(&k, &v)| (k, v)).collect()
 }
 
 

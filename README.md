@@ -42,5 +42,5 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 ### How to run:
 * Download the code (and extract if needed).
 * Open a terminal and CD to the downloaded folder.
-* Run `$ cargo run`. There are more options when running. You can view a list of those using `$ cargo run -- --help`.
-  * If you want to only run the Python code, you can either run `$ cargo run -- --py`, or `$ python ./src/python/main.py`. The second option is recommended for better output.
+* Run `$ cargo run`. There are more options when running. You can view a list of those using `$ cargo run -- --help` or `$ cargo run -- -h`.
+  * If you want to only run the Python code, you can either run `$ cargo run -- --py`, or `$ python ./src/python/main.py`. The second option is recommended for better error output.

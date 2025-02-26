@@ -77,6 +77,7 @@ pub async fn send_msg(
 }
 
 
+#[allow(dead_code)]
 pub async fn http_send_msg(
   http: &Http,
   c_id: ChannelId,
@@ -167,6 +168,7 @@ pub async fn edit_reply(
 }
 
 
+#[allow(dead_code)]
 pub async fn http_edit_msg(
   http: &Http,
   mut msg: Message,
@@ -265,6 +267,7 @@ pub fn embed_post_removed(post_data: &Value, url: &str, empheral: bool) -> Embed
     ),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
+    ts:  Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
     empheral,
     ..Default::default()
   };

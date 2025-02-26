@@ -7,7 +7,7 @@
   <!-- - [x] ~~Multithread so it can run both Discord and Reddit bot!!!~~ -->
   <!-- - [x] Security that only allows bk mods to run these commands. -->
   <!-- - [x] Some kind of voting system. -->
-  - [ ] `/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)
+  <!-- - [x] ~~`/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)~~ -->
   <!-- - [x] ~~`/bk_cfg_sr [subreddit]` to change the target subreddit(s)~~ -->
   - [ ] Allow updating the data autonomously and via manual commands.
     <!-- - [ ] 10-minute schedule for updating Discord channel (IMPOSSIBLE / REALLY FUCKING HARD) -->
@@ -19,9 +19,7 @@
     <!-- - [x] ~~Manually approve posts via `/bk_week_approve [url]`~~ -->
     <!-- - [x] ~~Manually un-approve posts via `/bk_week_disapprove [url]`~~ -->
     <!-- - [x] ~~Automatically add scraped posts to JSON~~ -->
-    - [ ] Automatically remove posts older than 7 days from JSON
-      - [x] ~~Function~~
-      - [ ] Automate
+    <!-- - [x] ~~Remove posts (from data) that are older than 7 days~~ --> // need python function to remove data about them
     - [ ] Automatically approve posts that don't get caught by reverse image search (ris)
     <!-- - [x] Log all posts in a Discord thread -->
       <!-- - [x] ~~`/bk_week_bind` to bind a channel for bk_week logs~~ -->

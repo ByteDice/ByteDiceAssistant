@@ -197,6 +197,7 @@ async fn gen_bot(data: Data, args: Args) -> Client {
         bk_week_cmds::bk_week_approve(),
         bk_week_cmds::bk_week_update(),
         bk_week_cmds::bk_week_vote(),
+        bk_week_cmds::bk_week_top(),
         // bk_admin
         bk_week_cmds::bk_admin_bind(),
         // bk_cfg

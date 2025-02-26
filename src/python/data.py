@@ -1,6 +1,7 @@
 import os
 import json
 from typing import Final
+import time
 
 import bot as botPy
 from macros import *
@@ -136,12 +137,34 @@ def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
 
 
 def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: str = "None") -> bool:
-  if url in bot.data[BK_WEEKLY]:
-    bot.data[BK_WEEKLY][url] = { "removed": True, "removed_by": removed_by, "remove_reason": reason }
+  weekly = bot.data[BK_WEEKLY]
+
+  if url in weekly:
+    weekly[url] = {
+      "removed": True,
+      "removed_by": removed_by,
+      "remove_reason": reason,
+      "post_data": { "date_unix": weekly[url]["post_data"]["date_unix"] }
+    }
     return True
   else:
     return False
   
+
+def remove_old_posts(bot: botPy.Bot, max_age: int) -> bool:
+  now = int(time.time())
+  weekly = bot.data[BK_WEEKLY]
+  remove: list[str] = []
+
+  for url, post in weekly.items():
+    if now - post["post_data"]["date_unix"] > max_age:
+      remove.append(url)
+
+  for key in remove:
+    weekly.pop(key)
+
+  return True
+
 
 def set_vote_post(
   bot: botPy.Bot,

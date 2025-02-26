@@ -2,13 +2,14 @@ import emoji
 from asyncpraw import models
 import asyncprawcore as prawcore
 import asyncpraw.exceptions as exc
+import time
 
 import data
 import bot as botPy
 from macros import *
 
 
-async def add_new_posts(bot: botPy.Bot) -> bool:
+async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
   check_emoji = emoji.emojize(":check_mark_button:")
   cross_emoji = emoji.emojize(":cross_mark:")
 
@@ -20,6 +21,7 @@ async def add_new_posts(bot: botPy.Bot) -> bool:
   added_posts = 0
   without_media = 0
   not_added = 0
+  old_posts = 0
   for post in posts:
     media = has_media(post)
 
@@ -32,14 +34,23 @@ async def add_new_posts(bot: botPy.Bot) -> bool:
         f"\n    {check_emoji if media[0] else cross_emoji} Media ({media[1]}) [{media[2]}]",
         f"\n        {media_urls}\n"
       )
-      
+    
+    details = get_post_details(post)
+    now = int(time.time())
+
+    if now - details.date_unix > max_age and max_age > 0:
+      old_posts += 1
+      continue
+
     if not media[0]:
       without_media += 1
       continue
 
+    post_added = False
+    
     post_added = data.add_post_to_data(
       bot,
-      get_post_details(post)
+      details
     )
 
     if post_added: added_posts += 1
@@ -48,7 +59,8 @@ async def add_new_posts(bot: botPy.Bot) -> bool:
   py_print(f"Successfully fetched {len(posts)} posts.\n" +
            f"       Out of which were {added_posts} added.\n" +
            f"       {without_media} had no media, " +
-           f"and {not_added} weren't added because they are removed or already existed")
+           f"{not_added} are removed or already existed, " +
+           f"and {old_posts} were older than the max age threshold.")
 
   return True
 
