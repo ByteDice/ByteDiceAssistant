@@ -10,6 +10,7 @@ mod macros;
 mod websocket;
 mod data;
 
+use std::collections::HashSet;
 use std::future::Future;
 use std::pin::Pin;
 use std::process;
@@ -18,6 +19,7 @@ use std::time::Duration;
 use std::vec;
 
 use clap::Parser;
+use poise::serenity_prelude::UserId;
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
 use serde::Serialize;
@@ -60,7 +62,6 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 struct Data {
   ball_prompts: [Vec<String>; 2],
-  byte_dice_id: u64,
   reddit_data: Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
   bk_mods_json: Value,
@@ -148,7 +149,6 @@ async fn gen_data(args: Args) -> Data {
   let data = Data {
     ball_prompts: [ball_classic, ball_quirk],
     bk_mods_json: bk_mods,
-    byte_dice_id: 697149665166229614,
     reddit_data: None.into(),
     discord_data: None.into(),
     args: args.clone()
@@ -177,9 +177,18 @@ async fn gen_bot(data: Data, args: Args) -> Client {
   let token_end_len = token[peek_len..].len();
   rs_println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
 
+  let own_env = std::env::var("ASSISTANT_OWNERS").expect("Missing ASSISTANT_OWNERS env var!");
+  let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
+  let own_vec_u64: Vec<u64> = own_vec_str
+    .iter()
+    .filter_map(|s| Some(s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax.")))
+    .collect();
+
+  let own: HashSet<UserId> = own_vec_u64.into_iter().map(UserId::from).collect();
 
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
+      owners: own,
       commands: vec![
         cmds::ping(),
         cmds::embed(),

@@ -5,7 +5,7 @@ use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
 use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
 
-use poise::serenity_prelude::{OnlineStatus, Timestamp, UserId};
+use poise::serenity_prelude::{OnlineStatus, Timestamp};
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
 
@@ -23,7 +23,12 @@ pub async fn ping(
 }
 
 
-#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR")]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  default_member_permissions = "ADMINISTRATOR",
+  owners_only
+)]
 /// Stops the bot... if you're mighty enough!
 pub async fn stop(
   ctx: Context<'_>,
@@ -33,9 +38,7 @@ pub async fn stop(
   let should_stop = ctx.data().args.dev
     || confirmation.unwrap_or_else(|| "".to_string()).to_lowercase() == "i want to stop the bot now";
 
-  let is_creator = is_creator(ctx);
-
-  if should_stop && is_creator {
+  if should_stop {
     let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
     data::write_dc_data(ctx.data()).await;
     data::write_re_data().await;
@@ -47,10 +50,7 @@ pub async fn stop(
 
     process::exit(0);
   }
-  else if !is_creator {
-    send_msg(ctx, "Failed to shut down: Invalid permissions.".to_string(), true, true).await;
-  }
-  else if !should_stop {
+  else {
     send_msg(ctx, "Failed to shut down: Invalid confirmation.".to_string(), true, true).await;
   }
 
@@ -58,15 +58,11 @@ pub async fn stop(
 }
 
 
-pub fn is_creator(ctx: Context<'_>) -> bool {
-  return ctx.author().id == UserId::new(ctx.data().byte_dice_id);
-}
-
-
 #[poise::command(
   slash_command,
   prefix_command,
-  default_member_permissions = "ADMINISTRATOR"
+  default_member_permissions = "ADMINISTRATOR",
+  owners_only
 )]
 /// Creates an embed.
 pub async fn embed(
@@ -113,7 +109,8 @@ pub async fn embed(
 #[poise::command(
   slash_command,
   prefix_command,
-  default_member_permissions = "ADMINISTRATOR"
+  default_member_permissions = "ADMINISTRATOR",
+  owners_only
 )]
 /// Sends a message.
 pub async fn send(

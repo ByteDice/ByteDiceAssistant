@@ -38,6 +38,7 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 | `ASSISTANT_R_TOKEN` | The token for the Reddit bot/account. |
 | `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
 | `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
+| `ASSISTANT_OWNERS` | A list of user ids that "own" the bot. Separate each owner with a comma and NO spaces. |
 
 ### How to run:
 * Download the code (and extract if needed).

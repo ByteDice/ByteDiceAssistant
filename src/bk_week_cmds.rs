@@ -71,7 +71,10 @@ pub async fn bk_week_help(
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
 /// Retrieves the data of a single post just for you. The data has to be within the database to work.
 pub async fn bk_week_get(
   ctx: Context<'_>,
@@ -169,7 +172,10 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
 /// Fetches a post from Reddit and adds it to the database.
 pub async fn bk_week_add(
   ctx: Context<'_>,
@@ -237,7 +243,10 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
 /// Removes a post from the database. It will show who last removed it.
 pub async fn bk_week_remove(
   ctx: Context<'_>,
@@ -271,7 +280,10 @@ pub async fn bk_week_remove(
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
 /// Approves a post in the database. Approving posts tells the bot that it's original.
 pub async fn bk_week_approve(
   ctx: Context<'_>,
@@ -321,7 +333,12 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
 
 
 
-#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  default_member_permissions = "ADMINISTRATOR",
+  guild_only
+)]
 /// Sets the channel where the bot will dump all log info. It's recommended to only run this once.
 pub async fn bk_admin_bind(
   ctx: Context<'_>
@@ -348,12 +365,21 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
 
 
 
-#[poise::command(slash_command, prefix_command, guild_only)]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  guild_only,
+  guild_cooldown = 120
+)]
 /// Updates all logs
 pub async fn bk_week_update(
   ctx: Context<'_>,
-  #[description = "Only adds new posts, leaves everything else unchanged."] only_add: Option<bool>,
-  #[description = "The max age of a post (in days). Any post older than this will be removed. (0 is infinite.)"] max_age: Option<u16>
+  #[description = "Only adds new posts, leaves everything else unchanged."]
+    only_add: Option<bool>,
+  #[description = "The max age of a post (in days). Any post older than this will be removed. (0 is infinite.)"]
+  #[min = 0]
+  #[max = 65535]
+    max_age: Option<u16>
 ) -> Result<(), Error>
 {
   let http = ctx.http();
@@ -630,7 +656,10 @@ async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
 }
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
 /// Adds/removes a vote from a post. These votes are not tied to Reddit upvotes.
 pub async fn bk_week_vote(
   ctx: Context<'_>,
@@ -690,12 +719,19 @@ pub async fn bk_week_vote(
 
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command
+)]
 /// Gets the top N (up to 10) posts within a certain category, such as upvotes. (Sorted descending.)
 pub async fn bk_week_top(
   ctx: Context<'_>,
-  #[description = "The sorting criteria, such as upvotes."] category: TopCategory,
-  #[description = "The amount of posts to show (max 10)."] amount: Option<u8>
+  #[description = "The sorting criteria, such as upvotes."]
+    category: TopCategory,
+  #[description = "The amount of posts to show (max 10)."]
+  #[min = 1]
+  #[max = 10]
+    amount: Option<u8>
 ) -> Result<(), Error>
 {
   let mut all: HashMap<&str, i32> = HashMap::new();
@@ -751,13 +787,17 @@ fn smallest_n<'a>(map: &'a HashMap<&'a str, i32>, n: usize) -> Vec<(&'a str, i32
 
 
 
-#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR")]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  owners_only
+)]
 /// Changes the subreddit(s) the bot patrols in. 
-pub async fn bk_cfg_sr(ctx: Context<'_>, sr: String) -> Result<(), Error> {
-  if !cmds::is_creator(ctx) {
-    send_msg(ctx, "Failed to update subreddits: Invalid permissions.".to_string(), true, true).await;
-  }
-
+pub async fn bk_cfg_sr(
+  ctx: Context<'_>,
+  sr: String
+) -> Result<(), Error>
+{
   let r = send_cmd_json("change_sr", Some(json!([sr]))).await;
 
   if r.is_some() {
