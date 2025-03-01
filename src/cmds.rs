@@ -10,7 +10,11 @@ use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
+)]
 /// Check if you have connection to the bot.
 pub async fn ping(
   ctx: Context<'_>,
@@ -26,8 +30,8 @@ pub async fn ping(
 #[poise::command(
   slash_command,
   prefix_command,
-  default_member_permissions = "ADMINISTRATOR",
-  owners_only
+  owners_only,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Stops the bot... if you're mighty enough!
 pub async fn stop(
@@ -61,8 +65,8 @@ pub async fn stop(
 #[poise::command(
   slash_command,
   prefix_command,
-  default_member_permissions = "ADMINISTRATOR",
-  owners_only
+  owners_only,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Creates an embed.
 pub async fn embed(
@@ -109,8 +113,8 @@ pub async fn embed(
 #[poise::command(
   slash_command,
   prefix_command,
-  default_member_permissions = "ADMINISTRATOR",
-  owners_only
+  owners_only,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Sends a message.
 pub async fn send(
@@ -125,7 +129,12 @@ pub async fn send(
 
 
 
-#[poise::command(slash_command, prefix_command, rename = "8_ball")]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  rename = "8_ball",
+  required_bot_permissions = "SEND_MESSAGES"
+)]
 /// Magic 8-ball. Ask a question, get an answer.
 pub async fn eight_ball(
   ctx: Context<'_>,
@@ -147,7 +156,11 @@ pub async fn eight_ball(
 }
 
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
+)]
 /// Convert a long reddit URL to a short one. The bot ONLY uses shortURLs when asking for one.
 pub async fn re_shorturl(
   ctx: Context<'_>,
@@ -180,7 +193,13 @@ pub fn to_shorturl(url: &str) -> Result<String, &str> {
 }
 
 
-#[poise::command(slash_command, prefix_command, default_member_permissions = "ADMINISTRATOR", guild_only)]
+#[poise::command(
+  slash_command,
+  prefix_command,
+  default_member_permissions = "ADMINISTRATOR",
+  guild_only,
+  required_bot_permissions = "SEND_MESSAGES"
+)]
 /// Add your server to my database so I can sell it! (/s), I only store some minimal data the bot needs.
 pub async fn add_server(
   ctx: Context<'_>
@@ -192,7 +211,7 @@ pub async fn add_server(
     send_msg(ctx, "Added your server to my data! Thanks for letting me steal it! (/s)".to_string(), true, true).await;
   }
   else {
-    send_msg(ctx, "Oopsies `(｡>\\\\<)`. It looks like my data i-is \\**sob*\\*... c-cor-corrupted!".to_string(), true, true).await;
+    send_msg(ctx, "Oopsies `(｡>\\\\<)`. It looks like my data i-is \\**sob*\\*... c-corrupted!".to_string(), true, true).await;
   }
 
   return Ok(());

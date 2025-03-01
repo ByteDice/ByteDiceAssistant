@@ -42,7 +42,8 @@ async fn not_bk_mod_msg(ctx: Context<'_>) {
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Shows helpful information on how to use the bk_week section of the bot.
 pub async fn bk_week_help(
@@ -73,9 +74,10 @@ pub async fn bk_week_help(
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
-/// Retrieves the data of a single post just for you. The data has to be within the database to work.
+/// Fetches the data of a single post, just for you. The data has to be within the database to work.
 pub async fn bk_week_get(
   ctx: Context<'_>,
   #[description = "The post URL."] url: String
@@ -105,7 +107,7 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     if let Some(post) = bk_week.get(url) {
       if post.get("removed").is_some() {
-        send_post_removed_message(ctx, url, post.get("removed_by").unwrap().as_str().unwrap()).await;
+        send_post_removed_message(ctx, url, post).await;
         return Ok(None);
       }
       return Ok(Some(post.clone()));
@@ -116,7 +118,7 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
   }
   else {
     send_data_corrupted_message(ctx, url).await;
-    rs_println!("{}", serde_json::to_string_pretty(reddit_data).unwrap());
+    rs_println!("{}", serde_json::to_string_pretty(reddit_data)?);
   }
   return Ok(None);
 }
@@ -142,15 +144,10 @@ async fn send_post_not_found_message(ctx: Context<'_>, url: &str) {
 }
 
 
-async fn send_post_removed_message(ctx: Context<'_>, url: &str, rm_by: &str) {
-  send_msg(
+async fn send_post_removed_message(ctx: Context<'_>, url: &str, post: &Value) {
+  send_embed(
     ctx, 
-    format!(
-      r#"Post URL \"<{}>\" is removed: Post is removed from the data! (Removed by: `{}`)
-      Hint: Run the command `/bk_week_add [URL]` in a Discord channel or `u/ByteDiceAssistant bk_week_add` in a Reddit post."#, 
-      url, rm_by
-    ).trim().to_string(), 
-    true, 
+    embed_post_removed(post, url, true),
     true
   ).await;
 }
@@ -174,7 +171,8 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Fetches a post from Reddit and adds it to the database.
 pub async fn bk_week_add(
@@ -245,7 +243,8 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Removes a post from the database. It will show who last removed it.
 pub async fn bk_week_remove(
@@ -265,7 +264,7 @@ pub async fn bk_week_remove(
   if r["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      format!("Successfully flagged URL \"{}\" as `\"removed\": true` and `\"removed_by\": \"{}\"`", url, auth),
+      "Successfully flagged the post as removed!".to_string(),
       true,
       true
     ).await;
@@ -282,7 +281,8 @@ pub async fn bk_week_remove(
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Approves a post in the database. Approving posts tells the bot that it's original.
 pub async fn bk_week_approve(
@@ -308,17 +308,17 @@ pub async fn bk_week_approve(
 async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: bool) {
   if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(&url) {
     if post.get("removed").is_some() {
-      send_post_removed_message(ctx, &url, post.get("removed_by").unwrap().as_str().unwrap()).await;
+      send_post_removed_message(ctx, &url, post).await;
       return;
     }
 
     let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, &url]))).await.unwrap();
     if r.get("value").is_some() {
       if approve {
-        send_msg(ctx, format!("Successfully flagged URL \"<{}>\" as `approved:by_human`!", &url), true, true).await;
+        send_msg(ctx, "Successfully flagged the post as approved (by a human)!".to_string(), true, true).await;
       }
       else {
-        send_msg(ctx, format!("Successfully removed flag `approved:by_human` from URL \"<{}>\"!", &url), true, true).await;
+        send_msg(ctx, "Successfully removed the \"approved (by a human)\" flag from the post!".to_string(), true, true).await;
       }
     }
     else {
@@ -337,7 +337,8 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
   slash_command,
   prefix_command,
   default_member_permissions = "ADMINISTRATOR",
-  guild_only
+  guild_only,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Sets the channel where the bot will dump all log info. It's recommended to only run this once.
 pub async fn bk_admin_bind(
@@ -369,7 +370,8 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
   slash_command,
   prefix_command,
   guild_only,
-  guild_cooldown = 120
+  guild_cooldown = 120,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Updates all logs
 pub async fn bk_week_update(
@@ -658,7 +660,8 @@ async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Adds/removes a vote from a post. These votes are not tied to Reddit upvotes.
 pub async fn bk_week_vote(
@@ -678,7 +681,7 @@ pub async fn bk_week_vote(
     return Ok(());
   }
   if post_data[&url].get("removed").is_some() {
-    send_post_removed_message(ctx, &url, post_data[&url]["removed_by"].as_str().unwrap()).await;
+    send_post_removed_message(ctx, &url, &post_data[&url]).await;
     return Ok(());
   }
 
@@ -721,7 +724,8 @@ pub async fn bk_week_vote(
 
 #[poise::command(
   slash_command,
-  prefix_command
+  prefix_command,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Gets the top N (up to 10) posts within a certain category, such as upvotes. (Sorted descending.)
 pub async fn bk_week_top(
@@ -790,7 +794,8 @@ fn smallest_n<'a>(map: &'a HashMap<&'a str, i32>, n: usize) -> Vec<(&'a str, i32
 #[poise::command(
   slash_command,
   prefix_command,
-  owners_only
+  owners_only,
+  required_bot_permissions = "SEND_MESSAGES"
 )]
 /// Changes the subreddit(s) the bot patrols in. 
 pub async fn bk_cfg_sr(

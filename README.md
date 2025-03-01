@@ -10,7 +10,7 @@ An automation tool for Byte Dice. It's both a Discord and Reddit bot in one prog
 **You can learn more about copyright by reading the full [license](/LICENSE.txt).**
 
 ## How to run
-### Dependecies:
+### Dependencies:
 
 This program uses Rust (v1.82.0) and Python (v3.11.4), you can likely use other versions if they are compatible. This program also uses these Python modules:
 * asyncio
@@ -39,6 +39,10 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 | `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
 | `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
 | `ASSISTANT_OWNERS` | A list of user ids that "own" the bot. Separate each owner with a comma and NO spaces. |
+
+### Required permissions:
+* Send Messages
+* and... nothing else.
 
 ### How to run:
 * Download the code (and extract if needed).
