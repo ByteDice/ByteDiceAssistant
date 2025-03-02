@@ -43,7 +43,7 @@ async fn not_bk_mod_msg(ctx: Context<'_>) {
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Shows helpful information on how to use the bk_week section of the bot.
 pub async fn bk_week_help(
@@ -75,7 +75,7 @@ pub async fn bk_week_help(
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | EMBED_LINKS"
 )]
 /// Fetches the data of a single post, just for you. The data has to be within the database to work.
 pub async fn bk_week_get(
@@ -172,7 +172,7 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Fetches a post from Reddit and adds it to the database.
 pub async fn bk_week_add(
@@ -244,7 +244,7 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Removes a post from the database. It will show who last removed it.
 pub async fn bk_week_remove(
@@ -282,7 +282,7 @@ pub async fn bk_week_remove(
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Approves a post in the database. Approving posts tells the bot that it's original.
 pub async fn bk_week_approve(
@@ -338,7 +338,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
   prefix_command,
   default_member_permissions = "ADMINISTRATOR",
   guild_only,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Sets the channel where the bot will dump all log info. It's recommended to only run this once.
 pub async fn bk_admin_bind(
@@ -371,7 +371,7 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
   prefix_command,
   guild_only,
   guild_cooldown = 120,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | READ_MESSAGE_HISTORY | EMBED_LINKS"
 )]
 /// Updates all logs
 pub async fn bk_week_update(
@@ -418,7 +418,7 @@ pub async fn bk_week_update(
   // Adding new posts 
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
   let weekly_art = r_data[BK_WEEK].as_object().unwrap();
-  add_posts(http, c_id, weekly_art, &msgs_json).await;
+  add_posts(http, c_id, weekly_art, &msgs_json, max_age_secs).await;
   
   // Stop if only_add
   if only_add.unwrap_or_else(|| false) {
@@ -552,7 +552,7 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value, max_age: u
     let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or_else(|| 0);
 
     // old
-    if now - post_date > max_age  {
+    if now - post_date > max_age {
       if let Some(obj) = msgs_json["old"].as_object_mut() {
         obj.insert(url.clone(), json!(msg.id.get()));
         continue;
@@ -600,13 +600,20 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value, max_age: u
 }
 
 
-async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value) {
+async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value, max_age: u64) {
+  let now = SystemTime::now()
+    .duration_since(UNIX_EPOCH)
+    .expect("Time went backwards")
+    .as_secs() as u64;
+
   for url in r_data.keys() {
-    if ["no_change", "updated", "removed", "old"]
+    if ["no_change", "updated", "removed", "old", "duplicates"]
       .iter()
       .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
       { continue; }
-    if msgs_json["duplicates"].as_object().unwrap().contains_key(url) { continue; }
+
+      let post_date = r_data[url]["date_unix"].as_u64().unwrap();
+      if now - post_date > max_age { continue; }
 
     if r_data[url].get("removed").is_some() {
       http_send_embed(http, c_id, embed_post_removed(&r_data[url], url, false)).await;
@@ -661,7 +668,7 @@ async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Adds/removes a vote from a post. These votes are not tied to Reddit upvotes.
 pub async fn bk_week_vote(
@@ -725,7 +732,7 @@ pub async fn bk_week_vote(
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | EMBED_LINKS"
 )]
 /// Gets the top N (up to 10) posts within a certain category, such as upvotes. (Sorted descending.)
 pub async fn bk_week_top(
@@ -795,7 +802,7 @@ fn smallest_n<'a>(map: &'a HashMap<&'a str, i32>, n: usize) -> Vec<(&'a str, i32
   slash_command,
   prefix_command,
   owners_only,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Changes the subreddit(s) the bot patrols in. 
 pub async fn bk_cfg_sr(

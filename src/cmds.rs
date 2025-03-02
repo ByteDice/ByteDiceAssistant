@@ -13,7 +13,7 @@ use regex::Regex;
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Check if you have connection to the bot.
 pub async fn ping(
@@ -31,7 +31,7 @@ pub async fn ping(
   slash_command,
   prefix_command,
   owners_only,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Stops the bot... if you're mighty enough!
 pub async fn stop(
@@ -66,7 +66,7 @@ pub async fn stop(
   slash_command,
   prefix_command,
   owners_only,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | EMBED_LINKS"
 )]
 /// Creates an embed.
 pub async fn embed(
@@ -76,7 +76,7 @@ pub async fn embed(
   #[description = "Color of side strip."] color: Option<u32>,
   #[description = "A URL the title is bound to."] url: Option<String>,
   #[description = "Timestamp at bottom (best to leave empty)."] timestamp: Option<Timestamp>,
-  #[description = "Empheral (only visible to you)."] empheral: Option<bool>,
+  #[description = "Ephemeral (only visible to you)."] ephemeral: Option<bool>,
   #[description = "Shows \"used {Command}\" reply text."] reply: Option<bool>,
   #[description = "Text that appears above and outside of the embed."] message: Option<String>,
   #[description = "A URL for a thumbnail image."] thumbnail: Option<String>,
@@ -93,7 +93,7 @@ pub async fn embed(
       col: color,
       url,
       ts: timestamp,
-      empheral: empheral.unwrap_or_else(|| false),
+      ephemeral: ephemeral.unwrap_or_else(|| false),
       message,
       thumbnail,
       author: if author.unwrap_or_else(|| false) { Some(Author { name: ctx.author().name.clone(), url: "".to_string(), icon_url: ctx.author().avatar_url().unwrap() }) } else { None }
@@ -114,12 +114,12 @@ pub async fn embed(
   slash_command,
   prefix_command,
   owners_only,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Sends a message.
 pub async fn send(
   ctx: Context<'_>,
-  #[description = "The message to send (NO EMPHERAL)"] msg: String
+  #[description = "The message to send (NOT EPHEMERAL)"] msg: String
 ) -> Result<(), Error>
 {
   send_msg(ctx, msg.replace("\\n", "\n"), false, false).await;
@@ -133,7 +133,7 @@ pub async fn send(
   slash_command,
   prefix_command,
   rename = "8_ball",
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Magic 8-ball. Ask a question, get an answer.
 pub async fn eight_ball(
@@ -159,7 +159,7 @@ pub async fn eight_ball(
 #[poise::command(
   slash_command,
   prefix_command,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Convert a long reddit URL to a short one. The bot ONLY uses shortURLs when asking for one.
 pub async fn re_shorturl(
@@ -198,7 +198,7 @@ pub fn to_shorturl(url: &str) -> Result<String, &str> {
   prefix_command,
   default_member_permissions = "ADMINISTRATOR",
   guild_only,
-  required_bot_permissions = "SEND_MESSAGES"
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Add your server to my database so I can sell it! (/s), I only store some minimal data the bot needs.
 pub async fn add_server(

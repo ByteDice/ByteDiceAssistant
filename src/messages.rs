@@ -21,7 +21,7 @@ pub struct EmbedOptions {
   pub col: Option<u32>,
   pub url: Option<String>,
   pub ts: Option<Timestamp>,
-  pub empheral: bool,
+  pub ephemeral: bool,
   pub message: Option<String>,
   pub author: Option<Author>,
   pub thumbnail: Option<String>
@@ -34,7 +34,7 @@ impl Default for EmbedOptions {
       col: None,
       url: None,
       ts: None,
-      empheral: false,
+      ephemeral: false,
       message: None,
       author: None,
       thumbnail: None
@@ -56,14 +56,14 @@ fn none_to_empty(string: Option<String>) -> String {
 pub async fn send_msg(
   ctx: Context<'_>,
   t: String,
-  empheral: bool,
+  ephemeral: bool,
   reply: bool
 ) -> Option<ReplyHandle<'_>>
 {
   if reply {
     let r = CreateReply {
       content: Some(t),
-      ephemeral: Some(empheral),
+      ephemeral: Some(ephemeral),
       ..Default::default()
     };
 
@@ -104,7 +104,7 @@ pub async fn send_embed(
     let r = CreateReply {
       embeds: vec![embed],
       content: options.message,
-      ephemeral: Some(options.empheral),
+      ephemeral: Some(options.ephemeral),
       ..Default::default()
     };
 
@@ -200,7 +200,7 @@ pub async fn send_dm(msg: String, args: Args) {
 }
 
 
-pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
+pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   let media_type = &post_data["post_data"]["media_type"];
 
   let desc_str = format!(
@@ -245,7 +245,7 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
     col: Some(DEFAULT_DC_COL),
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
-    empheral,
+    ephemeral,
     thumbnail: media_urls.get(0)
       .and_then(|url| url.as_str().map(|s| s.to_string()))
       .or_else(|| None),
@@ -254,7 +254,7 @@ pub fn embed_post(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions 
 }
 
 
-pub fn embed_post_removed(post_data: &Value, url: &str, empheral: bool) -> EmbedOptions {
+pub fn embed_post_removed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   return EmbedOptions { 
     title: Some("REMOVED!".to_string()),
     desc: format!(
@@ -268,7 +268,7 @@ pub fn embed_post_removed(post_data: &Value, url: &str, empheral: bool) -> Embed
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
     ts:  Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
-    empheral,
+    ephemeral,
     ..Default::default()
   };
 }
