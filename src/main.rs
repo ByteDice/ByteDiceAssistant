@@ -32,9 +32,6 @@ use tokio::time;
 use websocket::send_cmd_json;
 
 
-// TODO: bot command permissions
-
-
 #[derive(Parser, Serialize, Clone)]
 struct Args {
   #[arg(short = 'p', long, default_value = "2920", help = "Sets the port number, e.g 2200.")]

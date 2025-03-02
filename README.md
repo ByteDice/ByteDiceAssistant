@@ -33,12 +33,12 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 | --- | --- |
 | `ASSISTANT_TOKEN` | The Discord bot token. (Create a Discord bot [here](https://discord.com/developers/docs/intro)!) |
 | `ASSISTANT_TOKEN_TEST` | (Optional) A testing Discord bot token. This is only needed when the program is run with `-t` or `--test`. |
-| `ASSISTANT_DM_USER` | (Optional) Your Discord user ID. The assistant will DM this user when *certain* errors occur. |
 | `ASSISTANT_R_ID` | The id for the Reddit bot/account. (Create a Reddit bot [here](https://www.reddit.com/prefs/apps)!)  |
 | `ASSISTANT_R_TOKEN` | The token for the Reddit bot/account. |
 | `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
 | `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
-| `ASSISTANT_OWNERS` | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. |
+| `ASSISTANT_OWNERS` | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
+| `ASSISTANT_BK_WEEK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for  |
 
 ### Required permissions:
 **These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot).**

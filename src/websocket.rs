@@ -134,7 +134,7 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
       if text.starts_with("json:") {
         let t_json: Value = serde_json::from_str(&text[5..]).unwrap();
         if t_json.get("error").is_some() {
-          send_dm("Internal Python error!".to_string(), args).await;
+          send_dm("Unknown internal Python error occurred!".to_string(), args).await;
         }
       }
 
