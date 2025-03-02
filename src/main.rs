@@ -201,7 +201,6 @@ async fn gen_bot(data: Data, args: Args) -> Client {
         cmds::eight_ball(),
         cmds::re_shorturl(),
         cmds::add_server(),
-        //cmds::rule(),
         // bk_week
         bk_week_cmds::bk_week_help(),
         bk_week_cmds::bk_week_get(),
