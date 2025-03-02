@@ -26,12 +26,8 @@ enum TopCategory {
 }
 
 
-fn is_bk_mod(mod_list: Value, uid: u64) -> bool {
-  let obj = mod_list.as_object().unwrap();
-  let bk1_arr = obj["bk1"]["discord"].as_array().unwrap();
-  let bk2_arr = obj["bk2"]["discord"].as_array().unwrap();
-
-  return bk1_arr.contains(&json!(uid)) || bk2_arr.contains(&json!(uid));
+fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
+  return mod_list.contains(&uid);
 }
 
 
@@ -181,7 +177,7 @@ pub async fn bk_week_add(
   #[description = "Wether to approve it after adding it"] approve: Option<bool>
 ) -> Result<(), Error>
 {
-  if !is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get()) {
+  if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
     not_bk_mod_msg(ctx).await;
     return Ok(());
   }
@@ -253,7 +249,7 @@ pub async fn bk_week_remove(
   #[description = "The reason of the removal."] reason: Option<String>
 ) -> Result<(), Error>
 {
-  if !is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get()) {
+  if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
     not_bk_mod_msg(ctx).await;
     return Ok(());
   }
@@ -291,7 +287,7 @@ pub async fn bk_week_approve(
   #[description = "Wether to approve or disapprove the post"] disapprove: Option<bool>
 ) -> Result<(), Error>
 {
-  if !is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get()) {
+  if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
     not_bk_mod_msg(ctx).await;
     return Ok(());
   }
@@ -694,7 +690,7 @@ pub async fn bk_week_vote(
 
   let url_data = &post_data[&url];
   
-  let is_mod = is_bk_mod(ctx.data().bk_mods_json.clone(), ctx.author().id.get());
+  let is_mod = is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get());
   let voters_dc = url_data["votes"]["voters_dc"].as_array().unwrap();
   let mod_voters = url_data["votes"]["mod_voters"].as_array().unwrap();
   let voters = if is_mod { mod_voters } else { voters_dc };

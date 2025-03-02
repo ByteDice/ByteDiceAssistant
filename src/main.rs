@@ -62,7 +62,7 @@ struct Data {
   ball_prompts: [Vec<String>; 2],
   reddit_data: Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
-  bk_mods_json: Value,
+  bk_mods: Vec<u64>,
   args: Args
 }
 
@@ -145,16 +145,21 @@ async fn start(args: Args, owners: Vec<u64>) {
 async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
   let ball_quirk_str   = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
-  let bk_mods_str      = std::fs::read_to_string("./data/bk_mods.json").unwrap();
 
   let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
-  let bk_mods:      Value       = serde_json::from_str(&bk_mods_str).unwrap();
+  
+  let mods_env = std::env::var("ASSISTANT_BK_MODS").expect("Missing ASSISTANT_BK_MODS env var!");
+  let mods_vec_str: Vec<String> = mods_env.split(",").map(String::from).collect();
+  let mods_vec_u64: Vec<u64> = mods_vec_str
+    .iter()
+    .filter_map(|s| Some(s.parse::<u64>().expect("Failed to parse ASSISTANT_BK_MODS. Invalid syntax.")))
+    .collect();
 
   let data = Data {
     owners,
     ball_prompts: [ball_classic, ball_quirk],
-    bk_mods_json: bk_mods,
+    bk_mods: mods_vec_u64,
     reddit_data: None.into(),
     discord_data: None.into(),
     args: args.clone()
