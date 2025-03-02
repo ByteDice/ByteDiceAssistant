@@ -98,17 +98,17 @@ async fn receive_response() -> Option<Value> {
 }
 
 
-pub async fn start(args: Args) {
+pub async fn start(args: Args, owners: Vec<u64>) {
   rs_println!("Starting local websocket...");
   let ip = format!("127.0.0.1:{}", args.port);
   let listener = TcpListener::bind(&ip).await.unwrap();
   rs_println!("WebSocket server running on ws://{}", ip);
 
-  tokio::spawn(handle_connections(listener, args));
+  tokio::spawn(handle_connections(listener, args, owners));
 }
 
 
-async fn handle_connections(listener: TcpListener, args: Args) {
+async fn handle_connections(listener: TcpListener, args: Args, owners: Vec<u64>) {
   while let Ok((stream, _)) = listener.accept().await {
     let ws_stream = accept_async(stream).await.unwrap();
     let (sender, receiver) = ws_stream.split();
@@ -120,13 +120,13 @@ async fn handle_connections(listener: TcpListener, args: Args) {
     set_receiver(receiver_arc.clone()).await;
 
     while let Some(Ok(msg)) = receiver_arc.lock().await.as_mut().unwrap().next().await {
-      handle_message(msg, args.clone()).await;
+      handle_message(msg, args.clone(), owners.clone()).await;
     }
   }
 }
 
 
-async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
+async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners: Vec<u64>) {
   match msg {
     tungstenite::Message::Text(text) => {
       rs_println!("Received from Python: {}", text);
@@ -134,7 +134,7 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args) {
       if text.starts_with("json:") {
         let t_json: Value = serde_json::from_str(&text[5..]).unwrap();
         if t_json.get("error").is_some() {
-          send_dm("Unknown internal Python error occurred!".to_string(), args).await;
+          send_dm("Unknown internal Python error occurred!".to_string(), args, owners).await;
         }
       }
 

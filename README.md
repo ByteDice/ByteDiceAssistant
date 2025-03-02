@@ -38,10 +38,10 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 | `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
 | `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
 | `ASSISTANT_OWNERS` | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
-| `ASSISTANT_BK_WEEK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for  |
+| `ASSISTANT_BK_WEEK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/bk_week` commands. |
 
 ### Required permissions:
-**These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot).**
+**These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.**
 * Send Messages
 * Read Message History
 * View Channels

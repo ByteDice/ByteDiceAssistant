@@ -58,6 +58,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 
 struct Data {
+  owners: Vec<u64>,
   ball_prompts: [Vec<String>; 2],
   reddit_data: Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
@@ -74,6 +75,13 @@ async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
 
+  let own_env = std::env::var("ASSISTANT_OWNERS").expect("Missing ASSISTANT_OWNERS env var!");
+  let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
+  let own_vec_u64: Vec<u64> = own_vec_str
+    .iter()
+    .filter_map(|s| Some(s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax.")))
+    .collect();
+
   if args.test { println!("----- USING TEST BOT -----"); }
   if args.dev { println!("----- DEV MODE ENABLED -----"); }
   if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
@@ -88,7 +96,7 @@ async fn main() {
   else if args.rs && ! args.py {
     println!("----- RUST ONLY MODE -----");
     rs_println!("ARGS: {}", args_str);
-    start(args).await;
+    start(args, own_vec_u64.clone()).await;
     process::exit(0);
   }
   else if args.py && args.rs {
@@ -103,8 +111,8 @@ async fn main() {
 
   let rust = thread::spawn(move || {
     rt.block_on(async {
-      websocket::start(rust_args.clone()).await;
-      start(rust_args).await;
+      websocket::start(rust_args.clone(), own_vec_u64.clone()).await;
+      start(rust_args, own_vec_u64).await;
     });
   });
 
@@ -125,8 +133,8 @@ async fn main() {
 }
 
 
-async fn start(args: Args) {
-  let data = gen_data(args.clone()).await;
+async fn start(args: Args, owners: Vec<u64>) {
+  let data = gen_data(args.clone(), owners).await;
   let mut bot = gen_bot(data, args).await;
 
   rs_println!("Starting bot...");
@@ -134,7 +142,7 @@ async fn start(args: Args) {
 }
 
 
-async fn gen_data(args: Args) -> Data {
+async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
   let ball_quirk_str   = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
   let bk_mods_str      = std::fs::read_to_string("./data/bk_mods.json").unwrap();
@@ -144,6 +152,7 @@ async fn gen_data(args: Args) -> Data {
   let bk_mods:      Value       = serde_json::from_str(&bk_mods_str).unwrap();
 
   let data = Data {
+    owners,
     ball_prompts: [ball_classic, ball_quirk],
     bk_mods_json: bk_mods,
     reddit_data: None.into(),
@@ -174,14 +183,7 @@ async fn gen_bot(data: Data, args: Args) -> Client {
   let token_end_len = token[peek_len..].len();
   rs_println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
 
-  let own_env = std::env::var("ASSISTANT_OWNERS").expect("Missing ASSISTANT_OWNERS env var!");
-  let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
-  let own_vec_u64: Vec<u64> = own_vec_str
-    .iter()
-    .filter_map(|s| Some(s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax.")))
-    .collect();
-
-  let own: HashSet<UserId> = own_vec_u64.into_iter().map(UserId::from).collect();
+  let own: HashSet<UserId> = data.owners.clone().into_iter().map(UserId::from).collect();
 
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {

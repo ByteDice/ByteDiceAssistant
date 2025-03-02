@@ -178,25 +178,17 @@ pub async fn http_edit_msg(
 }
 
 
-pub async fn send_dm(msg: String, args: Args) {
-  let uids = env::var("ASSISTANT_OWNERS");
-  if uids.is_err() { return; }
-  
-  let uids_split: Vec<String> = uids.unwrap()
-    .split(',')
-    .map(|s| s.to_string())
-    .collect();
-
+pub async fn send_dm(msg: String, args: Args, owners: Vec<u64>) {
   let token: String =
-    if !args.test { std::env::var("ASSISTANT_TOKEN")     .expect("Missing ASSISTANT_TOKEN env var!") }
-    else          { std::env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!") };
+    if !args.test { env::var("ASSISTANT_TOKEN")     .expect("Missing ASSISTANT_TOKEN env var!") }
+    else          { env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!") };
 
   let http = Http::new(&token);
 
   let c_msg = CreateMessage::new().content(msg);
 
-  for uid in uids_split {
-    let user = UserId::new(uid.parse::<u64>().unwrap());
+  for uid in owners {
+    let user = UserId::new(uid);
     let _ = user.dm(http.as_ref(), c_msg.clone()).await;
   }
 }
