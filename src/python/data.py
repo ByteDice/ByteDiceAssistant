@@ -1,13 +1,12 @@
 import os
 import json
-from typing import Final
 import time
 
 import bot as botPy
 from macros import *
 
 
-BK_WEEKLY: Final[str] = "bk_weekly_art_posts"
+DATA_PATH = os.path.abspath(os.path.join(os.path.join(os.getcwd(), "data")))
 
 
 class PostData:
@@ -67,9 +66,7 @@ class PostData:
   
 
 def read_data(bot: botPy.Bot) -> bool:
-  # Intentionally unreadable >:]
-  data_path = os.path.abspath(os.path.join(os.path.join(os.getcwd(), "data")))
-  r_path = os.path.join(data_path, "reddit_data.json")
+  r_path = os.path.join(DATA_PATH, "reddit_data.json")
 
   if os.path.isfile(r_path):
     bot.data_f = open(r_path, "r+")
@@ -79,11 +76,11 @@ def read_data(bot: botPy.Bot) -> bool:
       return False
 
     py_print("reddit_data.json not found, creating new from preset...")
-    with open(os.path.join(data_path, "reddit_data_preset.json", "r")) as f:
+    with open(os.path.join(DATA_PATH, "reddit_data_preset.json", "r")) as f:
       data_preset_json = json.load(f)
 
-    data_preset_json[BK_WEEKLY].pop("EXAMPLE VALUE", None)
-    data_preset_json[BK_WEEKLY].pop("EXAMPLE VALUE DELETED", None)
+    data_preset_json[botPy.BK_WEEKLY].pop("EXAMPLE VALUE", None)
+    data_preset_json[botPy.BK_WEEKLY].pop("EXAMPLE VALUE DELETED", None)
 
     with open(r_path, "w") as f:
       json.dump(data_preset_json, f, indent = 2)
@@ -104,9 +101,32 @@ def write_data(bot: botPy.Bot) -> bool:
   return True
 
 
+async def read_cfg(bot: botPy.Bot) -> bool:
+  r_path = os.path.join(DATA_PATH, "cfg.json")
+
+  if os.path.isfile(r_path):
+    bot.data_f = open(r_path, "r+")
+
+  else:
+    py_print("cfg.json not found, creating new from preset...")
+    with open(os.path.join(DATA_PATH, "cfg_default.json", "r")) as f:
+      data_preset_json = json.load(f)
+
+    with open(r_path, "w") as f:
+      json.dump(data_preset_json, f, indent = 2)
+
+    bot.data_f = open(r_path, "r+")
+
+  data_str = bot.data_f.read()
+  json_data = json.loads(data_str)
+  await bot.update_cfg(json_data)
+  
+  return True
+
+
 def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool = False) -> bool:
   if bypass_conditions:
-    bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
+    bot.data[botPy.BK_WEEKLY][new_data.url] = new_data.to_json()
     if bot.args["dev"]:
       py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
@@ -114,14 +134,14 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
   # not sure what this is for
   updated = False
 
-  if new_data.url not in bot.data[BK_WEEKLY] or updated:
-    bot.data[BK_WEEKLY][new_data.url] = new_data.to_json()
+  if new_data.url not in bot.data[botPy.BK_WEEKLY] or updated:
+    bot.data[botPy.BK_WEEKLY][new_data.url] = new_data.to_json()
     if bot.args["dev"]:
       py_print(f"Added post \"{new_data.url}\"")
     return True
 
-  if "removed" not in bot.data[BK_WEEKLY][new_data.url]:
-    updated = new_data.upvotes != bot.data[BK_WEEKLY][new_data.url]["post_data"]
+  if "removed" not in bot.data[botPy.BK_WEEKLY][new_data.url]:
+    updated = new_data.upvotes != bot.data[botPy.BK_WEEKLY][new_data.url]["post_data"]
   
   else:
     py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
@@ -129,15 +149,15 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
   
 
 def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
-  if not hasattr(bot.data[BK_WEEKLY][url], "removed"):
-    bot.data[BK_WEEKLY][url]["approved"]["by_human"] = approved
+  if not hasattr(bot.data[botPy.BK_WEEKLY][url], "removed"):
+    bot.data[botPy.BK_WEEKLY][url]["approved"]["by_human"] = approved
     return True
   
   return False
 
 
 def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: str = "None") -> bool:
-  weekly = bot.data[BK_WEEKLY]
+  weekly = bot.data[botPy.BK_WEEKLY]
 
   if url in weekly:
     weekly[url] = {
@@ -153,7 +173,7 @@ def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: s
 
 def remove_old_posts(bot: botPy.Bot, max_age: int) -> bool:
   now = int(time.time())
-  weekly = bot.data[BK_WEEKLY]
+  weekly = bot.data[botPy.BK_WEEKLY]
   remove: list[str] = []
 
   for url, post in weekly.items():
@@ -174,10 +194,10 @@ def set_vote_post(
   from_dc: bool = False,
   remove_vote: bool = False,
 ) -> bool:
-  if url not in bot.data[BK_WEEKLY]:
+  if url not in bot.data[botPy.BK_WEEKLY]:
     return False
 
-  votes = bot.data[BK_WEEKLY][url]["votes"]
+  votes = bot.data[botPy.BK_WEEKLY][url]["votes"]
   re_voters: set[str] = set(votes["voters_re"])
   dc_voters: set[int] = set(votes["voters_dc"])
   mod_voters: set[int] = set(votes["mod_voters"])
@@ -194,8 +214,8 @@ def set_vote_post(
       return False
     target_voters.add(user)
 
-  bot.data[BK_WEEKLY][url]["votes"]["voters_re"] = list(re_voters)
-  bot.data[BK_WEEKLY][url]["votes"]["voters_dc"] = list(dc_voters)
-  bot.data[BK_WEEKLY][url]["votes"]["mod_voters"] = list(mod_voters)
+  bot.data[botPy.BK_WEEKLY][url]["votes"]["voters_re"] = list(re_voters)
+  bot.data[botPy.BK_WEEKLY][url]["votes"]["voters_dc"] = list(dc_voters)
+  bot.data[botPy.BK_WEEKLY][url]["votes"]["mod_voters"] = list(mod_voters)
 
   return True

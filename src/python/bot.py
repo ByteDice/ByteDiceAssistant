@@ -1,8 +1,13 @@
 from io import TextIOWrapper
 import asyncpraw as praw
 import os
-
+from typing import Final
 from macros import *
+import json
+
+
+BK_WEEKLY: Final[str] = "bk_weekly_art_posts"
+BK_WEEK:   Final[str] = "bk_week"
 
 
 class Bot:
@@ -11,6 +16,8 @@ class Bot:
   secret:   str = os.environ.get("ASSISTANT_R_TOKEN")
   username: str = os.environ.get("ASSISTANT_R_NAME")
   password: str = os.environ.get("ASSISTANT_R_PASS")
+
+  fetch_limit = 0
 
   useragent: str =\
     f"{username} by u/RandomPersonDotExe aka u/Byte_Dice"\
@@ -48,6 +55,7 @@ class Bot:
     
     return False
   
-  async def change_sr(self, new_sr) -> bool:
-    self.sr = await self.r.subreddit(new_sr)
+  async def update_cfg(self, new_cfg: dict) -> bool:
+    self.sr = await self.r.subreddit(new_cfg[BK_WEEK]["subreddits"])
+    self.fetch_limit = new_cfg[BK_WEEK]["fetch_limit"]
     return True

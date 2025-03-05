@@ -57,7 +57,7 @@ async def bk_week_add(mention: models.Comment, bot: botPy.Bot):
   short_url = mention.submission.shortlink
 
   r = ""
-  bd = bot.data[data.BK_WEEKLY]
+  bd = bot.data[botPy.BK_WEEKLY]
   # TODO: ask if the messages should be changed
   if short_url not in bd:
     posts.add_post_url(bot, short_url)

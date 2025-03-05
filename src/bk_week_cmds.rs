@@ -1,7 +1,7 @@
 use crate::websocket::send_cmd_json;
-use crate::{cmds, rs_println, websocket, Context, Data, Error, BK_WEEK};
+use crate::{cmds, rs_println, websocket, Context, Error, BK_WEEK};
 use crate::messages::*;
-use crate::data::{self, dc_bind_bk};
+use crate::data::{self, dc_bind_bk, get_mutex_data};
 
 use std::collections::HashMap;
 use std::fs;
@@ -81,21 +81,13 @@ pub async fn bk_week_get(
 {
   data::update_re_data(ctx.data()).await;
 
-  let reddit_data = get_reddit_data(ctx.data()).await?;
+  let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
   if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
     send_embed_for_post(ctx, post, &url).await?;
   }
 
   return Ok(());
-}
-
-pub async fn get_reddit_data(data: &Data) -> Result<Value, Error> {
-  let data_lock = data.reddit_data.lock().await;
-  return match data_lock.as_ref() {
-    Some(data) => Ok(data.clone()),
-    None => Err("Reddit data is corrupted".into()),
-  };
 }
 
 
@@ -186,7 +178,7 @@ pub async fn bk_week_add(
   let shorturl = if shorturl_u.is_ok() { shorturl_u.unwrap() } else { url };
 
   data::update_re_data(ctx.data()).await;
-  let reddit_data = get_reddit_data(ctx.data()).await.unwrap();
+  let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
     let a = approve.unwrap_or_else(|| false);
@@ -293,7 +285,7 @@ pub async fn bk_week_approve(
   }
 
   data::update_re_data(ctx.data()).await;
-  let reddit_data = get_reddit_data(ctx.data()).await.unwrap();
+  let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
   approve_cmd(ctx, &url, &reddit_data, !disapprove.unwrap_or_else(|| false)).await;
   
@@ -392,7 +384,7 @@ pub async fn bk_week_update(
 
   send_cmd_json("add_new_posts", Some(json!([max_age_secs]))).await;
   data::update_re_data(ctx.data()).await;
-  let r_data = get_reddit_data(ctx.data()).await.unwrap();
+  let r_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
   let c_id_u = get_c_id(ctx).await;
   
@@ -464,8 +456,7 @@ async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
     return None;
   }
 
-  let d_lock = ctx.data().discord_data.lock().await;
-  let d = d_lock.as_ref().unwrap();
+  let d = get_mutex_data(&ctx.data().reddit_data).await.unwrap();
   let c_id_u =
     d["servers"]
      [ctx.guild_id().unwrap().to_string()]
@@ -675,7 +666,7 @@ pub async fn bk_week_vote(
 {
   data::update_re_data(ctx.data()).await;
   let uid = ctx.author().id.get();
-  let re_data = get_reddit_data(ctx.data()).await.unwrap();
+  let re_data = get_mutex_data(&ctx.data().reddit_data).await?;
   let post_data = re_data[BK_WEEK].clone();
   let unw_vote = un_vote.unwrap_or_else(|| false);
   
@@ -742,7 +733,7 @@ pub async fn bk_week_top(
 ) -> Result<(), Error>
 {
   let mut all: HashMap<&str, i32> = HashMap::new();
-  let posts = &get_reddit_data(ctx.data()).await.unwrap()[BK_WEEK];
+  let posts = &get_mutex_data(&ctx.data().reddit_data).await?[BK_WEEK];
   let posts_u = posts.as_object().unwrap();
 
   for (url, dat) in posts_u {
@@ -789,32 +780,4 @@ fn smallest_n<'a>(map: &'a HashMap<&'a str, i32>, n: usize) -> Vec<(&'a str, i32
   let mut vec: Vec<_> = map.iter().collect();
   vec.sort_unstable_by(|a, b| a.1.cmp(b.1));
   vec.into_iter().take(n).map(|(&k, &v)| (k, v)).collect()
-}
-
-
-
-
-#[poise::command(
-  slash_command,
-  prefix_command,
-  owners_only,
-  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
-)]
-/// Changes the subreddit(s) the bot patrols in. 
-pub async fn bk_cfg_sr(
-  ctx: Context<'_>,
-  sr: String
-) -> Result<(), Error>
-{
-  let r = send_cmd_json("change_sr", Some(json!([sr]))).await;
-
-  if r.is_some() {
-    if r.unwrap()["value"].as_bool().unwrap() {
-      send_msg(ctx, "Successfully updated subreddits!".to_string(), true, true).await;
-      return Ok(());
-    }
-  }
-
-  send_msg(ctx, "Failed to update subreddits: Failed-type response from Python.".to_string(), true, true).await;
-  return Ok(());
 }

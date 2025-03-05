@@ -82,7 +82,7 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
     case "set_approve_post": r =       data .set_approve_post  (bot, *v["args"])
     case "set_vote_post":    r =       data .set_vote_post     (bot, *v["args"])
     case "remove_old_posts": r =       data .remove_old_posts  (bot, *v["args"])
-    case "change_sr":        r = await bot  .change_sr         (*v["args"])
+    case "update_cfg":       r = await bot  .update_cfg        (*v["args"])
     case "stop_praw":        r = await bot  .stop              ()
     case _: value_supported = False
 

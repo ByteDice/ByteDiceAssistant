@@ -2,15 +2,18 @@ use std::{fs, io::Write};
 use std::path::Path;
 
 use serde_json::{self, Value, json};
+use tokio::sync::Mutex;
 
-use crate::{Data, BK_WEEK, rs_println};
+use crate::{Data, BK_WEEK, rs_println, Error};
 use crate::websocket::send_cmd_json;
 
 
-static DATA_PATH_DC: &str = "./data/discord_data.json";
-static PRESET_PATH_DC: &str = "./data/discord_data_preset.json";
-static DATA_PATH_RE: &str = "./data/reddit_data.json";
-static PRESET_PATH_RE: &str = "./data/reddit_data_preset.json";
+static DATA_PATH_DC:    &str = "./data/discord_data.json";
+static PRESET_PATH_DC:  &str = "./data/discord_data_preset.json";
+static DATA_PATH_RE:    &str = "./data/reddit_data.json";
+static PRESET_PATH_RE:  &str = "./data/reddit_data_preset.json";
+static DATA_PATH_CFG:   &str = "./data/cfg.json";
+static PRESET_PATH_CFG: &str = "./data/cfg_default.json";
 
 
 pub async fn read_dc_data(data: &Data, wipe: bool) {
@@ -107,6 +110,35 @@ pub async fn write_re_data() {
 }
 
 
+pub async fn read_cfg_data(data: &Data, wipe: bool) {
+  if !Path::new(DATA_PATH_CFG).exists() || wipe {
+    rs_println!(
+      "{} creating new from preset...",
+      if !wipe { "cfg.json not found," } else { "[WIPE] (cfg.json)" }
+    );
+    generate_cfg_data();
+  }
+
+  let str_data = fs::read_to_string(DATA_PATH_CFG).unwrap();
+  let json_data = serde_json::from_str(&str_data).unwrap();
+  let mut cfg_data = data.cfg.lock().await;
+  *cfg_data = json_data;
+
+  send_cmd_json("update_cfg", Some(json!([str_data]))).await;
+}
+
+
+fn generate_cfg_data() {
+  let preset_str = fs::read_to_string(PRESET_PATH_CFG).unwrap();
+  let preset_json: Value = serde_json::from_str(&preset_str).unwrap();
+
+  let json_str = serde_json::to_string_pretty(&preset_json).unwrap();
+
+  let mut file = fs::File::create(DATA_PATH_CFG).unwrap();
+  file.write_all(json_str.as_bytes()).unwrap();
+}
+
+
 pub async fn dc_add_server(data: &Data, server_id: u64) -> Result<(), ()> {
   let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
@@ -154,4 +186,14 @@ pub async fn dc_contains_server(data: &Data, server_id: u64) -> bool {
 
   if servers.contains_key(&server_id.to_string()) { return true; }
   else { return false; }
+}
+
+
+#[allow(non_snake_case)]
+pub async fn get_mutex_data(data: &Mutex<Option<Value>>) -> Result<Value, Error> {
+  let data_lock = data.lock().await;
+  return match data_lock.as_ref() {
+    Some(data) => Ok(data.clone()),
+    None => Err("Cannot get mutex data: The data is corrupted!".into()),
+  };
 }

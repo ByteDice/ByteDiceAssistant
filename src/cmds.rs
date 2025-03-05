@@ -1,6 +1,6 @@
 use std::process;
 
-use crate::data::dc_add_server;
+use crate::data::{dc_add_server, get_mutex_data};
 use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
 use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
@@ -8,6 +8,7 @@ use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MA
 use poise::serenity_prelude::{OnlineStatus, Timestamp};
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
+use serde_json::json;
 
 
 #[poise::command(
@@ -214,5 +215,33 @@ pub async fn add_server(
     send_msg(ctx, "Oopsies `(｡>\\\\<)`. It looks like my data i-is \\**sob*\\*... c-corrupted!".to_string(), true, true).await;
   }
 
+  return Ok(());
+}
+
+
+#[poise::command(
+  slash_command,
+  prefix_command,
+  owners_only,
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
+)]
+/// Reloads the entire config file.
+pub async fn reload_cfg(
+  ctx: Context<'_>
+) -> Result<(), Error>
+{
+
+  let d = get_mutex_data(&ctx.data().cfg).await?;
+  let d_str = serde_json::to_string(&d)?;
+  let r = send_cmd_json("update_cfg", Some(json!([d_str]))).await; // TODO: THIS
+
+  if r.is_some() {
+    if r.unwrap()["value"].as_bool().unwrap() {
+      send_msg(ctx, "Successfully reloaded the configs!".to_string(), true, true).await;
+      return Ok(());
+    }
+  }
+
+  send_msg(ctx, "Failed to reload configs: Failed-type response from Python.".to_string(), true, true).await;
   return Ok(());
 }

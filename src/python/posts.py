@@ -69,7 +69,7 @@ async def fetch_posts_with_flair(bot: botPy.Bot, flair_name: str) -> list[models
   posts: list[models.Submission] = []
 
   # ~36 OG-art posts per week, round limit to 50, 75 or 100
-  async for post in bot.sr.search(f"flair:\"{flair_name}\"", sort="new", limit=10):
+  async for post in bot.sr.search(f"flair:\"{flair_name}\"", sort="new", limit=bot.fetch_limit):
     posts.append(post)
 
   return posts

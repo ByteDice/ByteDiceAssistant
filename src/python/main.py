@@ -26,17 +26,20 @@ async def main():
   if bot.args["dev"]:
     py_print("ARGS:", str(bot.args))
 
-  py_print("Reading data...")
-  dr = data.read_data(bot)
+  py_print("Reading config file...")
+  await data.read_cfg(bot)
+
+  py_print("Reading Reddit data...")
+  rd = data.read_data(bot)
   data_retries = 0
 
-  while not dr:
+  while not rd :
     data_retries += 1
     time.sleep(1)
     py_print(f"Failed to read data: File doesn't exist yet. Retrying (#{data_retries}/5)...")
-    dr = data.read_data(bot)
+    rd = data.read_data(bot)
 
-    if data_retries == 5 and not dr:
+    if data_retries == 5 and not rd:
       raise Exception("Couldn't read reddit_data.json: File doesn't exist")
 
   py_print("Successfully read data!")

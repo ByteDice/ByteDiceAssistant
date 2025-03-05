@@ -1,4 +1,5 @@
 #![warn(unused_extern_crates)]
+#![allow(clippy::needless_return)]
 
 mod cmds;
 mod bk_week_cmds;
@@ -58,12 +59,13 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 
 struct Data {
-  owners: Vec<u64>,
+  owners:       Vec<u64>,
   ball_prompts: [Vec<String>; 2],
-  reddit_data: Mutex<Option<Value>>,
+  reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
-  bk_mods: Vec<u64>,
-  args: Args
+  cfg:          Mutex<Option<Value>>,
+  bk_mods:      Vec<u64>,
+  args:         Args
 }
 
 
@@ -159,14 +161,16 @@ async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let data = Data {
     owners,
     ball_prompts: [ball_classic, ball_quirk],
-    bk_mods: mods_vec_u64,
-    reddit_data: None.into(),
+    bk_mods:      mods_vec_u64,
+    reddit_data:  None.into(),
     discord_data: None.into(),
-    args: args.clone()
+    cfg:          None.into(),
+    args:         args.clone()
   };
 
-  data::read_dc_data(&data, args.clone().wipe).await;
-  data::read_re_data(&data, args.clone().wipe).await;
+  data::read_dc_data (&data, args.clone().wipe).await;
+  data::read_re_data (&data, args.clone().wipe).await;
+  data::read_cfg_data(&data, args.clone().wipe).await;
 
   return data;
 }
@@ -212,8 +216,8 @@ async fn gen_bot(data: Data, args: Args) -> Client {
         bk_week_cmds::bk_week_top(),
         // bk_admin
         bk_week_cmds::bk_admin_bind(),
-        // bk_cfg
-        bk_week_cmds::bk_cfg_sr()
+        // cfg
+        cmds::reload_cfg()
       ],
       event_handler: events::event_handler,
       ..Default::default()
