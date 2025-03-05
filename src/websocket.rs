@@ -51,9 +51,9 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
   unsafe {
     let Some(sender) = &GLOBAL_SENDER else { return None };
     let mut sender = sender.lock().await;
-    let Some(s) = sender.as_mut() else { return None };
+    let s = sender.as_mut()?;
 
-    let unw_args = if func_args.is_some() { func_args.unwrap() } else { json!([]) };
+    let unw_args = func_args.unwrap_or(json!([]));
 
     let json_str = format!(
       "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
@@ -83,13 +83,13 @@ async fn receive_response() -> Option<Value> {
   unsafe {
     let Some(receiver) = &GLOBAL_RECEIVER else { return None };
     let mut receiver = receiver.lock().await;
-    let Some(r) = receiver.as_mut() else { return None };
+    let r = receiver.as_mut()?;
 
     let Some(Ok(msg)) = r.next().await else { return None };
     let tungstenite::Message::Text(response) = msg else { return None };
 
-    if response.starts_with("json:") {
-      return serde_json::from_str(&response[5..]).ok();
+    if let Some(stripped) = response.strip_prefix("json:") {
+      return serde_json::from_str(stripped).ok();
     }
     else {
       return serde_json::from_str(&response).ok();
@@ -131,8 +131,8 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
     tungstenite::Message::Text(text) => {
       rs_println!("Received from Python: {}", text);
 
-      if text.starts_with("json:") {
-        let t_json: Value = serde_json::from_str(&text[5..]).unwrap();
+      if let Some(stripped) = text.strip_prefix("json:") {
+        let t_json: Value = serde_json::from_str(stripped).unwrap();
         if t_json.get("error").is_some() {
           send_dm("Unknown internal Python error occurred!".to_string(), args, owners).await;
         }

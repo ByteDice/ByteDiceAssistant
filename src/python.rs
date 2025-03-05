@@ -12,7 +12,7 @@ pub fn start(args: String) -> PyResult<()> {
   rs_println!("Running Python program...");
 
   let slash = if cfg!(windows) { "\\" } else if cfg!(unix) { "/" } else { "" };
-  if slash == "" { errln!("Man what kinda OS do you have? Neither unix or windows, what the hell!? I can't process this anymore, you're too weird!"); }
+  if slash.is_empty() { errln!("Man what kinda OS do you have? Neither unix or windows, what the hell!? I can't process this anymore, you're too weird!"); }
 
   let path = format!("{0}{1}src{1}python", env!("CARGO_MANIFEST_DIR"), slash);
 
@@ -39,6 +39,6 @@ pub fn start(args: String) -> PyResult<()> {
 
 fn get_code(path: &str) -> String {
   return fs::read_to_string(path)
-    .expect(&format!("Failed to read Python file.\nPath: {}", path))
+    .unwrap_or_else(|_| panic!("Failed to read Python file.\nPath: {}", path))
     .to_string();
 }

@@ -175,13 +175,13 @@ pub async fn bk_week_add(
   }
 
   let shorturl_u = cmds::to_shorturl(&url);
-  let shorturl = if shorturl_u.is_ok() { shorturl_u.unwrap() } else { url };
+  let shorturl = &shorturl_u.unwrap_or(url.clone());
 
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
   if let Some(bk_week) = reddit_data.get(BK_WEEK) {
-    let a = approve.unwrap_or_else(|| false);
+    let a = approve.unwrap_or(false);
     let r = websocket::send_cmd_json("add_post_url", Some(json!([&shorturl, a, true]))).await.unwrap();
 
     if !r["value"].as_bool().unwrap() {
@@ -196,12 +196,12 @@ pub async fn bk_week_add(
       return Ok(());
     }
 
-    if let Some(post) = bk_week.get(&shorturl) {
+    if let Some(post) = bk_week.get(shorturl) {
       if post.get("removed").is_some() {
-        send_unremove_msg(ctx, &shorturl).await;
+        send_unremove_msg(ctx, shorturl).await;
       }
       else {
-        send_updated_msg(ctx, &shorturl).await;
+        send_updated_msg(ctx, shorturl).await;
       }
     }
     else {
@@ -287,16 +287,16 @@ pub async fn bk_week_approve(
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  approve_cmd(ctx, &url, &reddit_data, !disapprove.unwrap_or_else(|| false)).await;
+  approve_cmd(ctx, &url, &reddit_data, !disapprove.unwrap_or(false)).await;
   
   return Ok(());
 }
 
 
 async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: bool) {
-  if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(&url) {
+  if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(url) {
     if post.get("removed").is_some() {
-      send_post_removed_message(ctx, &url, post).await;
+      send_post_removed_message(ctx, url, post).await;
       return;
     }
 
@@ -310,11 +310,11 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
       }
     }
     else {
-      send_msg(ctx, format!("Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_approve() -> unwrap websocket result error`."), true, true).await;
+      send_msg(ctx, "Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_approve() -> unwrap websocket result error`.".to_string(), true, true).await;
     }
   }
   else {
-    send_post_not_found_message(ctx, &url).await;
+    send_post_not_found_message(ctx, url).await;
   }
 }
 
@@ -379,7 +379,7 @@ pub async fn bk_week_update(
   let progress = send_msg(ctx, p_text.clone(), true, true).await.unwrap();
   p_text = update_progress(ctx, progress.clone(), p_text, "\nFetching new posts & updating data file...".to_string()).await;
 
-  let max_age_u = max_age.unwrap_or_else(|| 8);
+  let max_age_u = max_age.unwrap_or(8);
   let max_age_secs = max_age_u as u64 * (60 * 60 * 24);
 
   send_cmd_json("add_new_posts", Some(json!([max_age_secs]))).await;
@@ -409,7 +409,7 @@ pub async fn bk_week_update(
   add_posts(http, c_id, weekly_art, &msgs_json, max_age_secs).await;
   
   // Stop if only_add
-  if only_add.unwrap_or_else(|| false) {
+  if only_add.unwrap_or(false) {
     send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
     update_progress(ctx, progress.clone(), p_text, "✅\n## Done!".to_string()).await;
     return Ok(());
@@ -471,7 +471,7 @@ async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
 async fn read_msgs(http: &Http, bot_id: UserId, c_id: ChannelId) -> Vec<Message> {
   let b = GetMessages::new().limit(100);
   let mut msgs = c_id.messages(http, b).await.unwrap();
-  msgs = msgs.into_iter().filter(|item| item.author.id == bot_id).collect();
+  msgs.retain(|item| item.author.id == bot_id);
 
   let mut last_msg: Option<Message> = msgs.last().cloned();
 
@@ -497,15 +497,15 @@ async fn read_msgs(http: &Http, bot_id: UserId, c_id: ChannelId) -> Vec<Message>
 }
 
 
-async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value, max_age: u64) -> Value {
+async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> Value {
   let mut msgs_json: Value = json!({"no_change": {}, "updated": {}, "removed": {}, "duplicates": {}, "old": {}});
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .expect("Time went backwards")
-    .as_secs() as u64;
+    .as_secs();
 
   for msg in msgs {
-    if msg.embeds.len() == 0 { continue; }
+    if msg.embeds.is_empty() { continue; }
     if msg.embeds[0].url.is_none() { continue; }
 
     let url = msg.embeds[0].url.clone().unwrap();
@@ -536,7 +536,7 @@ async fn msgs_to_json<'a>(msgs: Vec<Message>, reddit_data: &'a Value, max_age: u
     let mut u_json: Value = msg_json.unwrap();
     let re_url = &reddit_data[BK_WEEK][&url];
 
-    let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or_else(|| 0);
+    let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or(0);
 
     // old
     if now - post_date > max_age {
@@ -591,7 +591,7 @@ async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, ms
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .expect("Time went backwards")
-    .as_secs() as u64;
+    .as_secs();
 
   for url in r_data.keys() {
     if ["no_change", "updated", "removed", "old", "duplicates"]
@@ -668,7 +668,7 @@ pub async fn bk_week_vote(
   let uid = ctx.author().id.get();
   let re_data = get_mutex_data(&ctx.data().reddit_data).await?;
   let post_data = re_data[BK_WEEK].clone();
-  let unw_vote = un_vote.unwrap_or_else(|| false);
+  let unw_vote = un_vote.unwrap_or(false);
   
   if post_data.get(&url).is_none() {
     send_post_not_found_message(ctx, &url).await;
@@ -749,11 +749,8 @@ pub async fn bk_week_top(
     all.insert(url, val);
   }
 
-  let amount_u = amount.unwrap_or_else(|| 3);
-  let amount_clamped =
-    if amount_u > 10 { 10 }
-    else if amount_u < 1 { 1 }
-    else { amount_u };
+  let amount_u = amount.unwrap_or(3);
+  let amount_clamped = amount_u.clamp(1, 10);
 
   let top = 
     if category != TopCategory::Oldest
@@ -762,7 +759,7 @@ pub async fn bk_week_top(
 
   for post in top {
     let url = post.0;
-    let _ = send_embed_for_post(ctx, posts_u[url].clone(), &url).await;
+    let _ = send_embed_for_post(ctx, posts_u[url].clone(), url).await;
   }
 
   return Ok(());

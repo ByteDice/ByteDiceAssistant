@@ -184,8 +184,7 @@ pub async fn dc_contains_server(data: &Data, server_id: u64) -> bool {
   let mut clone = dc_data.clone();
   let servers = clone["servers"].as_object_mut().unwrap();
 
-  if servers.contains_key(&server_id.to_string()) { return true; }
-  else { return false; }
+  return servers.contains_key(&server_id.to_string())
 }
 
 

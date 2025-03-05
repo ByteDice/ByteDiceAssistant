@@ -41,7 +41,7 @@ pub async fn stop(
 ) -> Result<(), Error>
 {
   let should_stop = ctx.data().args.dev
-    || confirmation.unwrap_or_else(|| "".to_string()).to_lowercase() == "i want to stop the bot now";
+    || confirmation.unwrap_or_default().to_lowercase() == "i want to stop the bot now";
 
   if should_stop {
     let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
@@ -63,6 +63,7 @@ pub async fn stop(
 }
 
 
+#[allow(clippy::too_many_arguments)]
 #[poise::command(
   slash_command,
   prefix_command,
@@ -84,20 +85,20 @@ pub async fn embed(
   #[description = "Sets yourself as the author."] author: Option<bool>
 ) -> Result<(), Error> 
 {
-  let reply_unwrap = reply.unwrap_or_else(|| false);
+  let reply_unwrap = reply.unwrap_or(false);
 
   send_embed(
     ctx,
     EmbedOptions {
       desc: description.replace("\\n", "\n"),
-      title: if title.is_some() { Some(title.unwrap().replace("\\n", "\n")) } else { None },
+      title: title.map(|t| t.replace("\\n", "\n")),
       col: color,
       url,
       ts: timestamp,
-      ephemeral: ephemeral.unwrap_or_else(|| false),
+      ephemeral: ephemeral.unwrap_or(false),
       message,
       thumbnail,
-      author: if author.unwrap_or_else(|| false) { Some(Author { name: ctx.author().name.clone(), url: "".to_string(), icon_url: ctx.author().avatar_url().unwrap() }) } else { None }
+      author: if author.unwrap_or(false) { Some(Author { name: ctx.author().name.clone(), url: "".to_string(), icon_url: ctx.author().avatar_url().unwrap() }) } else { None }
     },
     reply_unwrap
   ).await;
@@ -235,11 +236,9 @@ pub async fn reload_cfg(
   let d_str = serde_json::to_string(&d)?;
   let r = send_cmd_json("update_cfg", Some(json!([d_str]))).await; // TODO: THIS
 
-  if r.is_some() {
-    if r.unwrap()["value"].as_bool().unwrap() {
-      send_msg(ctx, "Successfully reloaded the configs!".to_string(), true, true).await;
-      return Ok(());
-    }
+  if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
+    send_msg(ctx, "Successfully reloaded the configs!".to_string(), true, true).await;
+    return Ok(());
   }
 
   send_msg(ctx, "Failed to reload configs: Failed-type response from Python.".to_string(), true, true).await;

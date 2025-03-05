@@ -49,7 +49,7 @@ pub static MANDATORY_MSG: &str = "Mandatory response, please ignore.";
 
 
 fn none_to_empty(string: Option<String>) -> String {
-  return string.unwrap_or_else(|| "".to_string());
+  return string.unwrap_or_default();
 }
 
 
@@ -143,7 +143,7 @@ pub fn embed_from_options(options: EmbedOptions) -> CreateEmbed {
   let mut embed = CreateEmbed::new()
     .title      (none_to_empty(options.title))
     .description(options.desc)
-    .colour     (Color::new(options.col.unwrap_or_else(|| DEFAULT_DC_COL)))
+    .colour     (Color::new(options.col.unwrap_or(DEFAULT_DC_COL)))
     .url        (none_to_empty(options.url));
 
   if let Some(a) = author { embed = embed.author(a); }
@@ -240,9 +240,9 @@ pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
     ephemeral,
-    thumbnail: media_urls.get(0)
+    thumbnail: media_urls.first()
       .and_then(|url| url.as_str().map(|s| s.to_string()))
-      .or_else(|| None),
+      .or(None),
     ..Default::default()
   };
 }

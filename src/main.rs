@@ -27,7 +27,6 @@ use serde::Serialize;
 use serde_json::Value;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
-use serde_json;
 use tokio::task::JoinHandle;
 use tokio::time;
 use websocket::send_cmd_json;
@@ -56,6 +55,7 @@ struct Args {
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
+type Schedule = (Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>);
 
 
 struct Data {
@@ -81,7 +81,7 @@ async fn main() {
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
   let own_vec_u64: Vec<u64> = own_vec_str
     .iter()
-    .filter_map(|s| Some(s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax.")))
+    .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
     .collect();
 
   if args.test { println!("----- USING TEST BOT -----"); }
@@ -123,7 +123,7 @@ async fn main() {
   });
 
   if !args.nosched {
-    let schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)> = vec![
+    let schedules: Vec<Schedule> = vec![
       (Duration::from_secs(2 * 60), || Box::pin(read_reddit_inbox()))
     ];
 
@@ -155,7 +155,7 @@ async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let mods_vec_str: Vec<String> = mods_env.split(",").map(String::from).collect();
   let mods_vec_u64: Vec<u64> = mods_vec_str
     .iter()
-    .filter_map(|s| Some(s.parse::<u64>().expect("Failed to parse ASSISTANT_BK_MODS. Invalid syntax.")))
+    .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_BK_MODS. Invalid syntax."))
     .collect();
 
   let data = Data {
@@ -177,13 +177,9 @@ async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
 
 
 async fn gen_bot(data: Data, args: Args) -> Client {
-  let token;
-  if !args.test {
-    token = std::env::var("ASSISTANT_TOKEN").expect("Missing ASSISTANT_TOKEN env var!");
-  }
-  else {
-    token = std::env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!");
-  }
+  let token =
+    if !args.test { std::env::var("ASSISTANT_TOKEN").expect("Missing ASSISTANT_TOKEN env var!") }
+    else { std::env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!") };
 
   let intents = serenity::GatewayIntents::all();
 
@@ -246,7 +242,7 @@ async fn run_schedule<F: Fn() -> Pin<Box<dyn Future<Output = ()> + Send>>>(d: Du
 }
 
 
-async fn run_schedules(schedules: Vec<(Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>)>) {
+async fn run_schedules(schedules: Vec<Schedule>) {
   let mut handles: Vec<JoinHandle<()>> = vec![];
 
   rs_println!("Starting schedules...");
