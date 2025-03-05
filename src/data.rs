@@ -188,7 +188,6 @@ pub async fn dc_contains_server(data: &Data, server_id: u64) -> bool {
 }
 
 
-#[allow(non_snake_case)]
 pub async fn get_mutex_data(data: &Mutex<Option<Value>>) -> Result<Value, Error> {
   let data_lock = data.lock().await;
   return match data_lock.as_ref() {

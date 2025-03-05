@@ -4,7 +4,6 @@ use crate::messages::*;
 use crate::data::{self, dc_bind_bk, get_mutex_data};
 
 use std::collections::HashMap;
-use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use poise::serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId};
@@ -12,11 +11,6 @@ use poise::ReplyHandle;
 use serde_json::{json, Map, Value};
 
 
-#[derive(poise::ChoiceParameter, PartialEq)]
-enum HelpOptions {
-  Discord,
-  Reddit
-}
 #[derive(poise::ChoiceParameter, PartialEq)]
 enum TopCategory {
   Upvotes,
@@ -36,41 +30,12 @@ async fn not_bk_mod_msg(ctx: Context<'_>) {
 }
 
 
-#[poise::command(
-  slash_command,
-  prefix_command,
-  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
-)]
-/// Shows helpful information on how to use the bk_week section of the bot.
-pub async fn bk_week_help(
-  ctx: Context<'_>,
-  #[description = "Discord or Reddit help."] option: HelpOptions
-) -> Result<(), Error>
-{
-  let help: String;
-
-  if option == HelpOptions::Discord {
-    help = fs::read_to_string("./bk_week_help_dc.md").unwrap();
-  }
-  else if option == HelpOptions::Reddit {
-    help = fs::read_to_string("./bk_week_help_re.md").unwrap();
-  }
-  else {
-    help = "Unknown error!\nError trace: `bk_week_cmds.rs -> bk_week_help() -> option is not valid`.".to_string();
-  }
-
-  send_msg(ctx, help, true, true).await;
-  data::read_dc_data(ctx.data(), false).await;
-
-  return Ok(());
-}
-
-
 
 
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | EMBED_LINKS"
 )]
 /// Fetches the data of a single post, just for you. The data has to be within the database to work.
@@ -160,6 +125,7 @@ async fn send_data_corrupted_message(ctx: Context<'_>, url: &str) {
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Fetches a post from Reddit and adds it to the database.
@@ -232,6 +198,7 @@ async fn send_updated_msg(ctx: Context<'_>, url: &str) {
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Removes a post from the database. It will show who last removed it.
@@ -270,6 +237,7 @@ pub async fn bk_week_remove(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Approves a post in the database. Approving posts tells the bot that it's original.
@@ -324,6 +292,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "admin",
   default_member_permissions = "ADMINISTRATOR",
   guild_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
@@ -357,6 +326,7 @@ async fn send_server_not_in_data_msg(ctx: Context<'_>) {
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   guild_only,
   guild_cooldown = 120,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | READ_MESSAGE_HISTORY | EMBED_LINKS"
@@ -655,6 +625,7 @@ async fn remove_dupes(http: &Http, c_id: ChannelId, msgs_json: &Value) {
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Adds/removes a vote from a post. These votes are not tied to Reddit upvotes.
@@ -719,6 +690,7 @@ pub async fn bk_week_vote(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "bk_week",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | EMBED_LINKS"
 )]
 /// Gets the top N (up to 10) posts within a certain category, such as upvotes. (Sorted descending.)

@@ -5,15 +5,27 @@ use crate::websocket::send_cmd_json;
 use crate::{data, Context, Error};
 use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
 
+use poise::samples::HelpConfiguration;
 use poise::serenity_prelude::{OnlineStatus, Timestamp};
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
 use serde_json::json;
+use tokio::fs;
+
+
+#[derive(poise::ChoiceParameter, PartialEq)]
+enum HelpOptions {
+  BkWeek,
+  BkWeekReddit,
+  Generic,
+
+}
 
 
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "fun",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Check if you have connection to the bot.
@@ -31,10 +43,11 @@ pub async fn ping(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "owner",
   owners_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
-/// Stops the bot... if you're mighty enough!
+/// I have security measures, even in developer mode. You wont access this without being a bot "owner".
 pub async fn stop(
   ctx: Context<'_>,
   #[description = "Type \"i want to stop the bot now\" to confirm."] confirmation: Option<String>,
@@ -67,6 +80,7 @@ pub async fn stop(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "owner",
   owners_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | EMBED_LINKS"
 )]
@@ -115,6 +129,7 @@ pub async fn embed(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "owner",
   owners_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
@@ -134,6 +149,7 @@ pub async fn send(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "fun",
   rename = "8_ball",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
@@ -198,6 +214,7 @@ pub fn to_shorturl(url: &str) -> Result<String, &str> {
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "admin",
   default_member_permissions = "ADMINISTRATOR",
   guild_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
@@ -223,6 +240,7 @@ pub async fn add_server(
 #[poise::command(
   slash_command,
   prefix_command,
+  category = "owner",
   owners_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
@@ -231,16 +249,94 @@ pub async fn reload_cfg(
   ctx: Context<'_>
 ) -> Result<(), Error>
 {
-
   let d = get_mutex_data(&ctx.data().cfg).await?;
   let d_str = serde_json::to_string(&d)?;
-  let r = send_cmd_json("update_cfg", Some(json!([d_str]))).await; // TODO: THIS
+  let r = send_cmd_json("update_cfg", Some(json!([d_str]))).await;
 
   if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
-    send_msg(ctx, "Successfully reloaded the configs!".to_string(), true, true).await;
+    send_msg(
+      ctx,
+      format!("Successfully reloaded the configs!\nNew configs:\n```\n{}\n```", serde_json::to_string_pretty(&d)?),
+      true,
+      true
+    ).await;
     return Ok(());
   }
 
   send_msg(ctx, "Failed to reload configs: Failed-type response from Python.".to_string(), true, true).await;
   return Ok(());
+}
+
+
+#[poise::command(
+  slash_command,
+  prefix_command,
+  category = "help",
+  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
+)]
+/// Shows helpful information on how to use the bk_week section of the bot.
+pub async fn help(
+  ctx: Context<'_>,
+  #[description = "A full category of commands."] category: Option<HelpOptions>,
+  #[description = "The name of a single command. This argument will be prioritized over `category`."] cmd: Option<String>
+) -> Result<(), Error>
+{
+  match (category.is_some(), cmd.is_some()) {
+    (false, false) => (),
+    (true, false) => send_category_help(ctx, category.unwrap()).await,
+    _ => send_single_help(ctx, cmd).await
+  }
+
+  return Ok(());
+}
+
+
+async fn send_single_help(ctx: Context<'_>, mut cmd: Option<String>) {
+  let inv_name = ctx.invoked_command_name();
+
+  if inv_name != "help" {
+    cmd = match cmd {
+      Some(c) => Some(format!("{} {}", inv_name, c)),
+      None => Some(inv_name.to_string()),
+    };
+  }
+
+  let bottom_text = "skibidi";
+
+  let config = HelpConfiguration {
+    show_subcommands: true,
+    show_context_menu_commands: true,
+    ephemeral: true,
+    extra_text_at_bottom: bottom_text,
+
+    ..Default::default()
+  };
+  let _ = poise::builtins::help(ctx, cmd.as_deref(), config).await;
+}
+
+
+async fn send_category_help(ctx: Context<'_>, category: HelpOptions) {
+  match category {
+    HelpOptions::BkWeekReddit => send_bk_week_help_re(ctx).await,
+    HelpOptions::BkWeek =>       send_bk_week_help   (ctx).await,
+    HelpOptions::Generic =>      send_generic_help   (ctx).await,
+  }
+}
+
+
+async fn send_bk_week_help_re(ctx: Context<'_>) {
+  let t: String = fs::read_to_string("./bk_week_help_re.md").await
+    .unwrap_or("Help text not found. Someone deleted it. :(".to_string());
+
+  send_msg(ctx, t, true, true).await;
+}
+
+
+async fn send_bk_week_help(ctx: Context<'_>) {
+
+}
+
+
+async fn send_generic_help(ctx: Context<'_>) {
+
 }

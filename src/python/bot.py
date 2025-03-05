@@ -55,6 +55,12 @@ class Bot:
     
     return False
   
+  async def update_cfg_str(self, new_cfg: str) -> bool:
+    json_cfg = json.loads(new_cfg)
+    self.sr = await self.r.subreddit(json_cfg[BK_WEEK]["subreddits"])
+    self.fetch_limit = json_cfg[BK_WEEK]["fetch_limit"]
+    return True
+  
   async def update_cfg(self, new_cfg: dict) -> bool:
     self.sr = await self.r.subreddit(new_cfg[BK_WEEK]["subreddits"])
     self.fetch_limit = new_cfg[BK_WEEK]["fetch_limit"]

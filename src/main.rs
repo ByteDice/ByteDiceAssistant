@@ -194,6 +194,7 @@ async fn gen_bot(data: Data, args: Args) -> Client {
     .options(poise::FrameworkOptions {
       owners: own,
       commands: vec![
+        cmds::help(),
         cmds::ping(),
         cmds::embed(),
         cmds::send(),
@@ -202,7 +203,6 @@ async fn gen_bot(data: Data, args: Args) -> Client {
         cmds::re_shorturl(),
         cmds::add_server(),
         // bk_week
-        bk_week_cmds::bk_week_help(),
         bk_week_cmds::bk_week_get(),
         bk_week_cmds::bk_week_add(),
         bk_week_cmds::bk_week_remove(),
