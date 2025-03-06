@@ -9,3 +9,4 @@ __pycache__/
 # program-created data
 data/reddit_data.json
 data/discord_data.json
+data/cfg.json
