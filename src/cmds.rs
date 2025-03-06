@@ -1,12 +1,14 @@
+use std::collections::HashMap;
 use std::process;
+use std::error::Error as StdErr;
 
 use crate::data::{dc_add_server, get_mutex_data};
 use crate::websocket::send_cmd_json;
-use crate::{data, Context, Error};
+use crate::{data, Context, Data, Error};
 use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
 
-use poise::samples::HelpConfiguration;
 use poise::serenity_prelude::{OnlineStatus, Timestamp};
+use poise::Command;
 use rand::{seq::IteratorRandom, Rng};
 use regex::Regex;
 use serde_json::json;
@@ -15,11 +17,15 @@ use tokio::fs;
 
 #[derive(poise::ChoiceParameter, PartialEq)]
 enum HelpOptions {
+  Admin,
+  All,
   BkWeek,
   BkWeekReddit,
-  Generic,
-
+  Generic
 }
+
+
+type Cmd = Command<Data, Box<dyn StdErr + Send + Sync>>;
 
 
 #[poise::command(
@@ -278,40 +284,73 @@ pub async fn reload_cfg(
 pub async fn help(
   ctx: Context<'_>,
   #[description = "A full category of commands."] category: Option<HelpOptions>,
-  #[description = "The name of a single command. This argument will be prioritized over `category`."] cmd: Option<String>
+  #[description = "The name of a single command. This argument will be prioritized over `category`."] command: Option<String>
 ) -> Result<(), Error>
 {
-  match (category.is_some(), cmd.is_some()) {
-    (false, false) => (),
-    (true, false) => send_category_help(ctx, category.unwrap()).await,
-    _ => send_single_help(ctx, cmd).await
+  match (category.is_some(), command.is_some()) {
+    (false, false) => send_category_help(ctx, HelpOptions::Generic).await,
+    (true, false) =>  send_category_help(ctx, category.unwrap()).await,
+    _ => send_single_help(ctx, command.unwrap()).await
   }
 
   return Ok(());
 }
 
 
-async fn send_single_help(ctx: Context<'_>, mut cmd: Option<String>) {
-  let inv_name = ctx.invoked_command_name();
+fn format_cmd(cmd: &Cmd) -> String {
+  let arg_names: Vec<_> = cmd.parameters
+    .iter()
+    .map(|a| a.name.as_str())
+    .collect();
 
-  if inv_name != "help" {
-    cmd = match cmd {
-      Some(c) => Some(format!("{} {}", inv_name, c)),
-      None => Some(inv_name.to_string()),
-    };
+  let cmds_max_len = arg_names
+    .iter()
+    .max_by_key(|&&s| s.len())
+    .map(|&s| s.len())
+    .unwrap_or(0);
+
+  let args_format: Vec<_> = cmd.parameters
+    .iter()
+    .map(
+      |a|
+      format!(
+        "{}   {}{}{}",
+        a.name,
+        " ".repeat(cmds_max_len - a.name.len()),
+        if !a.required { "(OPTIONAL) " } else { "" },
+        a.description.as_ref().unwrap_or(&"".to_string())
+      )
+    )
+    .collect();
+
+  let t = format!(
+    "**`{}`**:\n```{}```",
+    cmd.name,
+    args_format.join("\n")
+  );
+
+  return t;
+}
+
+
+async fn send_single_help(ctx: Context<'_>, mut cmd_name: String) {
+  if cmd_name.starts_with("/") { cmd_name = cmd_name[1..].to_string(); }
+  let cmds = &ctx.framework().options().commands;
+  let cmd = cmds.iter().find(|c| c.name == cmd_name);
+
+  if cmd.is_none() {
+    send_msg(
+      ctx,
+      format!("No command with the name \"{}\" found!\nHint: Try `/help` without any arguments or `/help <category>`", cmd_name),
+      true,
+      true
+    ).await;
+
+    return;
   }
 
-  let bottom_text = "skibidi";
-
-  let config = HelpConfiguration {
-    show_subcommands: true,
-    show_context_menu_commands: true,
-    ephemeral: true,
-    extra_text_at_bottom: bottom_text,
-
-    ..Default::default()
-  };
-  let _ = poise::builtins::help(ctx, cmd.as_deref(), config).await;
+  let t = format_cmd(cmd.unwrap());
+  send_msg(ctx, t, true, true).await;
 }
 
 
@@ -320,6 +359,8 @@ async fn send_category_help(ctx: Context<'_>, category: HelpOptions) {
     HelpOptions::BkWeekReddit => send_bk_week_help_re(ctx).await,
     HelpOptions::BkWeek =>       send_bk_week_help   (ctx).await,
     HelpOptions::Generic =>      send_generic_help   (ctx).await,
+    HelpOptions::Admin =>        send_admin_help     (ctx).await,
+    HelpOptions::All =>          send_all_help       (ctx).await
   }
 }
 
@@ -332,11 +373,132 @@ async fn send_bk_week_help_re(ctx: Context<'_>) {
 }
 
 
-async fn send_bk_week_help(ctx: Context<'_>) {
+fn format_cmds(cmds: Vec<(&str, Vec<&Cmd>)>) -> String {   
+  let cmd_names: Vec<_> = cmds
+    .iter()
+    .flat_map(
+      |t|
+      t.1.iter().map(|c| c.name.as_str())
+    )
+    .collect();
 
+  let cmds_max_len = cmd_names
+    .iter()
+    .max_by_key(|&&s| s.len())
+    .map(|&s| s.len())
+    .unwrap_or(0);
+
+  let mut categories: Vec<(&str, Vec<String>)> = Vec::new();
+
+  for c_tuple in cmds {
+    let cmds_format: Vec<_> = c_tuple.1
+      .iter()
+      .map(
+        |c|
+        format!(
+          "{}   {}{}",
+          c.name,
+          " ".repeat(cmds_max_len - c.name.len()),
+          c.description.as_ref().unwrap_or(&"".to_string())
+        )
+      )
+      .collect();
+
+    categories.push((c_tuple.0, cmds_format));
+  }
+
+  let c_text: Vec<String> = categories
+    .iter()
+    .map(|i| format!("{}:\n  {}", i.0, i.1.join("\n  ")))
+    .collect();
+
+  let t = format!("```{}```", c_text.join("\n\n"));
+  return t;
+}
+
+
+fn separate_by_category(cmds: Vec<&Cmd>) -> Vec<(String, Vec<&Cmd>)> {
+  let mut grouped: HashMap<String, Vec<&Cmd>> = HashMap::new();
+  
+  for cmd in cmds {
+    grouped
+      .entry(cmd.category.clone().unwrap_or("No category".to_string()))
+      .or_insert_with(Vec::new).push(cmd);
+  }
+  
+  return grouped.into_iter().collect();
+}
+
+
+async fn send_bk_week_help(ctx: Context<'_>) {
+  let cmds = &ctx.framework().options().commands;
+  let bk_week_cmds: Vec<_> = cmds
+    .iter()
+    .filter(|cmd| cmd.category == Some("bk_week".to_string()))
+    .collect();
+
+  let t = format_cmds(vec![("bk_week", bk_week_cmds)]);
+  send_msg(ctx, t, true, true).await;
 }
 
 
 async fn send_generic_help(ctx: Context<'_>) {
+  let cmds = &ctx.framework().options().commands;
+  let filtered_cmds: Vec<_> = cmds
+    .iter()
+    .filter(
+      |cmd|
+      cmd.category != Some("bk_week".to_string())
+      || cmd.category != Some("owner".to_string())
+      || cmd.category != Some("admin".to_string())
+    )
+    .collect();
 
+  let categories = separate_by_category(filtered_cmds);
+
+  let cmds_format: Vec<(&str, Vec<&Cmd>)> = categories
+    .iter()
+    .map(|c| (c.0.as_str(), c.1.clone()))
+    .collect();
+
+  let t = format_cmds(cmds_format);
+  send_msg(ctx, t, true, true).await;
+}
+
+
+async fn send_admin_help(ctx: Context<'_>) {
+  let cmds = &ctx.framework().options().commands;
+  let filtered_cmds: Vec<_> = cmds
+    .iter()
+    .filter(
+      |cmd|
+      cmd.category == Some("owner".to_string())
+      || cmd.category == Some("admin".to_string())
+    )
+    .collect();
+
+  let categories = separate_by_category(filtered_cmds);
+
+  let cmds_format: Vec<(&str, Vec<&Cmd>)> = categories
+    .iter()
+    .map(|c| (c.0.as_str(), c.1.clone()))
+    .collect();
+
+  let t = format_cmds(cmds_format);
+  send_msg(ctx, t, true, true).await;
+}
+
+
+async fn send_all_help(ctx: Context<'_>) {
+  let cmds = &ctx.framework().options().commands;
+  let cmds_clone: Vec<_> = cmds.iter().clone().collect();
+  let categories = separate_by_category(cmds_clone);
+
+  let cmds_format: Vec<(&str, Vec<&Cmd>)> = categories
+    .iter()
+    .map(|c| (c.0.as_str(), c.1.clone()))
+    .collect();
+
+  let t = format_cmds(cmds_format);
+  send_msg(ctx, t, true, true).await;
 }

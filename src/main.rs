@@ -77,7 +77,7 @@ async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
 
-  let own_env = std::env::var("ASSISTANT_OWNERS").expect("Missing ASSISTANT_OWNERS env var!");
+  let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
   let own_vec_u64: Vec<u64> = own_vec_str
     .iter()
@@ -151,7 +151,7 @@ async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
   
-  let mods_env = std::env::var("ASSISTANT_BK_MODS").expect("Missing ASSISTANT_BK_MODS env var!");
+  let mods_env = std::env::var("ASSISTANT_BK_MODS").unwrap_or("0".to_string());
   let mods_vec_str: Vec<String> = mods_env.split(",").map(String::from).collect();
   let mods_vec_u64: Vec<u64> = mods_vec_str
     .iter()
