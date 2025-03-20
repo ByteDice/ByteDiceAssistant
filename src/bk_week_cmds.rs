@@ -569,8 +569,8 @@ async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, ms
       .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
       { continue; }
 
-      let post_date = r_data[url]["date_unix"].as_u64().unwrap();
-      if now - post_date > max_age { continue; }
+    let post_date = r_data[url]["post_data"]["date_unix"].as_u64().unwrap();
+    if now - post_date > max_age { continue; }
 
     if r_data[url].get("removed").is_some() {
       http_send_embed(http, c_id, embed_post_removed(&r_data[url], url, false)).await;
