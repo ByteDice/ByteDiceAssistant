@@ -426,7 +426,7 @@ async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
     return None;
   }
 
-  let d = get_mutex_data(&ctx.data().reddit_data).await.unwrap();
+  let d = get_mutex_data(&ctx.data().discord_data).await.unwrap();
   let c_id_u =
     d["servers"]
      [ctx.guild_id().unwrap().to_string()]
