@@ -9,6 +9,7 @@
   <!-- - [x] Some kind of voting system. -->
   <!-- - [x] ~~`/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)~~ -->
   <!-- - [x] ~~`/bk_cfg_sr [subreddit]` to change the target subreddit(s)~~ -->
+  - [ ] Allow disabling bk_week
   - [ ] Language files?
   - [ ] Allow updating the data autonomously and via manual commands.
     <!-- - [ ] 10-minute schedule for updating Discord channel (IMPOSSIBLE / REALLY FUCKING HARD) -->

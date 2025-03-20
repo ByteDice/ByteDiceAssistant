@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::process;
 use std::error::Error as StdErr;
 
-use crate::data::{dc_add_server, get_mutex_data};
+use crate::data::{dc_add_server, get_mutex_data, read_cfg_data};
 use crate::websocket::send_cmd_json;
 use crate::{data, Context, Data, Error};
 use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
@@ -255,6 +255,7 @@ pub async fn reload_cfg(
   ctx: Context<'_>
 ) -> Result<(), Error>
 {
+  read_cfg_data(&ctx.data(), false).await;
   let d = get_mutex_data(&ctx.data().cfg).await?;
   let d_str = serde_json::to_string(&d)?;
   let r = send_cmd_json("update_cfg", Some(json!([d_str]))).await;

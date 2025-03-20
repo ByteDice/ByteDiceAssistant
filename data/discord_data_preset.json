@@ -6,7 +6,8 @@
       "bk_mods": [
         "USER ID 1",
         "USER ID 2"
-      ]
+      ],
+      "bk_week_disabled": false
     }
   }
 }
