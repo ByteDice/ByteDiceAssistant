@@ -134,7 +134,7 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
       if let Some(stripped) = text.strip_prefix("json:") {
         let t_json: Value = serde_json::from_str(stripped).unwrap();
         if t_json.get("error").is_some() {
-          send_dm("Unknown internal Python error occurred!".to_string(), args, owners).await;
+          send_dm("Unknown internal Python error occurred: Websocket response error.".to_string(), args, owners).await;
         }
       }
 

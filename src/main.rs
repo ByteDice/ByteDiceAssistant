@@ -92,7 +92,7 @@ async fn main() {
   if args.py && !args.rs {
     println!("----- PYTHON ONLY MODE -----");
     rs_println!("ARGS: {}", args_str);
-    let _ = python::start(args_str);
+    let _ = python::start(args);
     process::exit(0);
   }
   else if args.rs && ! args.py {
@@ -108,7 +108,7 @@ async fn main() {
   rs_println!("ARGS: {}", args_str);
 
   let rt = Runtime::new().unwrap();
-  let python_args = args_str;
+  let python_args = args.clone();
   let rust_args = args.clone();
 
   let rust = thread::spawn(move || {
