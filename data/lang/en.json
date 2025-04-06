@@ -22,7 +22,7 @@
   "help_text_removed": "Help text not found. Someone deleted it. :(",
   "invalid_confirm_shutdown": "Failed to shut down: Invalid confirmation.",
   "invalid_os": "Man what kinda OS do you have? Neither unix or windows, what the hell!? I can't process this anymore, you're too weird!",
-  "lang_data_404": "file for language \"{}\" not found!",
+  "lang_data_404": "File for language \"{0}\" not found!",
   "lang_load_success": "Successfully loaded the english language file!",
   "mandatory_response": "Mandatory response message, please ignore.",
   "python_err": "Unknown internal Python Error: {0}",
