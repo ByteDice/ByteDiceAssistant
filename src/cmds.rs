@@ -3,14 +3,14 @@ use std::process;
 use std::error::Error as StdErr;
 
 use crate::data::{dc_add_server, get_mutex_data, read_cfg_data};
+use crate::re_cmds::generic_fns::to_shorturl;
 use crate::websocket::send_cmd_json;
-use crate::{data, Context, Data, Error};
+use crate::{data, lang, Context, Data, Error};
 use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
 
 use poise::serenity_prelude::{OnlineStatus, Timestamp};
 use poise::Command;
 use rand::{seq::IteratorRandom, Rng};
-use regex::Regex;
 use serde_json::json;
 use tokio::fs;
 
@@ -63,19 +63,19 @@ pub async fn stop(
     || confirmation.unwrap_or_default().to_lowercase() == "i want to stop the bot now";
 
   if should_stop {
-    let msg = send_msg(ctx, "Saving data...".to_string(), true, true).await.unwrap();
+    let msg = send_msg(ctx, lang!("data_save_progress"), true, true).await.unwrap();
     data::write_dc_data(ctx.data()).await;
     data::write_re_data().await;
     send_cmd_json("stop_praw", None).await;
 
-    edit_reply(ctx, msg, "Saving data... Done!\nShutting down...".to_string()).await;
+    edit_reply(ctx, msg, lang!("data_save_complete")).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
     ctx.framework().shard_manager.shutdown_all().await;
 
     process::exit(0);
   }
   else {
-    send_msg(ctx, "Failed to shut down: Invalid confirmation.".to_string(), true, true).await;
+    send_msg(ctx, lang!("invalid_confirm_shutdown"), true, true).await;
   }
 
   return Ok(());
@@ -171,7 +171,7 @@ pub async fn eight_ball(
 
   send_msg(
     ctx,
-    format!("Q: {}\nA: {}", question, rand_item.unwrap()),
+    lang!("8-ball_answer", question, rand_item.unwrap()),
     true,
     true
   ).await;
@@ -194,26 +194,13 @@ pub async fn re_shorturl(
   let shorturl = to_shorturl(&url);
 
   if shorturl.is_ok() {
-    send_msg(ctx, format!("ShortURL: <{}>", shorturl.unwrap()), true, true).await;
+    send_msg(ctx, lang!("shorturl", shorturl.unwrap()), true, true).await;
   }
   else {
-    send_msg(ctx, "Couldn't convert to shortURL: Invalid URL".to_string(), true, true).await;
+    send_msg(ctx, lang!("couldnt_shorturl"), true, true).await;
   }
 
   return Ok(());
-}
-
-
-pub fn to_shorturl(url: &str) -> Result<String, &str> {
-  let re = Regex::new(r"comments/([a-zA-Z0-9]+)").unwrap();
-    
-  if let Some(caps) = re.captures(url) {
-    let post_id = &caps[1];
-    let short_url = format!("https://redd.it/{}", post_id);
-    return Ok(short_url);
-  }
-
-  return Err("Invalid URL");
 }
 
 
@@ -233,10 +220,10 @@ pub async fn add_server(
   let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into()).await;
 
   if r.is_ok() {
-    send_msg(ctx, "Added your server to my data! Thanks for letting me steal it! (/s)".to_string(), true, true).await;
+    send_msg(ctx, lang!("add_to_data"), true, true).await;
   }
   else {
-    send_msg(ctx, "Oopsies `(｡>\\\\<)`. It looks like my data i-is \\**sob*\\*... c-corrupted!".to_string(), true, true).await;
+    send_msg(ctx, lang!("corrupted_data"), true, true).await;
   }
 
   return Ok(());
@@ -263,14 +250,14 @@ pub async fn reload_cfg(
   if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      format!("Successfully reloaded the configs!\nNew configs:\n```\n{}\n```", serde_json::to_string_pretty(&d)?),
+      lang!("reload_config_success", serde_json::to_string_pretty(&d).unwrap()),
       true,
       true
     ).await;
     return Ok(());
   }
 
-  send_msg(ctx, "Failed to reload configs: Failed-type response from Python.".to_string(), true, true).await;
+  send_msg(ctx, lang!("reload_config_python_fail"), true, true).await;
   return Ok(());
 }
 
@@ -342,7 +329,7 @@ async fn send_single_help(ctx: Context<'_>, mut cmd_name: String) {
   if cmd.is_none() {
     send_msg(
       ctx,
-      format!("No command with the name \"{}\" found!\nHint: Try `/help` without any arguments or `/help <category>`", cmd_name),
+      lang!("cmd_404", cmd_name),
       true,
       true
     ).await;
@@ -368,7 +355,7 @@ async fn send_category_help(ctx: Context<'_>, category: HelpOptions) {
 
 async fn send_bk_week_help_re(ctx: Context<'_>) {
   let t: String = fs::read_to_string("./bk_week_help_re.md").await
-    .unwrap_or("Help text not found. Someone deleted it. :(".to_string());
+    .unwrap_or(lang!("help_text_removed"));
 
   send_msg(ctx, t, true, true).await;
 }
@@ -435,10 +422,10 @@ async fn send_bk_week_help(ctx: Context<'_>) {
   let cmds = &ctx.framework().options().commands;
   let bk_week_cmds: Vec<_> = cmds
     .iter()
-    .filter(|cmd| cmd.category == Some("bk_week".to_string()))
+    .filter(|cmd| cmd.category == Some("re".to_string()))
     .collect();
 
-  let t = format_cmds(vec![("bk_week", bk_week_cmds)]);
+  let t = format_cmds(vec![("re", bk_week_cmds)]);
   send_msg(ctx, t, true, true).await;
 }
 
@@ -449,7 +436,7 @@ async fn send_generic_help(ctx: Context<'_>) {
     .iter()
     .filter(
       |cmd|
-      cmd.category != Some("bk_week".to_string())
+      cmd.category != Some("re".to_string())
       || cmd.category != Some("owner".to_string())
       || cmd.category != Some("admin".to_string())
     )

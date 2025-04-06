@@ -40,7 +40,7 @@ async def main():
     rd = data.read_data(bot)
 
     if data_retries == 5 and not rd:
-      raise Exception("Couldn't read reddit_data.json: File doesn't exist")
+      raise Exception("Couldn't read re_data.json: File doesn't exist")
 
   py_print("Successfully read data!")
 

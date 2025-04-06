@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::{Args, Context};
+use crate::{lang, Args, Context};
 
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
@@ -29,7 +29,7 @@ pub struct EmbedOptions {
 impl Default for EmbedOptions {
   fn default() -> Self {
     return EmbedOptions {
-      desc: "default description".to_string(),
+      desc: lang!("default_embed_desc"),
       title: None,
       col: None,
       url: None,
@@ -194,24 +194,14 @@ pub async fn send_dm(msg: String, args: Args, owners: Vec<u64>) {
 }
 
 
-pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   let media_type = &post_data["post_data"]["media_type"];
 
-  let desc_str = format!(
-    r#"Sorted by what I think will be most important
-    Spoilers and vote length anonymizer for fair review!
-    ## Post Data:
-    **Media type:** `{}`
-    **Post upvotes:** ||`{:>6}`||
-    **Moderator votes:** ||`{:>6}`||
-    **URL:** ||<{}>||
-
-    ## Listing Data:
-    **Added by:** `{{ human: {}, bot: {} }}`
-    **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
-    if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
+  let desc_str = lang!(
+    "data_post_embed",
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     post_data["votes"]["mod_voters"].as_array().unwrap().len(),
+    if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
     url,
 
     if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
@@ -248,11 +238,11 @@ pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions
 }
 
 
-pub fn embed_post_removed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   return EmbedOptions { 
     title: Some("REMOVED!".to_string()),
-    desc: format!(
-      "## Removed by `{}`\n**Reason:** {}\nURL: ||<{}>||\n\nJSON: ||`{}`||",
+    desc: lang!(
+      "data_post_removed_embed",
       post_data["removed_by"].as_str().unwrap(),
       if !post_data["remove_reason"].is_null() { post_data["remove_reason"].as_str().unwrap() }
         else { "None" },

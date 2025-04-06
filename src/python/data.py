@@ -66,7 +66,7 @@ class PostData:
   
 
 def read_data(bot: botPy.Bot) -> bool:
-  r_path = os.path.join(DATA_PATH, "reddit_data.json")
+  r_path = os.path.join(DATA_PATH, "re_data.json")
 
   if os.path.isfile(r_path):
     bot.data_f = open(r_path, "r+")
@@ -75,8 +75,8 @@ def read_data(bot: botPy.Bot) -> bool:
     if not bot.args["py"]:
       return False
 
-    py_print("reddit_data.json not found, creating new from preset...")
-    with open(os.path.join(DATA_PATH, "reddit_data_preset.json", "r")) as f:
+    py_print("re_data.json not found, creating new from preset...")
+    with open(os.path.join(DATA_PATH, "re_data_preset.json", "r")) as f:
       data_preset_json = json.load(f)
 
     data_preset_json[botPy.BK_WEEKLY].pop("EXAMPLE VALUE", None)

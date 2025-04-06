@@ -4,23 +4,24 @@ use std::path::Path;
 use serde_json::{self, Value, json};
 use tokio::sync::Mutex;
 
-use crate::{Data, BK_WEEK, rs_println, Error};
+use crate::{lang, rs_println, Data, Error, BK_WEEK, LANG};
 use crate::websocket::send_cmd_json;
 
 
-static DATA_PATH_DC:    &str = "./data/discord_data.json";
-static PRESET_PATH_DC:  &str = "./data/discord_data_preset.json";
-static DATA_PATH_RE:    &str = "./data/reddit_data.json";
-static PRESET_PATH_RE:  &str = "./data/reddit_data_preset.json";
+static DATA_PATH_DC:    &str = "./data/dc_data.json";
+static PRESET_PATH_DC:  &str = "./data/dc_data_preset.json";
+static DATA_PATH_RE:    &str = "./data/re_data.json";
+static PRESET_PATH_RE:  &str = "./data/re_data_preset.json";
 static DATA_PATH_CFG:   &str = "./data/cfg.json";
 static PRESET_PATH_CFG: &str = "./data/cfg_default.json";
+static DATA_PATH_LANG:  &str = "./data/lang/";
 
 
 pub async fn read_dc_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_DC).exists() || wipe {
     rs_println!(
-      "{} creating new from preset...",
-      if !wipe { "discord_data.json not found," } else { "[WIPE] (discord_data.json)" }
+      "{}",
+      lang!("creating_data_file", if !wipe { lang!("dc_data_404") } else { lang!("dc_data_wipe") })
     );
     generate_dc_data();
   }
@@ -70,8 +71,8 @@ pub async fn write_dc_data(data: &Data) {
 pub async fn read_re_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_RE).exists() || wipe {
     rs_println!(
-      "{} creating new from preset...",
-      if !wipe { "reddit_data.json not found," } else { "[WIPE] (reddit_data.json)" }
+      "{}",
+      lang!("creating_data_file", if !wipe { lang!("re_data_404") } else { lang!("re_data_wipe") })
     );
     generate_re_data();
   }
@@ -113,8 +114,8 @@ pub async fn write_re_data() {
 pub async fn read_cfg_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_CFG).exists() || wipe {
     rs_println!(
-      "{} creating new from preset...",
-      if !wipe { "cfg.json not found," } else { "[WIPE] (cfg.json)" }
+      "{}",
+      lang!("creating_data_file", if !wipe { lang!("cfg_data_404") } else { lang!("cfg_data_wipe") })
     );
     generate_cfg_data();
   }
@@ -148,7 +149,7 @@ pub async fn dc_add_server(data: &Data, server_id: u64) -> Result<(), ()> {
   let servers = dc_data["servers"].as_object_mut().unwrap();
 
   if !servers.contains_key(&server_id.to_string()) {
-    servers.insert(server_id.to_string(), json!({ "bk_week_channel": 0, "bk_mod_role": "bk mod", "bk_mods": [] }));
+    servers.insert(server_id.to_string(), json!({ "bk_week_channel": 0 }));
   }
 
   return Ok(());
@@ -193,5 +194,25 @@ pub async fn get_mutex_data(data: &Mutex<Option<Value>>) -> Result<Value, Error>
   return match data_lock.as_ref() {
     Some(data) => Ok(data.clone()),
     None => Err("Cannot get mutex data: The data is corrupted!".into()),
+  };
+}
+
+
+pub fn load_lang_data(lang: String) {
+  let full_path = format!("{}{}.json", DATA_PATH_LANG, lang);
+
+  if !Path::new(&full_path).exists() {
+    rs_println!(
+      "{}",
+      lang!("creating_data_file", lang!("cfg_data_404", lang))
+    );
+    generate_cfg_data();
+  }
+
+  let str_data = fs::read_to_string(full_path).unwrap();
+  let json_data = serde_json::from_str(&str_data).unwrap();
+
+  unsafe {
+    LANG = json_data;
   };
 }

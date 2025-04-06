@@ -1,5 +1,5 @@
 use crate::messages::send_dm;
-use crate::{errln, rs_println, Args};
+use crate::{errln, lang, rs_println, Args};
 
 use std::fs;
 use std::ffi::CString;
@@ -10,12 +10,12 @@ use pyo3::types::PyList;
 
 
 pub async fn start(args: Args) -> PyResult<()> { 
-  rs_println!("Running Python program...");
+  rs_println!("{}", lang!("starting_python_program"));
 
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
 
   let slash = if cfg!(windows) { "\\" } else if cfg!(unix) { "/" } else { "" };
-  if slash.is_empty() { errln!("Man what kinda OS do you have? Neither unix or windows, what the hell!? I can't process this anymore, you're too weird!"); }
+  if slash.is_empty() { errln!("{}", lang!("invalid_os")); }
 
   let path = format!("{0}{1}src{1}python", env!("CARGO_MANIFEST_DIR"), slash);
 
@@ -43,7 +43,7 @@ pub async fn start(args: Args) -> PyResult<()> {
       .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
       .collect();
 
-    send_dm(format!("Unknown internal Python Error: {:?}", from_python), args, own_vec_u64).await;
+    send_dm(lang!("python_err", format!("{:?}", from_python)), args, own_vec_u64).await;
     errln!("pyO3: {:?}", from_python);
   }
   return Ok(());
@@ -51,7 +51,8 @@ pub async fn start(args: Args) -> PyResult<()> {
 
 
 fn get_code(path: &str) -> String {
-  return fs::read_to_string(path)
-    .unwrap_or_else(|_| errln!("Failed to read Python file.\nPath: {}", path))
-    .to_string();
+  let file = fs::read_to_string(path);
+  if file.is_err() { errln!("Failed to read Python file.\nPath: {}", path); }
+
+  return file.unwrap().to_string();
 }

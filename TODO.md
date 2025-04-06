@@ -1,6 +1,7 @@
 ### High priority:
 <!-- - [x] ~~Embed creation tool~~ -->
 - [ ] Reddit bot that scrapes images with tag "Original Art" and posts them in Discord server
+  - [ ] Rename commands from "bk_week_{name}" to "re_{name}"
   <!-- - [x] ~~Discord bot /bk_help command~~ -->
   <!-- - [x] ~~Scrape the data~~ -->
   <!-- - [x] ~~Put it in a JSON~~ -->
@@ -10,7 +11,7 @@
   <!-- - [x] ~~`/bk_week_top [category] [amount]` to get the top N posts in a category (e.g upvotes)~~ -->
   <!-- - [x] ~~`/bk_cfg_sr [subreddit]` to change the target subreddit(s)~~ -->
   - [ ] Allow disabling bk_week
-  - [ ] Language files?
+  - [ ] Language files
   - [ ] Allow updating the data autonomously and via manual commands.
     <!-- - [ ] 10-minute schedule for updating Discord channel (IMPOSSIBLE / REALLY FUCKING HARD) -->
     <!-- - [x] ~~Manually add posts~~ -->
