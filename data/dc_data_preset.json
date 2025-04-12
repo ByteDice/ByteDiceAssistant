@@ -1,13 +1,8 @@
 {
   "servers": {
     "SERVER ID": {
-      "bk_week_channel": "CHANNEL ID INT",
-      "bk_mod_role": "bk mod",
-      "bk_mods": [
-        "USER ID 1",
-        "USER ID 2"
-      ],
-      "bk_week_disabled": false
+      "re_posts_channel": 0,
+      "re_disabled": false
     }
   }
 }

@@ -1,7 +1,7 @@
 use regex::Regex;
 use serde_json::Value;
 
-use crate::{messages::{make_post_embed, make_removed_embed, send_embed}, Context, Error};
+use crate::{data::get_mutex_data, messages::{make_post_embed, make_removed_embed, send_embed}, Context, Error};
 
 pub fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
   return mod_list.contains(&uid);
@@ -31,4 +31,14 @@ pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
     make_removed_embed(post, url, true),
     true
   ).await;
+}
+
+
+pub async fn get_readable_subreddits(ctx: Context<'_>) -> Result<String, Error> {
+  let d = get_mutex_data(&ctx.data().cfg).await?;
+  let sr = d["reddit"]["subreddits"].as_str().ok_or("Item of key \"subreddit\" is not a string type.\nTrace: get_readable_subreddits -> let sr = ...")?;
+  let split: Vec<&str> = sr.split("+").collect();
+  let join = split.join(", r/");
+
+  return Ok(join);
 }

@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg}, websocket::send_cmd_json, Context, Error, BK_WEEK};
+use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg}, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -27,7 +27,7 @@ pub async fn cmd(
 {
   let http = ctx.http();
 
-  let mut p_text = "`/bk_week_update`:".to_string();
+  let mut p_text = "`/re_updatediscord`:".to_string();
 
   let progress = send_msg(ctx, p_text.clone(), true, true).await.unwrap();
   p_text = update_progress(ctx, progress.clone(), p_text, "\nFetching new posts & updating data file...".to_string()).await;
@@ -42,7 +42,7 @@ pub async fn cmd(
   let c_id_u = get_c_id(ctx).await;
   
   if c_id_u.is_none() {
-    send_msg(ctx, "Could not find bk_week_channel in data!\nHint: Run (or tell an admin to run) `/bk_admin_bind` in a (preferably read-only) channel.".to_string(), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_posts_channel_404"), true, true).await;
     return Ok(());
   }
 
@@ -58,7 +58,7 @@ pub async fn cmd(
 
   // Adding new posts 
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
-  let weekly_art = r_data[BK_WEEK].as_object().unwrap();
+  let weekly_art = r_data[CFG_DATA_RE].as_object().unwrap();
   add_posts(http, c_id, weekly_art, &msgs_json, max_age_secs).await;
   
   // Stop if only_add
@@ -113,7 +113,7 @@ async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
   let c_id_u =
     d["servers"]
      [ctx.guild_id().unwrap().to_string()]
-     ["bk_week_channel"].as_u64().unwrap();
+     [DC_POSTS_CHANNEL_KEY].as_u64().unwrap();
 
   let c_id = ChannelId::new(c_id_u);
 
@@ -187,7 +187,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     if msg_json.is_err() { continue; }
 
     let mut u_json: Value = msg_json.unwrap();
-    let re_url = &reddit_data[BK_WEEK][&url];
+    let re_url = &reddit_data[CFG_DATA_RE][&url];
 
     let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or(0);
 

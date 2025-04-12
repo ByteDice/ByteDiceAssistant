@@ -1,11 +1,11 @@
 # ByteDiceAssistant
-An automation tool for Byte Dice. It's both a Discord and Reddit bot in one program.
+An automation tool primarily made for myself (Byte Dice) but publicly available for anyone to use. It's both a Discord and Reddit bot in one program.
 
 > [!CAUTION]
 > This tool is not intended for public use outside of the official *Byte Dice Assistant* bots. Expect issues if you host this yourself.\
-> This tool is only designed to run on Windows (10 and 11) and XUbuntu and may not work on any other OS.
+> This tool is only designed to run on Windows (10 and 11) and XUbuntu (24.04 and above) and may not work on any other OS.
 
-# Open-source - Copyright
+## Open-source - Copyright
 
 **ByteDiceAssistant © 2025 by Byte Dice is licensed under CC BY-NC-SA 4.0.**\
 **You can learn more about copyright by reading the full [license](/LICENSE.txt).**
@@ -42,7 +42,7 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 | `ASSISTANT_BK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/bk_week` commands. |
 
 ### Required permissions:
-**These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.**
+**These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.** (The permission integer is this part of the URL `&permissions=84992`)
 * Send Messages
 * Read Message History
 * View Channels
@@ -62,7 +62,7 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
     * write `VARIABLE_NAME="value"` + a new line for every variable.
     * if nano: `ctrl + O` (and press enter) then `ctrl + X`.
     * if VIM: press `esc` then write `:wq` (and press enter).
-* Restart the terminal if you added/changed the environment variables.
-* Run `$ cd path/to/extracted/folder`.
-* Run `$ cargo run`. You can view a list of options by running `$ cargo run -- --help` or `$ cargo run -- -h`.
+* Restart the terminal if you added/changed any environment variables.
+* Run `$ cd path/to/extracted/folder` to navigate to the downloaded files (replace `path/to/extracted/folder` with your actual path).
+* Run `$ cargo run` to start the program. You can view a list of options by running `$ cargo run -- --help` or `$ cargo run -- -h`.
   * If you only want to run the Python code, you can either run `$ cargo run -- --py`, or `$ python ./src/python/main.py`. The second option is recommended for better error output.

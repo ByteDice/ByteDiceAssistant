@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{lang, messages::send_msg, re_cmds::generic_fns::is_bk_mod, websocket::send_cmd_json, Context, Error};
+use crate::{lang, messages::send_msg, re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod}, websocket::send_cmd_json, Context, Error};
 
 #[poise::command(
   slash_command,
@@ -17,7 +17,8 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod"), false, false).await;
+    let sr = get_readable_subreddits(ctx).await?;
+    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
     return Ok(());
   }
 

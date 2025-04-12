@@ -79,8 +79,8 @@ def read_data(bot: botPy.Bot) -> bool:
     with open(os.path.join(DATA_PATH, "re_data_preset.json", "r")) as f:
       data_preset_json = json.load(f)
 
-    data_preset_json[botPy.BK_WEEKLY].pop("EXAMPLE VALUE", None)
-    data_preset_json[botPy.BK_WEEKLY].pop("EXAMPLE VALUE DELETED", None)
+    data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE VALUE", None)
+    data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE VALUE DELETED", None)
 
     with open(r_path, "w") as f:
       json.dump(data_preset_json, f, indent = 2)
@@ -126,7 +126,7 @@ async def read_cfg(bot: botPy.Bot) -> bool:
 
 def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool = False) -> bool:
   if bypass_conditions:
-    bot.data[botPy.BK_WEEKLY][new_data.url] = new_data.to_json()
+    bot.data[botPy.RE_DATA_POSTS][new_data.url] = new_data.to_json()
     if bot.args["dev"]:
       py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
@@ -134,14 +134,14 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
   # not sure what this is for
   updated = False
 
-  if new_data.url not in bot.data[botPy.BK_WEEKLY] or updated:
-    bot.data[botPy.BK_WEEKLY][new_data.url] = new_data.to_json()
+  if new_data.url not in bot.data[botPy.RE_DATA_POSTS] or updated:
+    bot.data[botPy.RE_DATA_POSTS][new_data.url] = new_data.to_json()
     if bot.args["dev"]:
       py_print(f"Added post \"{new_data.url}\"")
     return True
 
-  if "removed" not in bot.data[botPy.BK_WEEKLY][new_data.url]:
-    updated = new_data.upvotes != bot.data[botPy.BK_WEEKLY][new_data.url]["post_data"]
+  if "removed" not in bot.data[botPy.RE_DATA_POSTS][new_data.url]:
+    updated = new_data.upvotes != bot.data[botPy.RE_DATA_POSTS][new_data.url]["post_data"]
   
   else:
     py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
@@ -149,15 +149,15 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
   
 
 def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
-  if not hasattr(bot.data[botPy.BK_WEEKLY][url], "removed"):
-    bot.data[botPy.BK_WEEKLY][url]["approved"]["by_human"] = approved
+  if not hasattr(bot.data[botPy.RE_DATA_POSTS][url], "removed"):
+    bot.data[botPy.RE_DATA_POSTS][url]["approved"]["by_human"] = approved
     return True
   
   return False
 
 
 def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: str = "None") -> bool:
-  weekly = bot.data[botPy.BK_WEEKLY]
+  weekly = bot.data[botPy.RE_DATA_POSTS]
 
   if url in weekly:
     weekly[url] = {
@@ -173,7 +173,7 @@ def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: s
 
 def remove_old_posts(bot: botPy.Bot, max_age: int) -> bool:
   now = int(time.time())
-  weekly = bot.data[botPy.BK_WEEKLY]
+  weekly = bot.data[botPy.RE_DATA_POSTS]
   remove: list[str] = []
 
   for url, post in weekly.items():
@@ -194,10 +194,10 @@ def set_vote_post(
   from_dc: bool = False,
   remove_vote: bool = False,
 ) -> bool:
-  if url not in bot.data[botPy.BK_WEEKLY]:
+  if url not in bot.data[botPy.RE_DATA_POSTS]:
     return False
 
-  votes = bot.data[botPy.BK_WEEKLY][url]["votes"]
+  votes = bot.data[botPy.RE_DATA_POSTS][url]["votes"]
   re_voters: set[str] = set(votes["voters_re"])
   dc_voters: set[int] = set(votes["voters_dc"])
   mod_voters: set[int] = set(votes["mod_voters"])
@@ -214,8 +214,8 @@ def set_vote_post(
       return False
     target_voters.add(user)
 
-  bot.data[botPy.BK_WEEKLY][url]["votes"]["voters_re"] = list(re_voters)
-  bot.data[botPy.BK_WEEKLY][url]["votes"]["voters_dc"] = list(dc_voters)
-  bot.data[botPy.BK_WEEKLY][url]["votes"]["mod_voters"] = list(mod_voters)
+  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_re"] = list(re_voters)
+  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_dc"] = list(dc_voters)
+  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["mod_voters"] = list(mod_voters)
 
   return True

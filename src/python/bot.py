@@ -6,8 +6,8 @@ from macros import *
 import json
 
 
-BK_WEEKLY: Final[str] = "bk_weekly_art_posts"
-BK_WEEK:   Final[str] = "bk_week"
+RE_DATA_POSTS: Final[str] = "posts"
+CFG_DATA_RE:   Final[str] = "reddit"
 
 
 class Bot:
@@ -22,7 +22,7 @@ class Bot:
   useragent: str =\
     f"{username} by u/RandomPersonDotExe aka u/Byte_Dice"\
       if r_id == "YmZjr4zLr2qtHdpQXtj0sBOOdJzrXQ"\
-    else f"{username} (original program by u/RandomPersonDotExe aka u/Byte_Dice)"
+    else f"{username} (Original program by u/RandomPersonDotExe aka u/Byte_Dice)"
 
   if password is None:
     py_error("Environment variable \"ASSISTANT_R_PASS\" is null!")
@@ -57,11 +57,11 @@ class Bot:
   
   async def update_cfg_str(self, new_cfg: str) -> bool:
     json_cfg = json.loads(new_cfg)
-    self.sr = await self.r.subreddit(json_cfg[BK_WEEK]["subreddits"])
-    self.fetch_limit = json_cfg[BK_WEEK]["fetch_limit"]
+    self.sr = await self.r.subreddit(json_cfg[CFG_DATA_RE]["subreddits"])
+    self.fetch_limit = json_cfg[CFG_DATA_RE]["fetch_limit"]
     return True
   
   async def update_cfg(self, new_cfg: dict) -> bool:
-    self.sr = await self.r.subreddit(new_cfg[BK_WEEK]["subreddits"])
-    self.fetch_limit = new_cfg[BK_WEEK]["fetch_limit"]
+    self.sr = await self.r.subreddit(new_cfg[CFG_DATA_RE]["subreddits"])
+    self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
     return True

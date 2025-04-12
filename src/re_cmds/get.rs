@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::send_embed_for_post, rs_println, Context, Error, BK_WEEK};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::send_embed_for_post, rs_println, Context, Error, CFG_DATA_RE};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -30,7 +30,7 @@ pub async fn cmd(
 
 
 async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) -> Result<Option<Value>, Error> {
-  if let Some(bk_week) = reddit_data.get(BK_WEEK) {
+  if let Some(bk_week) = reddit_data.get(CFG_DATA_RE) {
     if let Some(post) = bk_week.get(url) {
       if post.get("removed").is_some() {
         send_embed_for_removed(ctx, url, post).await;

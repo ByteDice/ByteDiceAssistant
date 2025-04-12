@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod, send_embed_for_removed}, websocket::send_cmd_json, Context, Error, BK_WEEK};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod, send_embed_for_removed}, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -19,7 +19,7 @@ pub async fn cmd(
   data::update_re_data(ctx.data()).await;
   let uid = ctx.author().id.get();
   let re_data = get_mutex_data(&ctx.data().reddit_data).await?;
-  let post_data = re_data[BK_WEEK].clone();
+  let post_data = re_data[CFG_DATA_RE].clone();
   let unw_vote = un_vote.unwrap_or(false);
   
   if post_data.get(&url).is_none() {

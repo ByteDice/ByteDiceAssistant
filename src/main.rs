@@ -59,7 +59,7 @@ struct Args {
   noping: bool,
   #[arg(long, help = "Makes the program not use the schedules.")]
   nosched: bool,
-  #[arg(long, default_value = "en", help = "Which language file to use (Do not include file extention)")]
+  #[arg(long, default_value = "en", help = "Which language file to use (Do not include file extensions)")]
   lang: String
 }
 
@@ -79,7 +79,7 @@ struct Data {
 }
 
 
-static BK_WEEK: &str = "bk_weekly_art_posts";
+static CFG_DATA_RE: &str = "posts";
 
 pub static mut LANG: Option<serde_json::Value> = None;
 
@@ -100,19 +100,19 @@ async fn main() {
     .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
     .collect();
 
-  if args.test { println!("----- USING TEST BOT -----"); }
-  if args.dev { println!("----- DEV MODE ENABLED -----"); }
+  if args.test             { println!("-----             USING TEST BOT            -----"); }
+  if args.dev              { println!("-----            DEV MODE ENABLED           -----"); }
   if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
-  if args.nosched { println!("----- NO SCHEDULES -----") }
+  if args.nosched          { println!("-----             NO SCHEDULES              -----"); }
 
   if args.py && !args.rs {
-    println!("----- PYTHON ONLY MODE -----");
+    println!("-----           PYTHON ONLY MODE            -----");
     rs_println!("ARGS: {}", args_str);
     let _ = python::start(args).await;
     process::exit(0);
   }
   else if args.rs && ! args.py {
-    println!("----- RUST ONLY MODE -----");
+    println!("-----            RUST ONLY MODE             -----");
     rs_println!("ARGS: {}", args_str);
     start(args, own_vec_u64.clone()).await;
     process::exit(0);

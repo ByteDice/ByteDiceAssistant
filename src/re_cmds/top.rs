@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{data::get_mutex_data, re_cmds::generic_fns::send_embed_for_post, Context, Error, BK_WEEK};
+use crate::{data::get_mutex_data, re_cmds::generic_fns::send_embed_for_post, Context, Error, CFG_DATA_RE};
 
 #[derive(poise::ChoiceParameter, PartialEq)]
 enum TopCategory {
@@ -30,7 +30,7 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   let mut all: HashMap<&str, i32> = HashMap::new();
-  let posts = &get_mutex_data(&ctx.data().reddit_data).await?[BK_WEEK];
+  let posts = &get_mutex_data(&ctx.data().reddit_data).await?[CFG_DATA_RE];
   let posts_u = posts.as_object().unwrap();
 
   for (url, dat) in posts_u {

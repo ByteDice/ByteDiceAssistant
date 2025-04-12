@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::is_bk_mod, websocket, Context, Error, BK_WEEK};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod}, websocket, Context, Error, CFG_DATA_RE};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -19,7 +19,8 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod"), false, false).await;
+    let sr = get_readable_subreddits(ctx).await?;
+    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
     return Ok(());
   }
 
@@ -33,7 +34,7 @@ pub async fn cmd(
 
 
 async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: bool) {
-  if let Some(post) = reddit_data.get(BK_WEEK).unwrap().get(url) {
+  if let Some(post) = reddit_data.get(CFG_DATA_RE).unwrap().get(url) {
     if post.get("removed").is_some() {
       send_embed_for_removed(ctx, url, post).await;
       return;

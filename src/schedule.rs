@@ -5,7 +5,7 @@ use std::time::Duration;
 use tokio::task::JoinHandle;
 use tokio::time;
 
-use crate::{lang, rs_println};
+use crate::rs_println;
 
 
 pub type Schedule = (Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>);

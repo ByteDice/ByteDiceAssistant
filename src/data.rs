@@ -4,7 +4,7 @@ use std::path::Path;
 use serde_json::{self, Value, json};
 use tokio::sync::Mutex;
 
-use crate::{errln, rs_println, Data, Error, BK_WEEK, LANG};
+use crate::{errln, rs_println, Data, Error, CFG_DATA_RE, LANG};
 use crate::websocket::send_cmd_json;
 
 
@@ -15,6 +15,8 @@ static PRESET_PATH_RE:  &str = "./data/re_data_preset.json";
 static DATA_PATH_CFG:   &str = "./data/cfg.json";
 static PRESET_PATH_CFG: &str = "./data/cfg_default.json";
 static DATA_PATH_LANG:  &str = "./data/lang/";
+
+pub static DC_POSTS_CHANNEL_KEY: &str = "re_posts_channel";
 
 
 pub async fn read_dc_data(data: &Data, wipe: bool) {
@@ -88,7 +90,7 @@ fn generate_re_data() {
   let preset_str = fs::read_to_string(PRESET_PATH_RE).unwrap();
   let mut preset_json: Value = serde_json::from_str(&preset_str).unwrap();
 
-  if let Some(bk_week) = preset_json[BK_WEEK].as_object_mut() {
+  if let Some(bk_week) = preset_json[CFG_DATA_RE].as_object_mut() {
     bk_week.remove("EXAMPLE VALUE");
     bk_week.remove("EXAMPLE VALUE DELETED");
   }
@@ -149,7 +151,7 @@ pub async fn dc_add_server(data: &Data, server_id: u64) -> Result<(), ()> {
   let servers = dc_data["servers"].as_object_mut().unwrap();
 
   if !servers.contains_key(&server_id.to_string()) {
-    servers.insert(server_id.to_string(), json!({ "bk_week_channel": 0 }));
+    servers.insert(server_id.to_string(), json!({ DC_POSTS_CHANNEL_KEY: 0 }));
   }
 
   return Ok(());
@@ -170,7 +172,7 @@ pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<
 
   let server = servers[&server_id.to_string()].as_object_mut().unwrap();
 
-  server.insert("bk_week_channel".to_string(), channel_id.into());
+  server.insert(DC_POSTS_CHANNEL_KEY.to_string(), channel_id.into());
 
   return Ok(());
 }

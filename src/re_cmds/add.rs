@@ -2,8 +2,8 @@ use serde_json::json;
 
 use crate::data::get_mutex_data;
 use crate::messages::send_msg;
-use crate::{data, websocket, Context, Error, BK_WEEK};
-use crate::re_cmds::generic_fns::{is_bk_mod, to_shorturl};
+use crate::{data, websocket, Context, Error, CFG_DATA_RE};
+use crate::re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod, to_shorturl};
 use crate::lang;
 
 #[poise::command(
@@ -21,7 +21,8 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod"), false, false).await; // TODO: add subreddit arg to lang
+    let sr = get_readable_subreddits(ctx).await?;
+    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
     return Ok(());
   }
 
@@ -31,7 +32,7 @@ pub async fn cmd(
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  if let Some(bk_week) = reddit_data.get(BK_WEEK) {
+  if let Some(bk_week) = reddit_data.get(CFG_DATA_RE) {
     let a = approve.unwrap_or(false);
     let r = websocket::send_cmd_json("add_post_url", Some(json!([&shorturl, a, true]))).await.unwrap();
 
