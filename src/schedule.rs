@@ -23,7 +23,7 @@ pub async fn run_schedule<F: Fn() -> Pin<Box<dyn Future<Output = ()> + Send>>>(d
 pub async fn run_schedules(schedules: Vec<Schedule>) {
   let mut handles: Vec<JoinHandle<()>> = vec![];
 
-  rs_println!("{}", lang!("starting_schedules"));
+  rs_println!("Starting schedules...");
   for (d, f) in schedules {
     let handle = tokio::spawn(run_schedule(d, f));
     handles.push(handle);

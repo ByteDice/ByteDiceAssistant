@@ -29,7 +29,7 @@ pub struct EmbedOptions {
 impl Default for EmbedOptions {
   fn default() -> Self {
     return EmbedOptions {
-      desc: lang!("default_embed_desc"),
+      desc: lang!("dc_msg_embed_default_embed_desc"),
       title: None,
       col: None,
       url: None,
@@ -45,7 +45,6 @@ impl Default for EmbedOptions {
 
 static DEFAULT_DC_COL: u32 = 5793266;
 static REMOVED_DC_COL: u32 = 16716032;
-pub static MANDATORY_MSG: &str = "Mandatory response, please ignore.";
 
 
 fn none_to_empty(string: Option<String>) -> String {
@@ -198,7 +197,7 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
   let media_type = &post_data["post_data"]["media_type"];
 
   let desc_str = lang!(
-    "data_post_embed",
+    "dc_msg_embed_re_post",
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     post_data["votes"]["mod_voters"].as_array().unwrap().len(),
     if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
@@ -242,7 +241,7 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
   return EmbedOptions { 
     title: Some("REMOVED!".to_string()),
     desc: lang!(
-      "data_post_removed_embed",
+      "dc_msg_embed_re_removed",
       post_data["removed_by"].as_str().unwrap(),
       if !post_data["remove_reason"].is_null() { post_data["remove_reason"].as_str().unwrap() }
         else { "None" },

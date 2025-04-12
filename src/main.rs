@@ -40,7 +40,6 @@ use websocket::send_cmd_json;
 
 use crate::schedule::Schedule;
 
-// TODO: convert to lang!
 
 #[derive(Parser, Serialize, Clone)]
 struct Args {
@@ -92,7 +91,7 @@ async fn main() {
 
   rs_println!("Fetching language file...");
   data::load_lang_data(args.clone().lang);
-  rs_println!("{}", lang!("lang_load_success"));
+  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\n{}", lang!("log_lang_load_success"));
 
   let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
@@ -156,7 +155,7 @@ async fn start(args: Args, owners: Vec<u64>) {
   let data = gen_data(args.clone(), owners).await;
   let mut bot = gen_bot(data, args).await;
 
-  rs_println!("{}", lang!("dc_bot_starting"));
+  rs_println!("Starting Discord bot...");
   bot.start().await.unwrap();
 }
 

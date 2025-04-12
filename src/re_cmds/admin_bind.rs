@@ -18,10 +18,10 @@ pub async fn cmd(
   let r = dc_bind_bk(ctx.data(), ctx.guild_id().unwrap().into(), c_id).await;
 
   if r.is_ok() {
-    send_msg(ctx, lang!("bound_dc_channel", c_id), true, true).await;
+    send_msg(ctx, lang!("dc_msg_bound_channel", c_id), true, true).await;
   }
   else {
-    send_msg(ctx, lang!("dc_404"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_server_data_404"), false, false).await;
   }
 
   return Ok(());

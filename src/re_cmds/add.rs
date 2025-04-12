@@ -21,7 +21,7 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    send_msg(ctx, lang!("re_permdeny_bk_mod"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod"), false, false).await; // TODO: add subreddit arg to lang
     return Ok(());
   }
 
@@ -49,18 +49,18 @@ pub async fn cmd(
 
     if let Some(post) = bk_week.get(shorturl) {
       if post.get("removed").is_some() {
-        send_msg(ctx, lang!("re_unremove_post_success", url), true, true).await;
+        send_msg(ctx, lang!("dc_msg_re_post_unremove_success", url), true, true).await;
       }
       else {
-        send_msg(ctx, lang!("re_update_post_success", url), true, true).await;
+        send_msg(ctx, lang!("dc_msg_re_post_update_success", url), true, true).await;
       }
     }
     else {
-      send_msg(ctx, lang!("re_add_post_success", &shorturl), true, true).await;
+      send_msg(ctx, lang!("dc_msg_re_post_add_success", &shorturl), true, true).await;
     }
 
     if a {
-      send_msg(ctx, lang!("re_also_approved"), true, true).await;
+      send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await;
     }
   }
 

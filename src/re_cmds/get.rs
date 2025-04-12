@@ -39,11 +39,11 @@ async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) ->
       return Ok(Some(post.clone()));
     }
     else {
-      send_msg(ctx, lang!("re_404", url), true, true).await;
+      send_msg(ctx, lang!("dc_msg_re_post_404", url), true, true).await;
     }
   }
   else {
-    send_msg(ctx, lang!("re_data_corrupted", url), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_data_corrupted", url), true, true).await;
     rs_println!("{}", serde_json::to_string_pretty(reddit_data)?);
   }
   return Ok(None);

@@ -66,11 +66,11 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
 
     let r = receive_response().await;
     if !["respond_mentions"].contains(&func_name) || <Args as clap::Parser>::parse().dev {
-      rs_println!("{}", lang!("python_socket_response", format!("{:?}", r)));
+      rs_println!("Received from Python: [RESPONSE] {:?}", r);
     }
 
     if r.is_none() {
-      rs_println!("{}", lang!("python_socket_null"));
+      rs_println!("[IMPORTANT] Response from Python is None!");
     }
 
     return r;
@@ -99,10 +99,10 @@ async fn receive_response() -> Option<Value> {
 
 
 pub async fn start(args: Args, owners: Vec<u64>) {
-  rs_println!("{}", lang!("starting_socket"));
+  rs_println!("Running local websocket...");
   let ip = format!("127.0.0.1:{}", args.port);
   let listener = TcpListener::bind(&ip).await.unwrap();
-  rs_println!("{}", lang!("started_socket", ip));
+  rs_println!("WebSocket server running on ws://{}", ip);
 
   tokio::spawn(handle_connections(listener, args, owners));
 }
@@ -129,18 +129,18 @@ async fn handle_connections(listener: TcpListener, args: Args, owners: Vec<u64>)
 async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners: Vec<u64>) {
   match msg {
     tungstenite::Message::Text(text) => {
-      rs_println!("{}", lang!("socket_received_python", text.clone()));
+      rs_println!("Received from Python: {}", text);
 
       if let Some(stripped) = text.strip_prefix("json:") {
         let t_json: Value = serde_json::from_str(stripped).unwrap();
         if t_json.get("error").is_some() {
-          send_dm(lang!("python_socket_err"), args, owners).await;
+          send_dm(lang!("dc_msg_dm_python_err_socket"), args, owners).await;
         }
       }
 
       unsafe {
         if !REPLY_HELLO {
-          send_msg(&lang!("socket_rust_connection_test")).await;
+          send_msg("[Connection test] Hello from Rust!").await;
           REPLY_HELLO = true;
           HAS_CONNECTED = true;
         }
@@ -148,12 +148,12 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
     }
     tungstenite::Message::Binary(bytes) => {
       if args.dev && !args.noping {
-        rs_println!("{}", lang!("python_socket_binary_response", format!("{:?}", bytes)));
+        rs_println!("[Binary] from Python: {:?}", bytes);
       }
     }
     _ => {
       if args.dev && !args.noping {
-        rs_println!("{}", lang!("python_socket_unknown_response"));
+        rs_println!("Received from Python: [UNKNOWN / OTHER]");
       }
     }
   }

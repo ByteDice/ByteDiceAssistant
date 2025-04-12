@@ -17,7 +17,7 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    send_msg(ctx, lang!("re_permdeny_bk_mod"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod"), false, false).await;
     return Ok(());
   }
 
@@ -27,13 +27,13 @@ pub async fn cmd(
   if r["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      lang!("re_remove_post_success"),
+      lang!("dc_msg_re_post_remove_success"),
       true,
       true
     ).await;
   }
   else {
-    send_msg(ctx, lang!("re_404"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
   }
 
   return Ok(());

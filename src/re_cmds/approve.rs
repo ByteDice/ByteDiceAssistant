@@ -19,7 +19,7 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    send_msg(ctx, lang!("re_permdeny_bk_mod"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod"), false, false).await;
     return Ok(());
   }
 
@@ -42,17 +42,17 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
     let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, &url]))).await.unwrap();
     if r.get("value").is_some() {
       if approve {
-        send_msg(ctx, lang!("re_approve_post_success"), true, true).await;
+        send_msg(ctx, lang!("dc_msg_re_post_approve_success"), true, true).await;
       }
       else {
-        send_msg(ctx, lang!("re_disapprove_post_success"), true, true).await;
+        send_msg(ctx, lang!("dc_msg_re_post_disapprove_success"), true, true).await;
       }
     }
     else {
-      send_msg(ctx, lang!("re_err_trace", "`re_cmds -> approve.rs -> cmd() -> unwrap websocket result error`"), true, true).await;
+      send_msg(ctx, lang!("dc_msg_err_trace", "`re_cmds -> approve.rs -> cmd() -> unwrap websocket result error`"), true, true).await;
     }
   }
   else {
-    send_msg(ctx, lang!("re_404"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
   }
 }

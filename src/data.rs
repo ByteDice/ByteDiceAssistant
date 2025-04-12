@@ -4,7 +4,7 @@ use std::path::Path;
 use serde_json::{self, Value, json};
 use tokio::sync::Mutex;
 
-use crate::{lang, rs_println, Data, Error, BK_WEEK, LANG};
+use crate::{errln, rs_println, Data, Error, BK_WEEK, LANG};
 use crate::websocket::send_cmd_json;
 
 
@@ -20,8 +20,8 @@ static DATA_PATH_LANG:  &str = "./data/lang/";
 pub async fn read_dc_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_DC).exists() || wipe {
     rs_println!(
-      "{}",
-      lang!("creating_data_file", if !wipe { lang!("dc_data_404") } else { lang!("dc_data_wipe") })
+      "{} creating new from preset...",
+      if !wipe { "discord_data.json not found," } else { "[WIPE] (discord_data.json)" }
     );
     generate_dc_data();
   }
@@ -71,8 +71,8 @@ pub async fn write_dc_data(data: &Data) {
 pub async fn read_re_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_RE).exists() || wipe {
     rs_println!(
-      "{}",
-      lang!("creating_data_file", if !wipe { lang!("re_data_404") } else { lang!("re_data_wipe") })
+      "{} creating new from preset...",
+      if !wipe { "reddit_data.json not found," } else { "[WIPE] (reddit_data.json)" }
     );
     generate_re_data();
   }
@@ -114,8 +114,8 @@ pub async fn write_re_data() {
 pub async fn read_cfg_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_CFG).exists() || wipe {
     rs_println!(
-      "{}",
-      lang!("creating_data_file", if !wipe { lang!("cfg_data_404") } else { lang!("cfg_data_wipe") })
+      "{} creating new from preset...",
+      if !wipe { "cfg.json not found," } else { "[WIPE] (cfg.json)" }
     );
     generate_cfg_data();
   }
@@ -202,11 +202,10 @@ pub fn load_lang_data(lang: String) {
   let full_path = format!("{}{}.json", DATA_PATH_LANG, lang);
 
   if !Path::new(&full_path).exists() {
-    rs_println!(
-      "{}",
-      lang!("creating_data_file", lang!("cfg_data_404", lang))
+    errln!(
+      "File for language \"{0}\" ({0}.json) not found!\n    Hint: You can download official language files at https://github.com/ByteDice/ByteDiceAssistant in the data/langs/... folder",
+      lang
     );
-    generate_cfg_data();
   }
 
   let str_data = fs::read_to_string(full_path).unwrap();

@@ -1,4 +1,4 @@
-use crate::{lang, rs_println, Data, Error};
+use crate::{rs_println, Data, Error};
 
 use poise::serenity_prelude::{self as serenity, ActivityData};
 
@@ -14,12 +14,9 @@ pub fn event_handler<'a>(
   Box::pin(async move {
     if let serenity::FullEvent::Ready { data_about_bot } = event {
       rs_println!(
-        "{}",
-        lang!(
-          "dc_bot_started",
-          data_about_bot.user.name.clone(),
-          data_about_bot.user.id
-        )
+        "Bot started as user \"{}\" with id {}",
+        data_about_bot.user.name,
+        data_about_bot.user.id
       );
 
       let file_text = std::fs::read_to_string("./data/status.txt").unwrap();

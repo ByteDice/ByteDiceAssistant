@@ -6,13 +6,16 @@ use crate::data::{dc_add_server, get_mutex_data, read_cfg_data};
 use crate::re_cmds::generic_fns::to_shorturl;
 use crate::websocket::send_cmd_json;
 use crate::{data, lang, Context, Data, Error};
-use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions, MANDATORY_MSG};
+use crate::messages::{edit_reply, send_embed, send_msg, Author, EmbedOptions};
 
 use poise::serenity_prelude::{OnlineStatus, Timestamp};
 use poise::Command;
 use rand::{seq::IteratorRandom, Rng};
 use serde_json::json;
 use tokio::fs;
+
+
+// TODO: separate to multiple files
 
 
 #[derive(poise::ChoiceParameter, PartialEq)]
@@ -63,19 +66,19 @@ pub async fn stop(
     || confirmation.unwrap_or_default().to_lowercase() == "i want to stop the bot now";
 
   if should_stop {
-    let msg = send_msg(ctx, lang!("data_save_progress"), true, true).await.unwrap();
+    let msg = send_msg(ctx, lang!("dc_msg_owner_data_save"), true, true).await.unwrap();
     data::write_dc_data(ctx.data()).await;
     data::write_re_data().await;
     send_cmd_json("stop_praw", None).await;
 
-    edit_reply(ctx, msg, lang!("data_save_complete")).await;
+    edit_reply(ctx, msg, lang!("dc_msg_owner_data_save_complete")).await;
     ctx.serenity_context().set_presence(None, OnlineStatus::Invisible);
     ctx.framework().shard_manager.shutdown_all().await;
 
     process::exit(0);
   }
   else {
-    send_msg(ctx, lang!("invalid_confirm_shutdown"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_owner_shutdown_failed_confirmation"), true, true).await;
   }
 
   return Ok(());
@@ -124,7 +127,7 @@ pub async fn embed(
   ).await;
 
   if !reply_unwrap {
-    send_msg(ctx, MANDATORY_MSG.to_string(), true, true).await;
+    send_msg(ctx, lang!("dc_msg_mandatory_response"), true, true).await;
   }
 
   return Ok(());
@@ -146,7 +149,7 @@ pub async fn send(
 ) -> Result<(), Error>
 {
   send_msg(ctx, msg.replace("\\n", "\n"), false, false).await;
-  send_msg(ctx, MANDATORY_MSG.to_string(), true, true).await;
+  send_msg(ctx, lang!("dc_msg_mandatory_response"), true, true).await;
   return Ok(());
 }
 
@@ -171,7 +174,7 @@ pub async fn eight_ball(
 
   send_msg(
     ctx,
-    lang!("8-ball_answer", question, rand_item.unwrap()),
+    lang!("dc_msg_8-ball_answer", question, rand_item.unwrap()),
     true,
     true
   ).await;
@@ -194,10 +197,10 @@ pub async fn re_shorturl(
   let shorturl = to_shorturl(&url);
 
   if shorturl.is_ok() {
-    send_msg(ctx, lang!("shorturl", shorturl.unwrap()), true, true).await;
+    send_msg(ctx, lang!("dc_msg_shorturl", shorturl.unwrap()), true, true).await;
   }
   else {
-    send_msg(ctx, lang!("couldnt_shorturl"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_failed_shorturl_conversion"), true, true).await;
   }
 
   return Ok(());
@@ -220,10 +223,10 @@ pub async fn add_server(
   let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into()).await;
 
   if r.is_ok() {
-    send_msg(ctx, lang!("add_to_data"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_added_to_data"), true, true).await;
   }
   else {
-    send_msg(ctx, lang!("corrupted_data"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_corrupted_data"), true, true).await;
   }
 
   return Ok(());
@@ -250,14 +253,14 @@ pub async fn reload_cfg(
   if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      lang!("reload_config_success", serde_json::to_string_pretty(&d).unwrap()),
+      lang!("dc_msg_reload_cfg_success", serde_json::to_string_pretty(&d).unwrap()),
       true,
       true
     ).await;
     return Ok(());
   }
 
-  send_msg(ctx, lang!("reload_config_python_fail"), true, true).await;
+  send_msg(ctx, lang!("dc_msg_reload_cfg_python_fail"), true, true).await;
   return Ok(());
 }
 
@@ -329,7 +332,7 @@ async fn send_single_help(ctx: Context<'_>, mut cmd_name: String) {
   if cmd.is_none() {
     send_msg(
       ctx,
-      lang!("cmd_404", cmd_name),
+      lang!("dc_msg_cmd_404", cmd_name),
       true,
       true
     ).await;
@@ -355,7 +358,7 @@ async fn send_category_help(ctx: Context<'_>, category: HelpOptions) {
 
 async fn send_bk_week_help_re(ctx: Context<'_>) {
   let t: String = fs::read_to_string("./bk_week_help_re.md").await
-    .unwrap_or(lang!("help_text_removed"));
+    .unwrap_or(lang!("dc_msg_re_help_removed"));
 
   send_msg(ctx, t, true, true).await;
 }

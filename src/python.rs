@@ -10,12 +10,12 @@ use pyo3::types::PyList;
 
 
 pub async fn start(args: Args) -> PyResult<()> { 
-  rs_println!("{}", lang!("starting_python_program"));
+  rs_println!("Running Python program...");
 
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
 
   let slash = if cfg!(windows) { "\\" } else if cfg!(unix) { "/" } else { "" };
-  if slash.is_empty() { errln!("{}", lang!("invalid_os")); }
+  if slash.is_empty() { errln!("Man what kinda OS do you have? Neither unix or windows, what the hell!? I can't process this anymore, you're too weird!"); }
 
   let path = format!("{0}{1}src{1}python", env!("CARGO_MANIFEST_DIR"), slash);
 
@@ -43,7 +43,7 @@ pub async fn start(args: Args) -> PyResult<()> {
       .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
       .collect();
 
-    send_dm(lang!("python_err", format!("{:?}", from_python)), args, own_vec_u64).await;
+    send_dm(lang!("dc_msg_dm_python_err", format!("{:?}", from_python)), args, own_vec_u64).await;
     errln!("pyO3: {:?}", from_python);
   }
   return Ok(());

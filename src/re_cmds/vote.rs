@@ -23,7 +23,7 @@ pub async fn cmd(
   let unw_vote = un_vote.unwrap_or(false);
   
   if post_data.get(&url).is_none() {
-    send_msg(ctx, lang!("re_404"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
     return Ok(());
   }
   if post_data[&url].get("removed").is_some() {
@@ -39,11 +39,11 @@ pub async fn cmd(
   let voters = if is_mod { mod_voters } else { voters_dc };
 
   if voters.contains(&json!(uid)) && !unw_vote {
-    send_msg(ctx, lang!("re_already_voted"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_already_voted"), true, true).await;
     return Ok(());
   }
   else if !voters.contains(&json!(uid)) && unw_vote {
-    send_msg(ctx, lang!("re_havent_voted_remove_vote"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_vote_remove_havent"), true, true).await;
     return Ok(());
   }
 
@@ -51,16 +51,16 @@ pub async fn cmd(
   let unw_r = r["value"].as_bool().unwrap();
 
   if unw_r && !unw_vote && is_mod {
-    send_msg(ctx, lang!("re_vote_success_mod"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_vote_mod_success"), true, true).await;
   }
   else if unw_r && !unw_vote && !is_mod {
-    send_msg(ctx, lang!("re_vote_success"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_vote_success"), true, true).await;
   }
   else if unw_r && unw_vote {
-    send_msg(ctx, lang!("re_vote_remove_success"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_vote_remove_success"), true, true).await;
   }
   else {
-    send_msg(ctx, lang!("re_vote_err"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_re_vote_err"), true, true).await;
   }
 
   return Ok(());
