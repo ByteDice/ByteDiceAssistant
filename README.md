@@ -49,20 +49,31 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 * Embed Links
 
 ### How to run:
+### Short answer for experienced people:
+* Download the code.
+* Set the environment variables (listed above).
+* Restart the terminal.
+* Navigate to the project root directory.
+* Run with `cargo run`. 
+  * Alrenatively, run `cargo run -- {args here}` to add args.
+  * For help, run `cargo run -- -h` or `cargo run -- --help`.
+  * To only run the Python part, use `cargo run -- --py`, or for a better error output, `python ./src/python/main.py`
+
+### Long answer for absolute beginners:
 * Download the code (and extract it if needed).
 * Open a terminal.
-* Set the environment variables.
+* Set the environment variables (listed above).
   * On Windows:
 
-    * Run `$ setx VARIABLE_NAME "value"` in a terminal.
+    * Run `setx VARIABLE_NAME "value in quotes"` in a terminal.
     
   * On Unix (Linux / Mac):
-    * Run `$ sudo nano /etc/environment` or `$ sudo vim /etc/environment` in the terminal (and enter your password if prompted to).
-    * press `i` (only if you used VIM).
-    * write `VARIABLE_NAME="value"` + a new line for every variable.
+    * Run `sudo nano /etc/environment` or `sudo vim /etc/environment` in the terminal (and enter your password if prompted to).
+    * Press `i` (only if you used VIM).
+    * Write `VARIABLE_NAME="value"` + a new line for every variable.
     * if nano: `ctrl + O` (and press enter) then `ctrl + X`.
     * if VIM: press `esc` then write `:wq` (and press enter).
 * Restart the terminal if you added/changed any environment variables.
-* Run `$ cd path/to/extracted/folder` to navigate to the downloaded files (replace `path/to/extracted/folder` with your actual path).
-* Run `$ cargo run` to start the program. You can view a list of options by running `$ cargo run -- --help` or `$ cargo run -- -h`.
-  * If you only want to run the Python code, you can either run `$ cargo run -- --py`, or `$ python ./src/python/main.py`. The second option is recommended for better error output.
+* Run `cd path/to/extracted/folder` to navigate to the downloaded files (replace `path/to/extracted/folder` with your actual path).
+* Run `cargo run` to start the program. You can view a list of options by running `cargo run -- --help` or `cargo run -- -h`.
+  * If you only want to run the Python code, you can either run `cargo run -- --py` or `python ./src/python/main.py`. The second option is recommended for better error output.
