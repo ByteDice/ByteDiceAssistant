@@ -26,3 +26,6 @@
   * Shows a TLDR with pros/cons on a programming language
 - [ ] PowerPlate info viewer
   * Shows basic info on a PowerPlate
+
+### Random little things:
+- [ ] Update ASSISTANT_BK_MODS env var name to be reddit focused instead of bk focused
