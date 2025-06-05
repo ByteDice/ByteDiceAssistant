@@ -104,7 +104,7 @@ async fn main() {
 
   rs_println!("Fetching language file...");
   data::load_lang_data(args.clone().lang);
-  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\n{}", lang!("log_lang_load_success"));
+  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", lang!("log_lang_load_success"));
 
   let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();

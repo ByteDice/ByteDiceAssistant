@@ -18,7 +18,7 @@ pub async fn cmd(
   let r = dc_add_server(ctx.data(), ctx.guild_id().unwrap().into()).await;
 
   if r.is_ok() {
-    send_msg(ctx, lang!("dc_msg_added_to_data"), true, true).await;
+    send_msg(ctx, lang!("dc_msg_add_to_data"), true, true).await;
   }
   else {
     send_msg(ctx, lang!("dc_msg_corrupted_data"), true, true).await;

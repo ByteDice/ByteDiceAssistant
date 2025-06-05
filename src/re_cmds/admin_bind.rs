@@ -21,7 +21,7 @@ pub async fn cmd(
     send_msg(ctx, lang!("dc_msg_bound_channel", c_id), true, true).await;
   }
   else {
-    send_msg(ctx, lang!("dc_msg_server_data_404"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_data_server_404"), true, true).await;
   }
 
   return Ok(());

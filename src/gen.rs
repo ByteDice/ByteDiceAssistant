@@ -91,7 +91,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
   ]);
 
   // REDDIT
-  if cfg["RESTART_enabled"].as_bool().unwrap() { 
+  if cfg["reddit"]["RESTART_enabled"].as_bool().unwrap() { 
     cmds.extend([
       re_cmds::add::cmd(),
       re_cmds::approve::cmd(),

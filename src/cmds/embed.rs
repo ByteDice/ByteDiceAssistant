@@ -39,7 +39,8 @@ pub async fn cmd(
       ephemeral: ephemeral.unwrap_or(false),
       message,
       thumbnail,
-      author: if author.unwrap_or(false) { Some(Author { name: ctx.author().name.clone(), url: "".to_string(), icon_url: ctx.author().avatar_url().unwrap() }) } else { None }
+      author: if author.unwrap_or(false) { Some(Author { name: ctx.author().name.clone(), url: "".to_string(), icon_url: ctx.author().avatar_url().unwrap() }) } else { None },
+      ..Default::default()
     },
     reply_unwrap
   ).await;

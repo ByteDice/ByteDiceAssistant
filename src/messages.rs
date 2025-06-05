@@ -4,7 +4,7 @@ use crate::{lang, Args, Context};
 
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
-use poise::serenity_prelude::{ChannelId, Color, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, Timestamp, UserId};
+use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, ReactionType, Timestamp, UserId};
 use serde_json::json;
 
 
@@ -24,7 +24,8 @@ pub struct EmbedOptions {
   pub ephemeral: bool,
   pub message: Option<String>,
   pub author: Option<Author>,
-  pub thumbnail: Option<String>
+  pub thumbnail: Option<String>,
+  pub actionrows: Option<Vec<CreateActionRow>>
 }
 impl Default for EmbedOptions {
   fn default() -> Self {
@@ -37,7 +38,8 @@ impl Default for EmbedOptions {
       ephemeral: false,
       message: None,
       author: None,
-      thumbnail: None
+      thumbnail: None,
+      actionrows: None
     };
   }
 }
@@ -104,6 +106,7 @@ pub async fn send_embed(
       embeds: vec![embed],
       content: options.message,
       ephemeral: Some(options.ephemeral),
+      components: options.actionrows,
       ..Default::default()
     };
 
@@ -111,7 +114,12 @@ pub async fn send_embed(
     return Some(msg.unwrap());
   }
   else {
-    let r = CreateMessage::new().embeds(vec![embed]);
+    let mut r = CreateMessage::new().embeds(vec![embed]);
+  
+    if let Some(actionrows) = options.actionrows {
+      r = r.components(actionrows);
+    }
+
     let _ = ctx.channel_id().send_message(ctx.http(), r).await;
     return None;
   }
@@ -126,7 +134,11 @@ pub async fn http_send_embed(
 {
   let embed = embed_from_options(options.clone());
 
-  let r = CreateMessage::new().embeds(vec![embed]);
+  let mut r = CreateMessage::new().embeds(vec![embed]);
+
+  if let Some(actionrows) = options.actionrows {
+    r = r.components(actionrows);
+  }
 
   let msg = c_id.send_message(http, r).await;
   return msg.ok();
@@ -222,6 +234,14 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
   );
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
 
+  let action_row = CreateActionRow::Buttons(vec![
+    CreateButton::new("upvote_btn")     .label("Upvote")     .emoji(ReactionType::Unicode("⬆️".to_string())),
+    CreateButton::new("unupvote_btn")   .label("Un-upvote"),
+    CreateButton::new("approve_btn")    .label("Approve")    .emoji(ReactionType::Unicode("✅".to_string())),
+    CreateButton::new("unapprove_btn")  .label("Disapprove") .emoji(ReactionType::Unicode("❌".to_string())),
+    CreateButton::new("remove_btn")     .label("Remove")     .emoji(ReactionType::Unicode("🗑️".to_string()))
+  ]);
+
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
     desc: format!("{}\n\nJSON: ||`{}`||", trimmed, serde_json::to_string(&json_min).unwrap()),
@@ -232,6 +252,7 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
     thumbnail: media_urls.first()
       .and_then(|url| url.as_str().map(|s| s.to_string()))
       .or(None),
+    actionrows: Some(vec![action_row]),
     ..Default::default()
   };
 }

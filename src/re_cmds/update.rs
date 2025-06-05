@@ -105,7 +105,7 @@ async fn update_progress(ctx: Context<'_>, p: ReplyHandle<'_>, t: String, added_
 
 async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
   if !data::dc_contains_server(ctx.data(), ctx.guild_id().unwrap().into()).await {
-    send_msg(ctx, lang!("dc_msg_server_data_404"), false, false).await;
+    send_msg(ctx, lang!("dc_msg_data_server_404"), true, true).await;
     return None;
   }
 

@@ -22,7 +22,7 @@ pub fn to_shorturl(url: &str) -> Result<String, &str> {
 
 pub async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Result<(), Error> {
   send_embed(ctx, make_post_embed(&post, url, true), true).await;
-  Ok(())
+  return Ok(());
 }
 
 pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
