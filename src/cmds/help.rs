@@ -1,8 +1,7 @@
-use poise::Command;
-use std::{collections::HashMap, error::Error as StdErr};
+use std::collections::HashMap;
 use tokio::fs;
 
-use crate::{lang, messages::send_msg, Context, Data, Error};
+use crate::{lang, messages::send_msg, Context, Cmd, Error};
 
 
 #[derive(poise::ChoiceParameter, PartialEq)]
@@ -13,10 +12,6 @@ enum HelpOptions {
   BkWeekReddit,
   Generic
 }
-
-
-type Cmd = Command<Data, Box<dyn StdErr + Send + Sync>>;
-
 
 
 #[poise::command(

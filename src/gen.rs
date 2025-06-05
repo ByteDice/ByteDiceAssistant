@@ -4,7 +4,7 @@ use poise::serenity_prelude::UserId;
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
 
-use crate::{cmds, data, events, re_cmds, rs_println, Args, Data};
+use crate::{cmds, data::{self, get_mutex_data}, events, re_cmds, rs_println, Args, Cmd, Data};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -56,28 +56,7 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
       owners: own,
-      commands: vec![
-        cmds::help::cmd(),
-        cmds::ping::cmd(),
-        cmds::embed::cmd(),
-        cmds::send::cmd(),
-        cmds::stop::cmd(),
-        cmds::eight_ball::cmd(),
-        cmds::add_server::cmd(),
-        // reddit
-        re_cmds::add::cmd(),
-        re_cmds::approve::cmd(),
-        re_cmds::get::cmd(),
-        re_cmds::remove::cmd(),
-        re_cmds::top::cmd(),
-        re_cmds::update::cmd(),
-        re_cmds::vote::cmd(),
-        re_cmds::shorturl::cmd(),
-        // reddit admin
-        re_cmds::admin_bind::cmd(),
-        // cfg
-        cmds::reload_cfg::cmd()
-      ],
+      commands: make_cmd_vec(&data).await,
       event_handler: events::event_handler,
       ..Default::default()
     })
@@ -93,4 +72,44 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
     .framework(framework)
     .await
     .unwrap();
+}
+
+
+async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
+  let mut cmds = vec![];
+  let cfg = get_mutex_data(&data.cfg).await.unwrap();
+
+  // GENERIC
+  cmds.extend([
+    cmds::help::cmd(),
+    cmds::ping::cmd(),
+    cmds::embed::cmd(),
+    cmds::send::cmd(),
+    cmds::stop::cmd(),
+    cmds::eight_ball::cmd(),
+    cmds::add_server::cmd()
+  ]);
+
+  // REDDIT
+  if cfg["RESTART_enabled"].as_bool().unwrap() { 
+    cmds.extend([
+      re_cmds::add::cmd(),
+      re_cmds::approve::cmd(),
+      re_cmds::get::cmd(),
+      re_cmds::remove::cmd(),
+      re_cmds::top::cmd(),
+      re_cmds::update::cmd(),
+      re_cmds::vote::cmd(),
+      re_cmds::shorturl::cmd()
+    ]);
+  }
+
+  cmds.extend([
+    // reddit admin
+    re_cmds::admin_bind::cmd(),
+    // cfg
+    cmds::reload_cfg::cmd()
+  ]);
+
+  return cmds
 }

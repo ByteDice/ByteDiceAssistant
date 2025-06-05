@@ -37,10 +37,12 @@ use std::process;
 use std::thread;
 use std::time::Duration;
 use std::vec;
+use std::error::Error as StdErr;
 
 use clap::Parser;
 use r#gen::gen_bot;
 use r#gen::gen_data;
+use poise::Command;
 use schedule::run_schedules;
 use serde::Serialize;
 use serde_json::Value;
@@ -74,8 +76,9 @@ struct Args {
 }
 
 
-type Error = Box<dyn std::error::Error + Send + Sync>;
+type Error       = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
+type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
 
 
 struct Data {

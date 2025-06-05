@@ -30,16 +30,16 @@ This program uses Rust (v1.82.0) and Python (v3.11.4), you can likely use other 
 You can install Python modules by running `$ pip install {module}` or `$ python -m pip install {module}` in a terminal.
 
 ### Environment variables:
-| **Name** | **Description** |
-| --- | --- |
-| `ASSISTANT_TOKEN` | The Discord bot token. (Create a Discord bot [here](https://discord.com/developers/docs/intro)!) |
+| **Name**               | **Description** |
+| ---------------------- | --- |
+| `ASSISTANT_TOKEN`      | The Discord bot token. (Create a Discord bot [here](https://discord.com/developers/docs/intro)!) |
 | `ASSISTANT_TOKEN_TEST` | (Optional) A testing Discord bot token. This is only needed when the program is run with `-t` or `--test`. |
-| `ASSISTANT_R_ID` | The id for the Reddit bot/account. (Create a Reddit bot [here](https://www.reddit.com/prefs/apps)!)  |
-| `ASSISTANT_R_TOKEN` | The token for the Reddit bot/account. |
-| `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
-| `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
-| `ASSISTANT_OWNERS` | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
-| `ASSISTANT_BK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/re_*` commands. |
+| `ASSISTANT_R_ID`       | The id for the Reddit bot/account. (Create a Reddit bot [here](https://www.reddit.com/prefs/apps)!)  |
+| `ASSISTANT_R_TOKEN`    | The token for the Reddit bot/account. |
+| `ASSISTANT_R_NAME`     | The username of the Reddit bot/account. |
+| `ASSISTANT_R_PASS`     | The password for the Reddit bot/account. |
+| `ASSISTANT_OWNERS`     | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
+| `ASSISTANT_BK_MODS`    | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/re_*` commands. |
 
 ### Required permissions:
 **These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.** (The permission integer is this part of the URL `&permissions=84992`)
@@ -59,7 +59,7 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
   * For help, run `cargo run -- -h` or `cargo run -- --help`.
   * To only run the Python part, use `cargo run -- --py`, or for a better error output, `python ./src/python/main.py`
 
-### Long answer for absolute beginners:
+### Long answer for beginners:
 * Download the code (and extract it if needed).
 * Open a terminal.
 * Set the environment variables (listed above).
