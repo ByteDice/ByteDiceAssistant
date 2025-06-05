@@ -57,14 +57,13 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
     .options(poise::FrameworkOptions {
       owners: own,
       commands: vec![
-        cmds::help(),
-        cmds::ping(),
-        cmds::embed(),
-        cmds::send(),
-        cmds::stop(),
-        cmds::eight_ball(),
-        cmds::re_shorturl(),
-        cmds::add_server(),
+        cmds::help::cmd(),
+        cmds::ping::cmd(),
+        cmds::embed::cmd(),
+        cmds::send::cmd(),
+        cmds::stop::cmd(),
+        cmds::eight_ball::cmd(),
+        cmds::add_server::cmd(),
         // reddit
         re_cmds::add::cmd(),
         re_cmds::approve::cmd(),
@@ -73,10 +72,11 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
         re_cmds::top::cmd(),
         re_cmds::update::cmd(),
         re_cmds::vote::cmd(),
+        re_cmds::shorturl::cmd(),
         // reddit admin
         re_cmds::admin_bind::cmd(),
         // cfg
-        cmds::reload_cfg()
+        cmds::reload_cfg::cmd()
       ],
       event_handler: events::event_handler,
       ..Default::default()

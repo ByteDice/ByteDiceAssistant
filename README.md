@@ -39,7 +39,7 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 | `ASSISTANT_R_NAME` | The username of the Reddit bot/account. |
 | `ASSISTANT_R_PASS` | The password for the Reddit bot/account. |
 | `ASSISTANT_OWNERS` | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
-| `ASSISTANT_BK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/bk_week` commands. |
+| `ASSISTANT_BK_MODS` | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/re_*` commands. |
 
 ### Required permissions:
 **These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.** (The permission integer is this part of the URL `&permissions=84992`)
@@ -55,7 +55,7 @@ You can install Python modules by running `$ pip install {module}` or `$ python 
 * Restart the terminal.
 * Navigate to the project root directory.
 * Run with `cargo run`. 
-  * Alrenatively, run `cargo run -- {args here}` to add args.
+  * Alternatively, run `cargo run -- {args here}` to add args.
   * For help, run `cargo run -- -h` or `cargo run -- --help`.
   * To only run the Python part, use `cargo run -- --py`, or for a better error output, `python ./src/python/main.py`
 

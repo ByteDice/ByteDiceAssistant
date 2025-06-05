@@ -1,7 +1,16 @@
 #![warn(unused_extern_crates)]
 #![allow(clippy::needless_return)]
 
-mod cmds;
+mod cmds {
+  pub mod add_server;
+  pub mod eight_ball;
+  pub mod embed;
+  pub mod help;
+  pub mod ping;
+  pub mod reload_cfg;
+  pub mod send;
+  pub mod stop;
+}
 mod re_cmds {
   pub mod add;
   pub mod admin_bind;
@@ -9,6 +18,7 @@ mod re_cmds {
   pub mod generic_fns;
   pub mod get;
   pub mod remove;
+  pub mod shorturl;
   pub mod top;
   pub mod update;
   pub mod vote;
