@@ -2,8 +2,9 @@ use serde_json::json;
 
 use crate::data::get_mutex_data;
 use crate::messages::send_msg;
-use crate::{data, websocket, Context, Error, CFG_DATA_RE};
-use crate::re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod, to_shorturl};
+use crate::re_cmds::get::get_post_from_data;
+use crate::{data, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod, send_embed_for_post, to_shorturl};
 use crate::lang;
 
 #[poise::command(
@@ -34,7 +35,7 @@ pub async fn cmd(
 
   if let Some(bk_week) = reddit_data.get(CFG_DATA_RE) {
     let a = approve.unwrap_or(false);
-    let r = websocket::send_cmd_json("add_post_url", Some(json!([&shorturl, a, true]))).await.unwrap();
+    let r = send_cmd_json("add_post_url", Some(json!([&shorturl, a, true])), true).await.unwrap();
 
     if !r["value"].as_bool().unwrap() {
       send_msg(
@@ -49,20 +50,17 @@ pub async fn cmd(
     }
 
     if let Some(post) = bk_week.get(shorturl) {
-      if post.get("removed").is_some() {
-        send_msg(ctx, lang!("dc_msg_re_post_unremove_success", url), true, true).await;
-      }
-      else {
-        send_msg(ctx, lang!("dc_msg_re_post_update_success", url), true, true).await;
-      }
+      if post["removed"]["removed"].as_bool().unwrap()
+           { send_msg(ctx, lang!("dc_msg_re_post_unremove_success", &shorturl), true, true).await; }
+      else { send_msg(ctx, lang!("dc_msg_re_post_update_success", &shorturl), true, true).await; }
     }
-    else {
-      send_msg(ctx, lang!("dc_msg_re_post_add_success", &shorturl), true, true).await;
-    }
+    else { send_msg(ctx, lang!("dc_msg_re_post_add_success", &shorturl), true, true).await; }
 
-    if a {
-      send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await;
-    }
+    if a { send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await; }
+  }
+
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
+    send_embed_for_post(ctx, post, &url).await?;
   }
 
   return Ok(());

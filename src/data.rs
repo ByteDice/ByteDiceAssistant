@@ -103,13 +103,13 @@ fn generate_re_data() {
 
 
 pub async fn update_re_data(data: &Data) {
-  send_cmd_json("update_data_file", None).await;
+  send_cmd_json("update_data_file", None, true).await;
   read_re_data(data, false).await;
 }
 
 
 pub async fn write_re_data() {
-  send_cmd_json("update_data_file", None).await;
+  send_cmd_json("update_data_file", None, true).await;
 }
 
 
@@ -127,7 +127,7 @@ pub async fn read_cfg_data(data: &Data, wipe: bool) {
   let mut cfg_data = data.cfg.lock().await;
   *cfg_data = json_data;
 
-  send_cmd_json("update_cfg", Some(json!([str_data]))).await;
+  send_cmd_json("update_cfg", Some(json!([str_data])), true).await;
 }
 
 

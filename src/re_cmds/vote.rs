@@ -47,7 +47,7 @@ pub async fn cmd(
     return Ok(());
   }
 
-  let r = send_cmd_json("set_vote_post", Some(json!([url, uid, is_mod, true, unw_vote]))).await.unwrap();
+  let r = send_cmd_json("set_vote_post", Some(json!([url, uid, is_mod, true, unw_vote])), true).await.unwrap();
   let unw_r = r["value"].as_bool().unwrap();
 
   if unw_r && !unw_vote && is_mod {

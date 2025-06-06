@@ -46,7 +46,7 @@ async def parse_json(response: str, bot: botPy.Bot):
     try:
       json_response = json.loads(json_str)
       if json_response["value"] not in ["respond_mentions"] or bot.args["dev"]:
-        py_print(f"Received from Rust: {response}")
+        if json_response["print"]: py_print(f"Received from Rust: {response}")
 
       result = await json_to_func(json_response, bot)
       await ws_global.ping()
@@ -86,13 +86,15 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
     case "stop_praw":        r = await bot  .stop              ()
     case _: value_supported = False
 
+  print_result = v["print"]
+
   if not value_supported:
     val = v["value"]
     py_print(f"Value \"{val}\" is not supported")
-    return {"type": "result", "value": False}
+    return result_json(False, print_result)
 
-  return result_json(r)
+  return result_json(r, print_result)
 
 
-def result_json(bool: bool) -> dict:
-  return {"type": "result", "value": bool}
+def result_json(bool: bool, print_result: bool) -> dict:
+  return {"type": "result", "value": bool, "print": print_result}

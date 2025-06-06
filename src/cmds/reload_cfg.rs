@@ -19,7 +19,7 @@ pub async fn cmd(
   read_cfg_data(&ctx.data(), false).await;
   let d = get_mutex_data(&ctx.data().cfg).await?;
   let d_str = serde_json::to_string(&d)?;
-  let r = send_cmd_json("update_cfg", Some(json!([d_str]))).await;
+  let r = send_cmd_json("update_cfg", Some(json!([d_str])), true).await;
 
   if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
     send_msg(

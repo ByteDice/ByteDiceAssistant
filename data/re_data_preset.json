@@ -1,6 +1,11 @@
 {
   "posts": {
-    "EXAMPLE VALUE": {
+    "EXAMPLE URL": {
+      "removed": {
+        "removed": false,
+        "by": null,
+        "reason": null
+      },
       "post_data": {
         "title": "I JUST BOUGHT THE CONTINENT OF NORTH AMERICA FOR A DOLLAR!",
         "upvotes": 69420,
@@ -21,11 +26,6 @@
         "by_human": true,
         "by_ris": true
       }
-    },
-    "EXAMPLE VALUE DELETED": {
-      "removed": true,
-      "removed_by": "ME!!!!",
-      "remove_reason": "i HATED that post >:("
     }
   }
 }

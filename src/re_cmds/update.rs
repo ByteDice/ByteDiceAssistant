@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg}, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg, JSON_TEXT_END, JSON_TEXT_START}, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -35,7 +35,7 @@ pub async fn cmd(
   let max_age_u = max_age.unwrap_or(8);
   let max_age_secs = max_age_u as u64 * (60 * 60 * 24);
 
-  send_cmd_json("add_new_posts", Some(json!([max_age_secs]))).await;
+  send_cmd_json("add_new_posts", Some(json!([max_age_secs])), true).await;
   data::update_re_data(ctx.data()).await;
   let r_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
@@ -80,7 +80,7 @@ pub async fn cmd(
   if max_age_u > 0 {
     p_text = update_progress(ctx, progress.clone(), p_text.clone(), format!("✅\nRemoving old posts (threshold: {}d)...", max_age_u)).await;
     remove_old(http, c_id, &msgs_json).await;
-    send_cmd_json("remove_old_posts", Some(json!([max_age_secs]))).await;
+    send_cmd_json("remove_old_posts", Some(json!([max_age_secs])), true).await;
   }
 
   // Removing duplicate posts
@@ -181,7 +181,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
 
     if msg_last_len < 13 { continue; }
 
-    let msg_json_str = &msg_lines.clone().last().unwrap()[9..msg_last_len - 3];
+    let msg_json_str = &msg_lines.clone().last().unwrap()[JSON_TEXT_START.len()..msg_last_len - JSON_TEXT_END.len()];
     
     let msg_json = serde_json::from_str(msg_json_str);
     if msg_json.is_err() { continue; }

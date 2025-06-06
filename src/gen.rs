@@ -100,14 +100,12 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
       re_cmds::top::cmd(),
       re_cmds::update::cmd(),
       re_cmds::vote::cmd(),
-      re_cmds::shorturl::cmd()
+      re_cmds::shorturl::cmd(),
+      re_cmds::admin_bind::cmd(),
     ]);
   }
 
   cmds.extend([
-    // reddit admin
-    re_cmds::admin_bind::cmd(),
-    // cfg
     cmds::reload_cfg::cmd()
   ]);
 

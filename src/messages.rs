@@ -5,7 +5,6 @@ use crate::{lang, Args, Context};
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
 use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, ReactionType, Timestamp, UserId};
-use serde_json::json;
 
 
 #[derive(Clone)]
@@ -47,6 +46,9 @@ impl Default for EmbedOptions {
 
 static DEFAULT_DC_COL: u32 = 5793266;
 static REMOVED_DC_COL: u32 = 16716032;
+
+pub static JSON_TEXT_START: &str = "-# JSON: ||`";
+pub static JSON_TEXT_END:   &str = "`||";
 
 
 fn none_to_empty(string: Option<String>) -> String {
@@ -226,25 +228,19 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
     .collect::<Vec<_>>()
     .join("\n");
 
-  let json_min = json!(
-    {"post_data": json!({ "upvotes": post_data["post_data"]["upvotes"] }),
-    "added": post_data["added"],
-    "approved": post_data["approved"],
-    "votes": json!({"mod_voters": post_data["votes"]["mod_voters"]})}
-  );
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
 
   let action_row = CreateActionRow::Buttons(vec![
-    CreateButton::new("upvote_btn")     .label("Upvote")     .emoji(ReactionType::Unicode("⬆️".to_string())),
-    CreateButton::new("unupvote_btn")   .label("Un-upvote"),
-    CreateButton::new("approve_btn")    .label("Approve")    .emoji(ReactionType::Unicode("✅".to_string())),
-    CreateButton::new("unapprove_btn")  .label("Disapprove") .emoji(ReactionType::Unicode("❌".to_string())),
-    CreateButton::new("remove_btn")     .label("Remove")     .emoji(ReactionType::Unicode("🗑️".to_string()))
+    CreateButton::new("vote_btn")     .label("Vote")     .emoji(ReactionType::Unicode("⬆️".to_string())),
+    CreateButton::new("unvote_btn")   .label("Un-vote"),
+    CreateButton::new("approve_btn")  .label("Approve")    .emoji(ReactionType::Unicode("✅".to_string())),
+    CreateButton::new("unapprove_btn").label("Disapprove") .emoji(ReactionType::Unicode("❌".to_string())),
+    CreateButton::new("remove_btn")   .label("Remove")     .emoji(ReactionType::Unicode("🗑️".to_string()))
   ]);
 
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
-    desc: format!("{}\n\nJSON: ||`{}`||", trimmed, serde_json::to_string(&json_min).unwrap()),
+    desc: format!("{}\n\n{}{}{}", trimmed, JSON_TEXT_START, serde_json::to_string(&post_data).unwrap(), JSON_TEXT_END),
     col: Some(DEFAULT_DC_COL),
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
@@ -259,20 +255,26 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
 
 
 pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+  let action_row = CreateActionRow::Buttons(vec![
+    CreateButton::new("unremove_btn").label("Un-remove").emoji(ReactionType::Unicode("↩️".to_string()))
+  ]);
+
+  let desc = lang!(
+    "dc_msg_embed_re_removed",
+    post_data["removed"]["by"].as_str().unwrap(),
+    if !post_data["removed"]["reason"].is_null() { post_data["removed"]["reason"].as_str().unwrap() }
+      else { "None" },
+    url
+  );
+
   return EmbedOptions { 
-    title: Some("REMOVED!".to_string()),
-    desc: lang!(
-      "dc_msg_embed_re_removed",
-      post_data["removed_by"].as_str().unwrap(),
-      if !post_data["remove_reason"].is_null() { post_data["remove_reason"].as_str().unwrap() }
-        else { "None" },
-      url,
-      serde_json::to_string(&post_data).unwrap()
-    ),
+    title: Some(format!("[REMOVED] {}", post_data["post_data"]["title"])),
+    desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, serde_json::to_string(&post_data).unwrap(), JSON_TEXT_END),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
     ts:  Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
     ephemeral,
+    actionrows: Some(vec![action_row]),
     ..Default::default()
   };
 }

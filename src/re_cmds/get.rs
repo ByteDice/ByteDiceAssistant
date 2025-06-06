@@ -29,10 +29,10 @@ pub async fn cmd(
 }
 
 
-async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) -> Result<Option<Value>, Error> {
+pub async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str) -> Result<Option<Value>, Error> {
   if let Some(bk_week) = reddit_data.get(CFG_DATA_RE) {
     if let Some(post) = bk_week.get(url) {
-      if post.get("removed").is_some() {
+      if post["removed"]["removed"].as_bool().unwrap() {
         send_embed_for_removed(ctx, url, post).await;
         return Ok(None);
       }

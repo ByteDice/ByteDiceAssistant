@@ -18,14 +18,20 @@ class PostData:
     date_unix:         int,
     media_type:        str,
     media_urls:        list[str],
-    voters_re:         list[str] = [],
-    voters_dc:         list[int] = [],
-    mod_voters:        list[int] = [],
-    added_by_human:    bool = False,
-    added_by_bot:      bool = False,
-    approved_by_human: bool = False,
-    approved_by_ris:   bool = False
+    removed:           bool       = False,
+    removed_by:        str | None = None,
+    removed_reason:    str | None = None,
+    voters_re:         list[str]  = [],
+    voters_dc:         list[int]  = [],
+    mod_voters:        list[int]  = [],
+    added_by_human:    bool       = False,
+    added_by_bot:      bool       = False,
+    approved_by_human: bool       = False,
+    approved_by_ris:   bool       = False
   ):
+    self.removed            = removed
+    self.removed_by         = removed_by
+    self.removed_reason     = removed_reason
     self.url                = url
     self.title              = title
     self.upvotes            = upvotes
@@ -42,6 +48,11 @@ class PostData:
   
   def to_json(self):
     return {
+      "removed": {
+        "removed": self.removed,
+        "by": self.removed_reason,
+        "reason": self.removed_reason
+      },
       "post_data": {
         "title": self.title,
         "upvotes": self.upvotes,
@@ -125,31 +136,26 @@ async def read_cfg(bot: botPy.Bot) -> bool:
 
 
 def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool = False) -> bool:
+  if new_data.removed:
+    new_data.removed = False
+    new_data.removed_by = None
+    new_data.removed_reason = None
+
   if bypass_conditions:
     bot.data[botPy.RE_DATA_POSTS][new_data.url] = new_data.to_json()
-    if bot.args["dev"]:
-      py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
+    if bot.args["dev"]: py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
 
-  # not sure what this is for
-  updated = False
-
-  if new_data.url not in bot.data[botPy.RE_DATA_POSTS] or updated:
+  if new_data.url not in bot.data[botPy.RE_DATA_POSTS]:
     bot.data[botPy.RE_DATA_POSTS][new_data.url] = new_data.to_json()
-    if bot.args["dev"]:
-      py_print(f"Added post \"{new_data.url}\"")
+    if bot.args["dev"]: py_print(f"Added post \"{new_data.url}\"")
     return True
-
-  if "removed" not in bot.data[botPy.RE_DATA_POSTS][new_data.url]:
-    updated = new_data.upvotes != bot.data[botPy.RE_DATA_POSTS][new_data.url]["post_data"]
   
-  else:
-    py_print(f"Failed to add post \"{new_data.url}\": Removed flag is True.")
-    return False
+  return False
   
 
 def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
-  if not hasattr(bot.data[botPy.RE_DATA_POSTS][url], "removed"):
+  if not bot.data[botPy.RE_DATA_POSTS][url]["removed"]["removed"]:
     bot.data[botPy.RE_DATA_POSTS][url]["approved"]["by_human"] = approved
     return True
   
@@ -160,12 +166,11 @@ def remove_post(bot: botPy.Bot, url: str, removed_by: str = "UNKNOWN", reason: s
   weekly = bot.data[botPy.RE_DATA_POSTS]
 
   if url in weekly:
-    weekly[url] = {
-      "removed": True,
-      "removed_by": removed_by,
-      "remove_reason": reason,
-      "post_data": { "date_unix": weekly[url]["post_data"]["date_unix"] }
-    }
+    rm = weekly[url]["removed"]
+    rm["removed"] = True
+    rm["by"] = removed_by
+    rm["reason"] = reason
+    weekly[url]["removed"] = rm
     return True
   else:
     return False

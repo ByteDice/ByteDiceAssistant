@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{lang, messages::send_msg, re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod}, websocket::send_cmd_json, Context, Error};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::{generic_fns::{get_readable_subreddits, is_bk_mod, send_embed_for_removed}, get::get_post_from_data}, websocket::send_cmd_json, Context, Error};
 
 #[poise::command(
   slash_command,
@@ -23,18 +23,27 @@ pub async fn cmd(
   }
 
   let auth = &ctx.author().name;
-  let r = send_cmd_json("remove_post_url", Some(json!([&url, &auth, &reason]))).await.unwrap();
+  let r = send_cmd_json("remove_post_url", Some(json!([&url, &auth, &reason])), true).await.unwrap();
 
   if r["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      lang!("dc_msg_re_post_remove_success"),
+      lang!("dc_msg_re_post_remove_success", &url),
       true,
       true
     ).await;
   }
   else {
     send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
+  }
+
+  data::update_re_data(ctx.data()).await;
+  let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
+
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
+    if post["removed"]["removed"].as_bool().unwrap() {
+      send_embed_for_removed(ctx, &url, &post).await;
+    }
   }
 
   return Ok(());

@@ -47,7 +47,7 @@ pub async fn send_msg(msg: &str) {
 
 
 #[allow(static_mut_refs)]
-pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<Value> {
+pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>, print_output: bool) -> Option<Value> {
   unsafe {
     let Some(sender) = &GLOBAL_SENDER else { return None };
     let mut sender = sender.lock().await;
@@ -56,7 +56,7 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
     let unw_args = func_args.unwrap_or(json!([]));
 
     let json_str = format!(
-      "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
+      "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}, \"print\": {print_output}}}",
       func_name, unw_args
     );
 
@@ -65,6 +65,11 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
     }
 
     let r = receive_response().await;
+    if let Some(rs) = r.clone() {
+      if !rs.get("print").unwrap_or(&json![false]).as_bool().unwrap()
+         { return r; }
+    }
+
     if !["respond_mentions"].contains(&func_name) || <Args as clap::Parser>::parse().dev {
       rs_println!("Received from Python: [RESPONSE] {:?}", r);
     }

@@ -94,13 +94,15 @@ struct Data {
 
 static CFG_DATA_RE: &str = "posts";
 
-pub static mut LANG: Option<serde_json::Value> = None;
+pub static mut LANG:   Option<serde_json::Value> = None;
+pub static mut NOPING: bool = false;
 
 
 #[tokio::main]
 async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
+  unsafe { NOPING = args.noping; }
 
   rs_println!("Fetching language file...");
   data::load_lang_data(args.clone().lang);
@@ -117,6 +119,8 @@ async fn main() {
   if args.dev              { println!("-----            DEV MODE ENABLED           -----"); }
   if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
   if args.nosched          { println!("-----             NO SCHEDULES              -----"); }
+
+  // TODO: handle if config for reddit is disabled to not start python
 
   if args.py && !args.rs {
     println!("-----           PYTHON ONLY MODE            -----");
@@ -174,6 +178,8 @@ async fn start(args: Args, owners: Vec<u64>) {
 
 
 async fn read_reddit_inbox() {
-  unsafe { if !websocket::HAS_CONNECTED { return; } }
-  send_cmd_json("respond_mentions", None).await;
+  unsafe {
+    if !websocket::HAS_CONNECTED { return; }
+    send_cmd_json("respond_mentions", None, !NOPING).await;
+  }
 }

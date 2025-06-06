@@ -36,7 +36,7 @@ pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
 
 pub async fn get_readable_subreddits(ctx: Context<'_>) -> Result<String, Error> {
   let d = get_mutex_data(&ctx.data().cfg).await?;
-  let sr = d["reddit"]["subreddits"].as_str().ok_or("Item of key \"subreddit\" is not a string type.\nTrace: get_readable_subreddits -> let sr = ...")?;
+  let sr = d["reddit"]["subreddits"].as_str().ok_or("Item of key \"subreddit\" is not a string type.\nTrace: `get_readable_subreddits -> let sr = ...`")?;
   let split: Vec<&str> = sr.split("+").collect();
   let join = split.join(", r/");
 
