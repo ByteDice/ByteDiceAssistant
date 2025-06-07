@@ -1,5 +1,6 @@
 <!-- If for some reason you're reading this without MD formatting - please disable word-wrap for your own good. -->
 # ByteDiceAssistant
+![](/BDA_icon_64x64.png)\
 An automation tool primarily made for myself (Byte Dice) but publicly available for anyone to use. It's both a Discord and Reddit bot in one program.
 
 > [!CAUTION]
@@ -58,8 +59,12 @@ It is required to install all used Python modules. You can find those in [req.tx
 * View Channels
 * Embed Links
 
-### How to run:
-### Short answer for experienced people:
+### Configuration:
+You can find config files in the [cfg/](cfg/) folder. You can also find the default config in the [data/defaults/cfg_default.toml](data/defaults/cfg_default.toml) file, where comments are also listed.\
+**NOTE:** Some config files are automatically generated, and you will need to run the app once for them to generate.
+
+### How to start the program:
+#### Short answer for experienced people:
 * Download the code.
 * Set the environment variables (listed above).
 * Restart the terminal.
@@ -70,7 +75,7 @@ It is required to install all used Python modules. You can find those in [req.tx
   * For help, run `cargo run -- -h` or `cargo run -- --help`.
   * To only run the Python part, use `cargo run -- --py`, or for a better error output, `python ./src/python/main.py`
 
-### Long answer for beginners:
+#### Long answer for beginners:
 * Download the code (and extract it if needed).
 * Open a terminal.
 * Set the environment variables (listed above).

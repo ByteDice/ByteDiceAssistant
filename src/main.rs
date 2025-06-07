@@ -50,6 +50,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use websocket::send_cmd_json;
 
+use crate::data::get_toml_mutex;
 use crate::schedule::Schedule;
 
 
@@ -103,6 +104,7 @@ async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
   unsafe { NOPING = args.noping; }
+  
 
   rs_println!("Fetching language file...");
   data::load_lang_data(args.clone().lang);
@@ -115,12 +117,12 @@ async fn main() {
     .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
     .collect();
 
+  let data = gen_data(args.clone(), own_vec_u64.clone()).await;
+
   if args.test             { println!("-----             USING TEST BOT            -----"); }
   if args.dev              { println!("-----            DEV MODE ENABLED           -----"); }
   if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
   if args.nosched          { println!("-----             NO SCHEDULES              -----"); }
-
-  // TODO: handle if config for reddit is disabled to not start python
 
   if args.py && !args.rs {
     println!("-----           PYTHON ONLY MODE            -----");
@@ -131,27 +133,34 @@ async fn main() {
   else if args.rs && ! args.py {
     println!("-----            RUST ONLY MODE             -----");
     rs_println!("ARGS: {}", args_str);
-    start(args, own_vec_u64.clone()).await;
+    start(args, data).await;
     process::exit(0);
   }
 
   rs_println!("ARGS: {}", args_str);
+
+  let cfg = get_toml_mutex(&data.cfg).await.unwrap();
+  let cfg_arr = cfg["commands"]["disabled_categories"].as_array().unwrap();
+  let contains: toml::Value = "re".parse().unwrap(); 
+  let run_py = !cfg_arr.contains(&contains);
 
   let rt_rs = Runtime::new().unwrap();
   let rt_py = Runtime::new().unwrap();
   let python_args = args.clone();
   let rust_args = args.clone();
 
+  if !run_py { rs_println!("[IMPORTANT] You have disabled the \"re\" commands in the CFG. The app will not run the Python code nor the websockets to save resources!"); }
+
   let rust = thread::spawn(move || {
     rt_rs.block_on(async {
-      websocket::start(rust_args.clone(), own_vec_u64.clone()).await;
-      start(rust_args, own_vec_u64).await;
+      if run_py { websocket::start(rust_args.clone(), own_vec_u64.clone()).await; }
+      start(rust_args, data).await;
     });
   });
 
   let python = thread::spawn(move || {
     rt_py.block_on(async {
-      let _ = python::start(python_args).await;
+      if run_py { let _ = python::start(python_args).await; }
     });
   });
 
@@ -168,8 +177,7 @@ async fn main() {
 }
 
 
-async fn start(args: Args, owners: Vec<u64>) {
-  let data = gen_data(args.clone(), owners).await;
+async fn start(args: Args, data: Data) {
   let mut bot = gen_bot(data, args).await;
 
   rs_println!("Starting Discord bot...");

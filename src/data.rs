@@ -136,12 +136,9 @@ pub async fn read_cfg_data(data: &Data, wipe: bool) {
 
 fn generate_cfg_data() {
   let preset_str = fs::read_to_string(PRESET_PATH_CFG).unwrap();
-  let preset_json: toml::Value = preset_str.parse().unwrap();
-
-  let json_str = toml::to_string_pretty(&preset_json).unwrap();
 
   let mut file = fs::File::create(DATA_PATH_CFG).unwrap();
-  file.write_all(json_str.as_bytes()).unwrap();
+  file.write_all(preset_str.as_bytes()).unwrap();
 }
 
 
