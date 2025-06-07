@@ -60,7 +60,7 @@ It is required to install all used Python modules. You can find those in [req.tx
 * Embed Links
 
 ### Configuration:
-You can find config files in the [cfg/](cfg/) folder. You can also find the default config in the [data/defaults/cfg_default.toml](data/defaults/cfg_default.toml) file, where comments are also listed.\
+You can find config files in the [cfg/](cfg/) folder. You can also find the default configs in the [data/defaults/cfg_default.toml](data/defaults/cfg_default.toml) file.\
 **NOTE:** Some config files are automatically generated, and you will need to run the app once for them to generate.
 
 ### How to start the program:
