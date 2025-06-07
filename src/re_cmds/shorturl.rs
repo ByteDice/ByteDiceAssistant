@@ -5,6 +5,7 @@ use crate::{lang, messages::send_msg, re_cmds::generic_fns::to_shorturl, Context
   slash_command,
   prefix_command,
   rename = "re_shorturl",
+  category = "re",
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Convert a long reddit URL to a short one. The bot ONLY uses shortURLs when asking for one.

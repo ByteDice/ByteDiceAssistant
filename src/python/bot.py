@@ -3,7 +3,7 @@ import asyncpraw as praw
 import os
 from typing import Final
 from macros import *
-import json
+import toml
 
 
 RE_DATA_POSTS: Final[str] = "posts"
@@ -56,7 +56,7 @@ class Bot:
     return False
   
   async def update_cfg_str(self, new_cfg: str) -> bool:
-    json_cfg = json.loads(new_cfg)
+    json_cfg = toml.loads(new_cfg)
     self.sr = await self.r.subreddit(json_cfg[CFG_DATA_RE]["subreddits"])
     self.fetch_limit = json_cfg[CFG_DATA_RE]["fetch_limit"]
     return True

@@ -1,0 +1,19 @@
+[reddit]
+# Which subreddits the bot will scan when executing "re"-category commands.
+# Is automatically disabled when `disabled_categories` includes "re".
+# Separate multiple subreddits with a "+", e.g "memes+askreddit".
+subreddits = "bytedicetesting"
+
+# How many posts the bot scans when running `/re_updatediscord`.
+fetch_limit = 100
+
+[commands]
+# TODO: readme
+# Disabled selected command categories. All commands and their categories can be viewed in the README.
+# "admin" and "owner" categories are always enabled.
+# [REQUIRES RESTART]
+disabled_categories = [
+  # "fun",
+  # "help"
+  # "re"
+]

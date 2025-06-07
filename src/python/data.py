@@ -1,4 +1,5 @@
 import os
+import toml
 import json
 import time
 
@@ -6,7 +7,10 @@ import bot as botPy
 from macros import *
 
 
-DATA_PATH = os.path.abspath(os.path.join(os.path.join(os.getcwd(), "data")))
+DATA_PATH    = os.path.join(os.path.join(os.getcwd(), "data"))
+DB_PATH      = os.path.join(DATA_PATH, "db")
+DEFAULT_PATH = os.path.join(DATA_PATH, "default")
+CFG_PATH     = os.path.join(os.path.join(os.getcwd(), "cfg"))
 
 
 class PostData:
@@ -77,7 +81,7 @@ class PostData:
   
 
 def read_data(bot: botPy.Bot) -> bool:
-  r_path = os.path.join(DATA_PATH, "re_data.json")
+  r_path = os.path.join(DB_PATH, "re_data.json")
 
   if os.path.isfile(r_path):
     bot.data_f = open(r_path, "r+")
@@ -113,23 +117,23 @@ def write_data(bot: botPy.Bot) -> bool:
 
 
 async def read_cfg(bot: botPy.Bot) -> bool:
-  r_path = os.path.join(DATA_PATH, "cfg.json")
+  r_path = os.path.join(CFG_PATH, "cfg.toml")
 
   if os.path.isfile(r_path):
     bot.data_f = open(r_path, "r+")
 
   else:
-    py_print("cfg.json not found, creating new from preset...")
-    with open(os.path.join(DATA_PATH, "cfg_default.json", "r")) as f:
-      data_preset_json = json.load(f)
+    py_print("cfg.toml not found, creating new from preset...")
+    with open(os.path.join(DEFAULT_PATH, "cfg_default.toml", "r")) as f:
+      data_preset_json = toml.load(f)
 
     with open(r_path, "w") as f:
-      json.dump(data_preset_json, f, indent = 2)
+      toml.dump(data_preset_json, f, indent = 2)
 
     bot.data_f = open(r_path, "r+")
 
   data_str = bot.data_f.read()
-  json_data = json.loads(data_str)
+  json_data = toml.loads(data_str)
   await bot.update_cfg(json_data)
   
   return True

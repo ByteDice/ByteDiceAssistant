@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{data::{get_mutex_data, read_cfg_data}, lang, messages::send_msg, websocket::send_cmd_json, Context, Error};
+use crate::{data::{get_toml_mutex, read_cfg_data}, lang, messages::send_msg, websocket::send_cmd_json, Context, Error};
 
 
 #[poise::command(
@@ -17,14 +17,14 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   read_cfg_data(&ctx.data(), false).await;
-  let d = get_mutex_data(&ctx.data().cfg).await?;
-  let d_str = serde_json::to_string(&d)?;
+  let d = get_toml_mutex(&ctx.data().cfg).await.unwrap();
+  let d_str = toml::to_string(&d)?;
   let r = send_cmd_json("update_cfg", Some(json!([d_str])), true).await;
 
   if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      lang!("dc_msg_reload_cfg_success", serde_json::to_string_pretty(&d).unwrap()),
+      lang!("dc_msg_reload_cfg_success", toml::to_string_pretty(&d).unwrap()),
       true,
       true
     ).await;

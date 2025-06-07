@@ -86,7 +86,7 @@ struct Data {
   ball_prompts: [Vec<String>; 2],
   reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
-  cfg:          Mutex<Option<Value>>,
+  cfg:          Mutex<Option<toml::Value>>,
   bk_mods:      Vec<u64>,
   args:         Args,
 }

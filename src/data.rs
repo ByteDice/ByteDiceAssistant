@@ -8,12 +8,15 @@ use crate::{errln, rs_println, Data, Error, CFG_DATA_RE, LANG};
 use crate::websocket::send_cmd_json;
 
 
-static DATA_PATH_DC:    &str = "./data/dc_data.json";
-static PRESET_PATH_DC:  &str = "./data/dc_data_preset.json";
-static DATA_PATH_RE:    &str = "./data/re_data.json";
-static PRESET_PATH_RE:  &str = "./data/re_data_preset.json";
-static DATA_PATH_CFG:   &str = "./data/cfg.json";
-static PRESET_PATH_CFG: &str = "./data/cfg_default.json";
+static DATA_PATH_DC:    &str = "./data/db/dc_data.json";
+static PRESET_PATH_DC:  &str = "./data/defaults/dc_data_preset.json";
+
+static DATA_PATH_RE:    &str = "./data/db/re_data.json";
+static PRESET_PATH_RE:  &str = "./data/defaults/re_data_preset.json";
+
+static DATA_PATH_CFG:   &str = "./cfg/cfg.toml";
+static PRESET_PATH_CFG: &str = "./data/defaults/cfg_default.toml";
+
 static DATA_PATH_LANG:  &str = "./data/lang/";
 
 pub static DC_POSTS_CHANNEL_KEY: &str = "re_posts_channel";
@@ -117,15 +120,15 @@ pub async fn read_cfg_data(data: &Data, wipe: bool) {
   if !Path::new(DATA_PATH_CFG).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
-      if !wipe { "cfg.json not found," } else { "[WIPE] (cfg.json)" }
+      if !wipe { "cfg.toml not found," } else { "[WIPE] (cfg.toml)" }
     );
     generate_cfg_data();
   }
 
   let str_data = fs::read_to_string(DATA_PATH_CFG).unwrap();
-  let json_data = serde_json::from_str(&str_data).unwrap();
+  let json_data: toml::Value = str_data.parse().unwrap();
   let mut cfg_data = data.cfg.lock().await;
-  *cfg_data = json_data;
+  *cfg_data = Some(json_data);
 
   send_cmd_json("update_cfg", Some(json!([str_data])), true).await;
 }
@@ -133,9 +136,9 @@ pub async fn read_cfg_data(data: &Data, wipe: bool) {
 
 fn generate_cfg_data() {
   let preset_str = fs::read_to_string(PRESET_PATH_CFG).unwrap();
-  let preset_json: Value = serde_json::from_str(&preset_str).unwrap();
+  let preset_json: toml::Value = preset_str.parse().unwrap();
 
-  let json_str = serde_json::to_string_pretty(&preset_json).unwrap();
+  let json_str = toml::to_string_pretty(&preset_json).unwrap();
 
   let mut file = fs::File::create(DATA_PATH_CFG).unwrap();
   file.write_all(json_str.as_bytes()).unwrap();
@@ -192,6 +195,15 @@ pub async fn dc_contains_server(data: &Data, server_id: u64) -> bool {
 
 
 pub async fn get_mutex_data(data: &Mutex<Option<Value>>) -> Result<Value, Error> {
+  let data_lock = data.lock().await;
+  return match data_lock.as_ref() {
+    Some(data) => Ok(data.clone()),
+    None => Err("Cannot get mutex data: The data is corrupted!".into()),
+  };
+}
+
+
+pub async fn get_toml_mutex(data: &Mutex<Option<toml::Value>>) -> Result<toml::Value, Error> {
   let data_lock = data.lock().await;
   return match data_lock.as_ref() {
     Some(data) => Ok(data.clone()),

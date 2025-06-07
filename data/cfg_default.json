@@ -1,8 +1,0 @@
-{
-  "comment": "IMPORTANT!!! Anything labeled with 'RESTART_{cfg-name-here}' requires a restart to apply",
-  "reddit": {
-    "RESTART_enabled": true,
-    "subreddits": "bytedicetesting",
-    "fetch_limit": 100
-  }
-}

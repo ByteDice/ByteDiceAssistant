@@ -19,11 +19,9 @@ pub fn event_handler<'a>(
         data_about_bot.user.id
       );
 
-      let file_text = std::fs::read_to_string("./data/status.txt").unwrap();
+      let file_text = std::fs::read_to_string("./cfg/status.txt").unwrap();
       let custom_activity = ActivityData::custom(file_text);
-      // TODO: make custom rich presence
-      //let playing_activity
-
+      
       ctx.online();
       ctx.set_activity(Some(custom_activity));
     }

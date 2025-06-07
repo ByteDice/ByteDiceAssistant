@@ -4,12 +4,12 @@ use poise::serenity_prelude::UserId;
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
 
-use crate::{cmds, data::{self, get_mutex_data}, events, re_cmds, rs_println, Args, Cmd, Data};
+use crate::{cmds, data::{self, get_toml_mutex}, events, re_cmds, rs_println, Args, Cmd, Data};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
-  let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
-  let ball_quirk_str   = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
+  let ball_classic_str = std::fs::read_to_string("./cfg/8-ball_classic.txt").unwrap();
+  let ball_quirk_str   = std::fs::read_to_string("./cfg/8-ball_quirky.txt").unwrap();
 
   let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
   let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
@@ -76,38 +76,39 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
 
 
 async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
-  let mut cmds = vec![];
-  let cfg = get_mutex_data(&data.cfg).await.unwrap();
-
-  // GENERIC
-  cmds.extend([
+  let mut cmds = vec![
+    // GENERIC
     cmds::help::cmd(),
     cmds::ping::cmd(),
+    cmds::eight_ball::cmd(),
+    // REDDIT
+    re_cmds::add::cmd(),
+    re_cmds::approve::cmd(),
+    re_cmds::get::cmd(),
+    re_cmds::remove::cmd(),
+    re_cmds::top::cmd(),
+    re_cmds::update::cmd(),
+    re_cmds::vote::cmd(),
+    re_cmds::shorturl::cmd(),
+    // [ADMIN / OWNER]
     cmds::embed::cmd(),
     cmds::send::cmd(),
     cmds::stop::cmd(),
-    cmds::eight_ball::cmd(),
-    cmds::add_server::cmd()
-  ]);
+    cmds::add_server::cmd(),
+    cmds::reload_cfg::cmd(),
+    // REDDIT [ADMIN / OWNER]
+    re_cmds::admin_bind::cmd()
+  ];
+  let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 
-  // REDDIT
-  if cfg["reddit"]["RESTART_enabled"].as_bool().unwrap() { 
-    cmds.extend([
-      re_cmds::add::cmd(),
-      re_cmds::approve::cmd(),
-      re_cmds::get::cmd(),
-      re_cmds::remove::cmd(),
-      re_cmds::top::cmd(),
-      re_cmds::update::cmd(),
-      re_cmds::vote::cmd(),
-      re_cmds::shorturl::cmd(),
-      re_cmds::admin_bind::cmd(),
-    ]);
-  }
+  let disabled = cfg["commands"]["disabled_categories"]
+    .as_array()
+    .unwrap()
+    .iter()
+    .filter_map(|v| v.as_str())
+    .collect::<Vec<_>>();
 
-  cmds.extend([
-    cmds::reload_cfg::cmd()
-  ]);
+  cmds.retain(|cmd| !disabled.contains(&cmd.category.as_ref().unwrap().as_str()));
 
-  return cmds
+  return cmds;
 }
