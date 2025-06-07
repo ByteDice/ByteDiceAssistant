@@ -8,7 +8,6 @@ subreddits = "bytedicetesting"
 fetch_limit = 100
 
 [commands]
-# TODO: readme
 # Disabled selected command categories. All commands and their categories can be viewed in the README.
 # "admin" and "owner" categories are always enabled.
 # [REQUIRES RESTART]

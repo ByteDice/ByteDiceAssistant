@@ -141,8 +141,7 @@ async fn main() {
 
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
   let cfg_arr = cfg["commands"]["disabled_categories"].as_array().unwrap();
-  let contains: toml::Value = "re".parse().unwrap(); 
-  let run_py = !cfg_arr.contains(&contains);
+  let run_py = !cfg_arr.iter().any(|val| val.as_str() == Some("re"));
 
   let rt_rs = Runtime::new().unwrap();
   let rt_py = Runtime::new().unwrap();
