@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::data::get_mutex_data;
+use crate::data::{get_mutex_data, update_re_data};
 use crate::messages::send_msg;
 use crate::re_cmds::get::get_post_from_data;
 use crate::{data, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
@@ -22,7 +22,7 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    let sr = get_readable_subreddits(ctx).await?;
+    let sr = get_readable_subreddits(ctx.data()).await?;
     send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
     return Ok(());
   }
@@ -59,6 +59,7 @@ pub async fn cmd(
     if a { send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await; }
   }
 
+  update_re_data(ctx.data()).await;
   if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
     send_embed_for_post(ctx, post, &url).await?;
   }

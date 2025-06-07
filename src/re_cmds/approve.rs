@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod}, websocket, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::is_bk_mod_msg, websocket, Context, Error, CFG_DATA_RE};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -18,11 +18,7 @@ pub async fn cmd(
   #[description = "Wether to approve or disapprove the post"] disapprove: Option<bool>
 ) -> Result<(), Error>
 {
-  if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    let sr = get_readable_subreddits(ctx).await?;
-    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
-    return Ok(());
-  }
+  if is_bk_mod_msg(ctx).await { return Ok(()); }
 
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;

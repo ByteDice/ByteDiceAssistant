@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg, JSON_TEXT_END, JSON_TEXT_START}, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg}, re_cmds::generic_fns::embed_to_json, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -175,15 +175,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
       continue;
     }
 
-    let msg_desc = &msg.embeds[0].description.clone().unwrap();
-    let msg_lines = msg_desc.split("\n");
-    let msg_last_len = msg_lines.clone().last().unwrap().len();
-
-    if msg_last_len < 13 { continue; }
-
-    let msg_json_str = &msg_lines.clone().last().unwrap()[JSON_TEXT_START.len()..msg_last_len - JSON_TEXT_END.len()];
-    
-    let msg_json = serde_json::from_str(msg_json_str);
+    let msg_json = embed_to_json(&msg.embeds[0]);
     if msg_json.is_err() { continue; }
 
     let mut u_json: Value = msg_json.unwrap();

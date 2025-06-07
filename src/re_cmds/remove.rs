@@ -17,7 +17,7 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    let sr = get_readable_subreddits(ctx).await?;
+    let sr = get_readable_subreddits(ctx.data()).await?;
     send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
     return Ok(());
   }
