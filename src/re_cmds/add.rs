@@ -4,7 +4,7 @@ use crate::data::{get_mutex_data, update_re_data};
 use crate::messages::send_msg;
 use crate::re_cmds::get::get_post_from_data;
 use crate::{data, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
-use crate::re_cmds::generic_fns::{get_readable_subreddits, is_bk_mod, send_embed_for_post, to_shorturl};
+use crate::re_cmds::generic_fns::{is_bk_mod_msg, send_embed_for_post, to_shorturl};
 use crate::lang;
 
 #[poise::command(
@@ -21,11 +21,7 @@ pub async fn cmd(
   #[description = "Wether to approve it after adding it"] approve: Option<bool>
 ) -> Result<(), Error>
 {
-  if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    let sr = get_readable_subreddits(ctx.data()).await?;
-    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
-    return Ok(());
-  }
+  if is_bk_mod_msg(ctx).await { return Ok(()); }
 
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());

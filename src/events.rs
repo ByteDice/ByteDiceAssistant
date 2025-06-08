@@ -1,7 +1,10 @@
-use crate::re_cmds::generic_fns::{embed_to_json, is_bk_mod_serenity, serenity_send_msg};
-use crate::{rs_println, Data, Error};
+use crate::data::{get_mutex_data, update_re_data};
+use crate::messages::make_post_embed;
+use crate::re_cmds::generic_fns::{is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
+use crate::{lang, rs_println, websocket, Data, Error, CFG_DATA_RE};
 
 use poise::serenity_prelude::{self as serenity, ActivityData, ComponentInteraction, Interaction, Member, Ready};
+use serde_json::json;
 
 use std::future::Future;
 use std::pin::Pin;
@@ -47,14 +50,12 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
   let i_msg = interaction.clone().message_component();
   if i_msg.is_none() { return Err(Error::from("message_component is None!")); }
   let i_embed = i_msg.unwrap().message.embeds[0].clone();
-
-  let json = embed_to_json(&i_embed);
-  if json.is_err() { return Err(Error::from("Failed to pase message JSON!")); }
+  let url = i_embed.url.clone().unwrap();
 
   return match component.data.custom_id.as_str() {
-    "approve_btn"   => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component).await,
+    "approve_btn"   => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
     "remove_btn"    => Ok(()),
-    "unapprove_btn" => Ok(()),
+    "unapprove_btn" => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
     "unremove_btn"  => Ok(()),
     "unvote_btn"    => Ok(()),
     "vote_btn"      => Ok(()),
@@ -63,10 +64,28 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
 }
 
 
-async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction) -> Result<(), Error> {
+async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, approve: bool) -> Result<(), Error> {
   if !is_bk_mod_serenity(ctx, data, c_member, component).await { return Ok(()); }
 
-  serenity_send_msg(ctx, component, "Hello from this stupid program that tastes oddly like pasta.".to_string(), true).await;
+  let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, url])), true).await.unwrap();
+
+  let c_id = component.channel_id;
+  let m_id = component.message.id;
+
+  if r["value"].as_bool().unwrap() {
+    update_re_data(data).await;
+    let new_data = &get_mutex_data(&data.reddit_data).await.unwrap()[CFG_DATA_RE][&url];
+    let e = make_post_embed(new_data, &url, true);
+
+    if approve {
+      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_approve_success"), true).await;
+    }
+    else {
+      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_disapprove_success"), true).await;
+    }
+  }
 
   return Ok(());
 }

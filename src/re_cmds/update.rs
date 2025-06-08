@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, http_send_embed, make_post_embed, make_removed_embed, send_msg}, re_cmds::generic_fns::embed_to_json, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -30,7 +30,7 @@ pub async fn cmd(
   let mut p_text = "`/re_updatediscord`:".to_string();
 
   let progress = send_msg(ctx, p_text.clone(), true, true).await.unwrap();
-  p_text = update_progress(ctx, progress.clone(), p_text, "\nFetching new posts & updating data file...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text, lang!("dc_msg_update_fetch", "\n")).await;
 
   let max_age_u = max_age.unwrap_or(8);
   let max_age_secs = max_age_u as u64 * (60 * 60 * 24);
@@ -49,47 +49,47 @@ pub async fn cmd(
   let c_id = c_id_u.unwrap();
 
   // Reading messages
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), format!("✅\nReading messages in <#{}>...", c_id)).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_read", "✅\n", c_id)).await;
   let msgs = read_msgs(http, ctx.framework().bot_id, c_id).await;
 
   // Parsing messages to JSON
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nParsing messages to JSON...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_parse", "✅\n")).await;
   let msgs_json = msgs_to_json(msgs, &r_data, max_age_secs).await;
 
   // Adding new posts 
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nAdding new posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_add", "✅\n")).await;
   let weekly_art = r_data[CFG_DATA_RE].as_object().unwrap();
-  add_posts(http, c_id, weekly_art, &msgs_json, max_age_secs).await;
+  add_posts(ctx, weekly_art, &msgs_json, max_age_secs).await;
   
   // Stop if only_add
   if only_add.unwrap_or(false) {
-    send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
-    update_progress(ctx, progress.clone(), p_text, "✅\n## Done!".to_string()).await;
+    send_msg(ctx, lang!("dc_msg_update_done", "`/bk_week_update`\n## "), true, true).await;
+    update_progress(ctx, progress.clone(), p_text, lang!("dc_msg_update_done", "✅\n## ")).await;
     return Ok(());
   }
 
   // Editing updated posts
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nEditing updated posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_editing", "✅\n")).await;
   edit_posts(http, c_id, weekly_art, &msgs_json).await;
 
   // Removing removed posts
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nRemoving removed posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_removing", "✅\n")).await;
   remove_posts(http, c_id, weekly_art, &msgs_json).await;
 
   // Removing old posts
   if max_age_u > 0 {
-    p_text = update_progress(ctx, progress.clone(), p_text.clone(), format!("✅\nRemoving old posts (threshold: {}d)...", max_age_u)).await;
+    p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_removing_old", "✅\n", max_age_u)).await;
     remove_old(http, c_id, &msgs_json).await;
     send_cmd_json("remove_old_posts", Some(json!([max_age_secs])), true).await;
   }
 
   // Removing duplicate posts
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), "✅\nRemoving duplicate posts...".to_string()).await;
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_removing_dupe", "✅\n")).await;
   remove_dupes(http, c_id, &msgs_json).await;
 
   // Done
-  update_progress(ctx, progress.clone(), p_text, "✅\n## Done!".to_string()).await;
-  send_msg(ctx, "`/bk_week_update`\n## Done!".to_string(), true, true).await;
+  update_progress(ctx, progress.clone(), p_text, lang!("dc_msg_update_done", "✅\n## ")).await;
+  send_msg(ctx, lang!("dc_msg_update_done", "`/bk_week_update`\n## "), true, true).await;
 
   return Ok(());
 }
@@ -178,14 +178,15 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     let msg_json = embed_to_json(&msg.embeds[0]);
     if msg_json.is_err() { continue; }
 
-    let mut u_json: Value = msg_json.unwrap();
+    let u_json: Value = msg_json.unwrap();
     let re_url = &reddit_data[CFG_DATA_RE][&url];
 
     let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or(0);
 
     // old
-    if now - post_date > max_age {
+    if now - post_date > max_age && max_age > 0 {
       if let Some(obj) = msgs_json["old"].as_object_mut() {
+        rs_println!("old: {}", url);
         obj.insert(url.clone(), json!(msg.id.get()));
         continue;
       }
@@ -209,13 +210,8 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     }
 
     // updated
-    if u_json["added"]                != re_url["added"]
-    || u_json["approved"]             != re_url["approved"]
-    || u_json["post_data"]["upvotes"] != re_url["post_data"]["upvotes"]
-    || u_json["votes"]["mod_voters"]  != re_url["votes"]["mod_voters"]
+    if &u_json != re_url
     {
-      u_json.as_object_mut().unwrap().insert("msg_id".to_string(), Value::String(msg.id.clone().to_string()));
-
       if let Some(obj) = msgs_json["updated"].as_object_mut() {
         obj.insert(url.clone(), json!(msg.id.get()));
         continue;
@@ -232,7 +228,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
 }
 
 
-async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, msgs_json: &Value, max_age: u64) {
+async fn add_posts(ctx: Context<'_>, r_data: &Map<String, Value>, msgs_json: &Value, max_age: u64) {
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .expect("Time went backwards")
@@ -245,14 +241,14 @@ async fn add_posts(http: &Http, c_id: ChannelId, r_data: &Map<String, Value>, ms
       { continue; }
 
     let post_date = r_data[url]["post_data"]["date_unix"].as_u64().unwrap();
-    if now - post_date > max_age { continue; }
+    if now - post_date > max_age && max_age > 0 { continue; }
 
-    if r_data[url].get("removed").is_some() {
-      http_send_embed(http, c_id, make_removed_embed(&r_data[url], url, false)).await;
+    if r_data[url]["removed"]["removed"].as_bool().unwrap() {
+      send_embed(ctx, make_removed_embed(&r_data[url], url, false), false).await;
       continue;
     }
 
-    http_send_embed(http, c_id, make_post_embed(&r_data[url], url, false)).await;
+    send_embed(ctx, make_post_embed(&r_data[url], url, false), false).await;
   }
 }
 

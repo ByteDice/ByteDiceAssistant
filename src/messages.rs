@@ -128,6 +128,7 @@ pub async fn send_embed(
 }
 
 
+#[allow(dead_code)]
 pub async fn http_send_embed(
   http: &Http,
   c_id: ChannelId,
@@ -231,11 +232,11 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
 
   let action_row = CreateActionRow::Buttons(vec![
-    CreateButton::new("vote_btn")     .label("Vote")     .emoji(ReactionType::Unicode("⬆️".to_string())),
-    CreateButton::new("unvote_btn")   .label("Un-vote"),
-    CreateButton::new("approve_btn")  .label("Approve")    .emoji(ReactionType::Unicode("✅".to_string())),
-    CreateButton::new("unapprove_btn").label("Disapprove") .emoji(ReactionType::Unicode("❌".to_string())),
-    CreateButton::new("remove_btn")   .label("Remove")     .emoji(ReactionType::Unicode("🗑️".to_string()))
+    CreateButton::new("vote_btn")     .label(lang!("dc_btn_vote"))     .emoji(ReactionType::Unicode("⬆️".to_string())),
+    CreateButton::new("unvote_btn")   .label(lang!("dc_btn_unvote")),
+    CreateButton::new("approve_btn")  .label(lang!("dc_btn_approve"))    .emoji(ReactionType::Unicode("✅".to_string())),
+    CreateButton::new("unapprove_btn").label(lang!("dc_btn_unapprove")) .emoji(ReactionType::Unicode("❌".to_string())),
+    CreateButton::new("remove_btn")   .label(lang!("dc_btn_remove"))     .emoji(ReactionType::Unicode("🗑️".to_string()))
   ]);
 
   return EmbedOptions { 
@@ -256,19 +257,21 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
 
 pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   let action_row = CreateActionRow::Buttons(vec![
-    CreateButton::new("unremove_btn").label("Un-remove").emoji(ReactionType::Unicode("↩️".to_string()))
+    CreateButton::new("unremove_btn").label(lang!("dc_btn_unremove")).emoji(ReactionType::Unicode("↩️".to_string()))
   ]);
+
+  let none = lang!("none");
 
   let desc = lang!(
     "dc_msg_embed_re_removed",
     post_data["removed"]["by"].as_str().unwrap(),
     if !post_data["removed"]["reason"].is_null() { post_data["removed"]["reason"].as_str().unwrap() }
-      else { "None" },
+      else { &none },
     url
   );
 
   return EmbedOptions { 
-    title: Some(format!("[REMOVED] {}", post_data["post_data"]["title"])),
+    title: Some(lang!("dc_msg_removed_square_brackets", post_data["post_data"]["title"].clone())),
     desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, serde_json::to_string(&post_data).unwrap(), JSON_TEXT_END),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),

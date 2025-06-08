@@ -83,7 +83,7 @@ pub async fn read_re_data(data: &Data, wipe: bool) {
   }
 
   let str_data = fs::read_to_string(DATA_PATH_RE).unwrap();
-  let json_data = serde_json::from_str(&str_data).unwrap();
+  let json_data: Option<Value> = serde_json::from_str(&str_data).unwrap();
   let mut re_data = data.reddit_data.lock().await;
   *re_data = json_data;
 }

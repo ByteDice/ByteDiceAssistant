@@ -37,7 +37,7 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
     }
 
     let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, &url])), true).await.unwrap();
-    if r.get("value").is_some() {
+    if r["value"].as_bool().unwrap() {
       if approve {
         send_msg(ctx, lang!("dc_msg_re_post_approve_success"), true, true).await;
       }

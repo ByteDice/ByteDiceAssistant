@@ -1,4 +1,10 @@
 {
+  "dc_btn_approve": "Approve",
+  "dc_btn_remove": "Remove",
+  "dc_btn_unapprove": "Disapprove",
+  "dc_btn_unremove": "Restore",
+  "dc_btn_unvote": "Un-vote",
+  "dc_btn_vote": "Vote",
   "dc_msg_8-ball_answer": "## You shook a magic 8-ball\nQ: {0}\nA: {1}",
   "dc_msg_add_to_data": "Added your server to my data! Thanks for letting me steal it! (/s)",
   "dc_msg_bound_channel": "Successfully bound channel ID `{0}` as the \"where all collected Reddit data gets dumped\" channel!",
@@ -36,6 +42,17 @@
   "dc_msg_re_vote_success": "Successfully voted!",
   "dc_msg_reload_cfg_python_fail": "Failed to reload configs: Failed-type response from Python.",
   "dc_msg_reload_cfg_success": "Successfully reloaded the configs!\nNew configs:\n```\n{0}\n```",
+  "dc_msg_removed_square_brackets": "[REMOVED] {0}",
   "dc_msg_shorturl": "ShortURL: <{0}>",
-  "log_lang_load_success": "Successfully loaded the english language file!"
+  "dc_msg_update_add": "{0}Adding new posts...",
+  "dc_msg_update_done": "{0}Done!",
+  "dc_msg_update_editing": "{0}Editing updated posts...",
+  "dc_msg_update_fetch": "{0}Fetching new posts & updating data file...",
+  "dc_msg_update_parse": "{0}Parsing messages to JSON...",
+  "dc_msg_update_read": "{0}Reading messages in <#{1}>...",
+  "dc_msg_update_removing_dupe": "{0}Removing duplicate posts...",
+  "dc_msg_update_removing_old": "{0}Removing old posts (threshold: {1}d)...",
+  "dc_msg_update_removing": "{0}Removing removed posts...",
+  "log_lang_load_success": "Successfully loaded the english language file!",
+  "none": "None"
 }

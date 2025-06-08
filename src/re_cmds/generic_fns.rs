@@ -1,8 +1,8 @@
-use poise::serenity_prelude::{self as serenity, ComponentInteraction, CreateInteractionResponse, CreateInteractionResponseMessage, Embed, Member};
+use poise::serenity_prelude::{self as serenity, ChannelId, ComponentInteraction, CreateInteractionResponse, CreateInteractionResponseMessage, EditMessage, Embed, Member, MessageId};
 use regex::Regex;
 use serde_json::Value;
 
-use crate::{data::get_toml_mutex, lang, messages::{make_post_embed, make_removed_embed, send_embed, send_msg, JSON_TEXT_END, JSON_TEXT_START}, Context, Data, Error};
+use crate::{data::get_toml_mutex, lang, messages::{embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, EmbedOptions, JSON_TEXT_END, JSON_TEXT_START}, Context, Data, Error};
 
 pub fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
   return mod_list.contains(&uid);
@@ -33,6 +33,12 @@ pub async fn serenity_send_msg(ctx: &serenity::Context, component: &ComponentInt
 }
 
 
+pub async fn serenity_edit_msg_embed(ctx: &serenity::Context, c_id: &ChannelId, m_id: &MessageId, e: EmbedOptions) {
+  let r = EditMessage::new().embed(embed_from_options(e));
+  let _ = c_id.edit_message(ctx.http.clone(), m_id, r).await;
+}
+
+
 pub fn to_shorturl(url: &str) -> Result<String, &str> {
   let re = Regex::new(r"comments/([a-zA-Z0-9]+)").unwrap();
     
@@ -50,6 +56,7 @@ pub async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Re
   send_embed(ctx, make_post_embed(&post, url, true), true).await;
   return Ok(());
 }
+
 
 pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
   send_embed(

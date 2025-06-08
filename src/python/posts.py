@@ -45,8 +45,6 @@ async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
     if not media[0]:
       without_media += 1
       continue
-
-    post_added = False
     
     post_added = data.add_post_to_data(
       bot,
@@ -57,10 +55,12 @@ async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
     else: not_added += 1
 
   py_print(f"Successfully fetched {len(posts)} posts.\n" +
-           f"       Out of which were {added_posts} added.\n" +
-           f"       {without_media} had no media, " +
+           f"     Out of which were {added_posts} added.\n" +
+           f"     {without_media} had no media, " +
            f"{not_added} are removed or already existed, " +
            f"and {old_posts} were older than the max age threshold.")
+
+  data.write_data(bot)
 
   return True
 

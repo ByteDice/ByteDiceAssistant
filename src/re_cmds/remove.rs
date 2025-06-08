@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::{generic_fns::{get_readable_subreddits, is_bk_mod, send_embed_for_removed}, get::get_post_from_data}, websocket::send_cmd_json, Context, Error};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::{generic_fns::{is_bk_mod_msg, send_embed_for_removed}, get::get_post_from_data}, websocket::send_cmd_json, Context, Error};
 
 #[poise::command(
   slash_command,
@@ -16,11 +16,7 @@ pub async fn cmd(
   #[description = "The reason of the removal."] reason: Option<String>
 ) -> Result<(), Error>
 {
-  if !is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) {
-    let sr = get_readable_subreddits(ctx.data()).await?;
-    send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
-    return Ok(());
-  }
+  if is_bk_mod_msg(ctx).await { return Ok(()); }
 
   let auth = &ctx.author().name;
   let r = send_cmd_json("remove_post_url", Some(json!([&url, &auth, &reason])), true).await.unwrap();
