@@ -5,6 +5,10 @@ An automation tool for Byte Dice. It's both a Discord and Reddit bot in one prog
 > This tool is not intended for public use outside of the official *Byte Dice Assistant* bots. Expect issues if you host this yourself.\
 > This tool is only designed to run on Windows (10 and 11) and XUbuntu and may not work on any other OS.
 
+> [!NOTE]
+> This is an older version of the software. The newest version can be found in the [embed_buttons branch](https://github.com/ByteDice/ByteDiceAssistant/tree/embed_buttons).\
+> Keep in mind that said branch is unstable and constantly updated with untested stuff. Download code from there at your own risk or wait till this notice is removed or replaced.
+
 # Open-source - Copyright
 
 **ByteDiceAssistant © 2025 by Byte Dice is licensed under CC BY-NC-SA 4.0.**\
