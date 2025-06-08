@@ -207,8 +207,8 @@ def set_vote_post(
     return False
 
   votes = bot.data[botPy.RE_DATA_POSTS][url]["votes"]
-  re_voters: set[str] = set(votes["voters_re"])
-  dc_voters: set[int] = set(votes["voters_dc"])
+  re_voters: set[str]  = set(votes["voters_re"])
+  dc_voters: set[int]  = set(votes["voters_dc"])
   mod_voters: set[int] = set(votes["mod_voters"])
 
   target_voters = mod_voters if mod_vote else (dc_voters if from_dc else re_voters)
@@ -222,9 +222,9 @@ def set_vote_post(
     if user in target_voters:
       return False
     target_voters.add(user)
-
-  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_re"] = list(re_voters)
-  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_dc"] = list(dc_voters)
+ 
+  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_re"]  = list(re_voters)
+  bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_dc"]  = list(dc_voters)
   bot.data[botPy.RE_DATA_POSTS][url]["votes"]["mod_voters"] = list(mod_voters)
 
   return True

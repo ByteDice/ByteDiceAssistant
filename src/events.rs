@@ -1,6 +1,6 @@
 use crate::data::{get_mutex_data, update_re_data};
 use crate::messages::{make_post_embed, make_removed_embed, EmbedOptions};
-use crate::re_cmds::generic_fns::{is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
+use crate::re_cmds::generic_fns::{is_bk_mod, is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
 use crate::websocket::send_cmd_json;
 use crate::{lang, rs_println, Data, Error, CFG_DATA_RE};
 
@@ -55,11 +55,11 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
 
   return match component.data.custom_id.as_str() {
     "approve_btn"   => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
-    "remove_btn"    => remove_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
+    "remove_btn"    => remove_btn (ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
     "unapprove_btn" => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
-    "unremove_btn"  => remove_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
-    "unvote_btn"    => Ok(()),
-    "vote_btn"      => Ok(()),
+    "unremove_btn"  => remove_btn (ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
+    "unvote_btn"    => vote_btn   (ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
+    "vote_btn"      => vote_btn   (ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
     _ => Err("Message button with that ID isn't handled.".into())
   }
 }
@@ -78,12 +78,12 @@ async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, co
     let new_data = &get_mutex_data(&data.reddit_data).await.unwrap()[CFG_DATA_RE][&url];
     let e = make_post_embed(new_data, &url, true);
 
+    serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+
     if approve {
-      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
       serenity_send_msg(ctx, component, lang!("dc_msg_re_post_approve_success"), true).await;
     }
     else {
-      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
       serenity_send_msg(ctx, component, lang!("dc_msg_re_post_disapprove_success"), true).await;
     }
   }
@@ -114,14 +114,46 @@ async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, com
     if remove { e = make_removed_embed(new_data, &url, true); }
     else      { e = make_post_embed   (new_data, &url, true); }
 
+    serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+
     if remove {
-      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
       serenity_send_msg(ctx, component, lang!("dc_msg_re_post_remove_success", &url), true).await;
     }
     else {
-      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
       serenity_send_msg(ctx, component, lang!("dc_msg_re_post_unremove_success", &url), true).await;
     }
+  }
+
+  return Ok(());
+}
+
+
+async fn vote_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, vote: bool) -> Result<(), Error> {
+  let uid: u64 = c_member.user.id.into();
+  let is_mod = is_bk_mod(data.bk_mods.clone(), uid);
+
+  let r = send_cmd_json("set_vote_post", Some(json!([&url, uid, is_mod, true, !vote])), true).await.unwrap();
+
+  let c_id = component.channel_id;
+  let m_id = component.message.id;
+
+  if r["value"].as_bool().unwrap() {
+    update_re_data(data).await;
+    let new_data = &get_mutex_data(&data.reddit_data).await.unwrap()[CFG_DATA_RE][&url];
+    let e = make_post_embed(new_data, &url, true);
+
+    serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+
+    if vote {
+      if is_mod { serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_mod_success"), true).await; }
+      else      { serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_success"),     true).await; }
+    }
+    else {
+      serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_success"), true).await;
+    }
+  }
+  else {
+    if !vote { serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_havent"), true).await; }
   }
 
   return Ok(());
