@@ -55,6 +55,7 @@ pub async fn cmd(
   // Parsing messages to JSON
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_parse", "✅\n")).await;
   let msgs_json = msgs_to_json(msgs, &r_data, max_age_secs).await;
+  if ctx.data().args.dev { rs_println!("Posts changelog: {}", msgs_json); }
 
   // Adding new posts 
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_add", "✅\n")).await;
@@ -68,9 +69,9 @@ pub async fn cmd(
     return Ok(());
   }
 
-  // Editing updated posts
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_editing", "✅\n")).await;
-  edit_posts(http, c_id, weekly_art, &msgs_json).await;
+  // Removing duplicate posts
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_removing_dupe", "✅\n")).await;
+  remove_dupes(http, c_id, &msgs_json).await;
 
   // Removing removed posts
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_removing", "✅\n")).await;
@@ -83,9 +84,9 @@ pub async fn cmd(
     send_cmd_json("remove_old_posts", Some(json!([max_age_secs])), true).await;
   }
 
-  // Removing duplicate posts
-  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_removing_dupe", "✅\n")).await;
-  remove_dupes(http, c_id, &msgs_json).await;
+  // Editing updated posts
+  p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_editing", "✅\n")).await;
+  edit_posts(http, c_id, weekly_art, &msgs_json).await;
 
   // Done
   update_progress(ctx, progress.clone(), p_text, lang!("dc_msg_update_done", "✅\n## ")).await;
@@ -193,8 +194,8 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     }
 
     // removed
-    if re_url.get("removed").is_some() {
-      if u_json.get("removed").is_some() {
+    if re_url["removed"]["removed"].as_bool().unwrap() {
+      if u_json["removed"]["removed"].as_bool().unwrap() {
         // no change
         if let Some(obj) = msgs_json["no_change"].as_object_mut() {
           obj.insert(url.clone(), json!(msg.id.get()));

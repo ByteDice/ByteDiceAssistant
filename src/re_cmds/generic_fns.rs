@@ -34,7 +34,9 @@ pub async fn serenity_send_msg(ctx: &serenity::Context, component: &ComponentInt
 
 
 pub async fn serenity_edit_msg_embed(ctx: &serenity::Context, c_id: &ChannelId, m_id: &MessageId, e: EmbedOptions) {
-  let r = EditMessage::new().embed(embed_from_options(e));
+  let r = EditMessage::new()
+    .embed(embed_from_options(e.clone()))
+    .components(e.actionrows.unwrap());
   let _ = c_id.edit_message(ctx.http.clone(), m_id, r).await;
 }
 

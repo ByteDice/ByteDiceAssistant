@@ -7,6 +7,10 @@ An automation tool primarily made for myself (Byte Dice) but publicly available 
 > This tool is not intended for public use outside of the official *Byte Dice Assistant* bots. Expect issues if you host this yourself.\
 > This tool is only designed to run on Windows (10 and 11) and XUbuntu (24.04 and above) and may not work on any other OS.
 
+> [!NOTE]
+> This bot <ins>never modifies any Reddit content</ins>. All it does and will ever do is read/scrape.
+> The data will never be sold and will only be shared with permission from subreddit moderators.
+
 ## Open-source - Copyright
 
 **ByteDiceAssistant © 2025 by Byte Dice is licensed under CC BY-NC-SA 4.0.**\

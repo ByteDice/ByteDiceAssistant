@@ -32,7 +32,7 @@
   "dc_msg_re_post_approve_success": "Successfully approved the post!",
   "dc_msg_re_post_disapprove_success": "Successfully disapproved the post!",
   "dc_msg_re_post_remove_success": "Successfully removed post with URL \"<{0}>\"!",
-  "dc_msg_re_post_unremove_success": "Successfully un-removed post with URL \"<{0}>\"!",
+  "dc_msg_re_post_unremove_success": "Successfully restored post with URL \"<{0}>\"!",
   "dc_msg_re_post_update_success": "Updated post with URL \"<{0}>\"!",
   "dc_msg_re_posts_channel_404": "Could not find `re_posts_channel` in data!\nHint: Run `/admin_re_bindchannel` in a (preferably read-only) channel (requires administrator permission).",
   "dc_msg_re_vote_err": "Failed to [vote / un-vote]: Unknown internal error.",

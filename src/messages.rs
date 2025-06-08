@@ -231,13 +231,7 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
 
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
 
-  let action_row = CreateActionRow::Buttons(vec![
-    CreateButton::new("vote_btn")     .label(lang!("dc_btn_vote"))     .emoji(ReactionType::Unicode("⬆️".to_string())),
-    CreateButton::new("unvote_btn")   .label(lang!("dc_btn_unvote")),
-    CreateButton::new("approve_btn")  .label(lang!("dc_btn_approve"))    .emoji(ReactionType::Unicode("✅".to_string())),
-    CreateButton::new("unapprove_btn").label(lang!("dc_btn_unapprove")) .emoji(ReactionType::Unicode("❌".to_string())),
-    CreateButton::new("remove_btn")   .label(lang!("dc_btn_remove"))     .emoji(ReactionType::Unicode("🗑️".to_string()))
-  ]);
+  let action_row = make_post_components();
 
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
@@ -256,9 +250,7 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
 
 
 pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
-  let action_row = CreateActionRow::Buttons(vec![
-    CreateButton::new("unremove_btn").label(lang!("dc_btn_unremove")).emoji(ReactionType::Unicode("↩️".to_string()))
-  ]);
+  let action_row = make_removed_components();
 
   let none = lang!("none");
 
@@ -280,4 +272,22 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
     actionrows: Some(vec![action_row]),
     ..Default::default()
   };
+}
+
+
+fn make_post_components() -> CreateActionRow {
+  return CreateActionRow::Buttons(vec![
+    CreateButton::new("vote_btn")     .label(lang!("dc_btn_vote"))     .emoji(ReactionType::Unicode("⬆️".to_string())),
+    CreateButton::new("unvote_btn")   .label(lang!("dc_btn_unvote")),
+    CreateButton::new("approve_btn")  .label(lang!("dc_btn_approve"))    .emoji(ReactionType::Unicode("✅".to_string())),
+    CreateButton::new("unapprove_btn").label(lang!("dc_btn_unapprove")) .emoji(ReactionType::Unicode("❌".to_string())),
+    CreateButton::new("remove_btn")   .label(lang!("dc_btn_remove"))     .emoji(ReactionType::Unicode("🗑️".to_string()))
+  ]);
+}
+
+
+fn make_removed_components() -> CreateActionRow {
+  return CreateActionRow::Buttons(vec![
+    CreateButton::new("unremove_btn").label(lang!("dc_btn_unremove")).emoji(ReactionType::Unicode("↩️".to_string()))
+  ]);
 }

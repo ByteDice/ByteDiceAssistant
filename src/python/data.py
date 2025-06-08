@@ -190,7 +190,7 @@ def remove_old_posts(bot: botPy.Bot, max_age: int) -> bool:
       remove.append(url)
 
   for key in remove:
-    weekly.pop(key)
+    weekly[key]["removed"]["removed"] = True
 
   return True
 

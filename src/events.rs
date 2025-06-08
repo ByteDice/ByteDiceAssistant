@@ -1,10 +1,11 @@
 use crate::data::{get_mutex_data, update_re_data};
-use crate::messages::make_post_embed;
+use crate::messages::{make_post_embed, make_removed_embed, EmbedOptions};
 use crate::re_cmds::generic_fns::{is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
-use crate::{lang, rs_println, websocket, Data, Error, CFG_DATA_RE};
+use crate::websocket::send_cmd_json;
+use crate::{lang, rs_println, Data, Error, CFG_DATA_RE};
 
 use poise::serenity_prelude::{self as serenity, ActivityData, ComponentInteraction, Interaction, Member, Ready};
-use serde_json::json;
+use serde_json::{json, Value};
 
 use std::future::Future;
 use std::pin::Pin;
@@ -54,9 +55,9 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
 
   return match component.data.custom_id.as_str() {
     "approve_btn"   => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
-    "remove_btn"    => Ok(()),
+    "remove_btn"    => remove_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
     "unapprove_btn" => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
-    "unremove_btn"  => Ok(()),
+    "unremove_btn"  => remove_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
     "unvote_btn"    => Ok(()),
     "vote_btn"      => Ok(()),
     _ => Err("Message button with that ID isn't handled.".into())
@@ -67,7 +68,7 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
 async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, approve: bool) -> Result<(), Error> {
   if !is_bk_mod_serenity(ctx, data, c_member, component).await { return Ok(()); }
 
-  let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, url])), true).await.unwrap();
+  let r = send_cmd_json("set_approve_post", Some(json!([approve, url])), true).await.unwrap();
 
   let c_id = component.channel_id;
   let m_id = component.message.id;
@@ -84,6 +85,42 @@ async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, co
     else {
       serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
       serenity_send_msg(ctx, component, lang!("dc_msg_re_post_disapprove_success"), true).await;
+    }
+  }
+
+  return Ok(());
+}
+
+
+async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, remove: bool) -> Result<(), Error> {
+  if !is_bk_mod_serenity(ctx, data, c_member, component).await { return Ok(()); }
+
+  let r: Value;
+
+  if remove {
+    r = send_cmd_json("remove_post_url", Some(json!([&url, &c_member.user.name, None::<String>])), true).await.unwrap();
+  }
+  else {
+    r = send_cmd_json("add_post_url", Some(json!([&url, false, true])), true).await.unwrap();
+  }
+
+  let c_id = component.channel_id;
+  let m_id = component.message.id;
+
+  if r["value"].as_bool().unwrap() {
+    update_re_data(data).await;
+    let new_data = &get_mutex_data(&data.reddit_data).await.unwrap()[CFG_DATA_RE][&url];
+    let e: EmbedOptions;
+    if remove { e = make_removed_embed(new_data, &url, true); }
+    else      { e = make_post_embed   (new_data, &url, true); }
+
+    if remove {
+      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_remove_success", &url), true).await;
+    }
+    else {
+      serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_unremove_success", &url), true).await;
     }
   }
 
