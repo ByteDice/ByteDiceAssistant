@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -14,7 +14,7 @@ use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::
   guild_cooldown = 120,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL | READ_MESSAGE_HISTORY | EMBED_LINKS"
 )]
-/// Updates the binded Discord channel with the bot's current Reddit data.
+/// Updates the bound Discord channel with the bot's current Reddit data.
 pub async fn cmd(
   ctx: Context<'_>,
   #[description = "Only adds new posts, leaves everything else unchanged."]
@@ -182,6 +182,8 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     let u_json: Value = msg_json.unwrap();
     let re_url = &reddit_data[CFG_DATA_RE][&url];
 
+    let json_trimmed = trim_post_json(re_url);
+
     let post_date = re_url["post_data"]["date_unix"].as_u64().unwrap_or(0);
 
     // old
@@ -194,7 +196,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     }
 
     // removed
-    if re_url["removed"]["removed"].as_bool().unwrap() {
+    if json_trimmed["removed"]["removed"].as_bool().unwrap() {
       if u_json["removed"]["removed"].as_bool().unwrap() {
         // no change
         if let Some(obj) = msgs_json["no_change"].as_object_mut() {
@@ -211,7 +213,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     }
 
     // updated
-    if &u_json != re_url
+    if u_json != json_trimmed
     {
       if let Some(obj) = msgs_json["updated"].as_object_mut() {
         obj.insert(url.clone(), json!(msg.id.get()));

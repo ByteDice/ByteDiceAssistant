@@ -18,7 +18,7 @@ pub async fn cmd(
   #[description = "Wether to approve or disapprove the post"] disapprove: Option<bool>
 ) -> Result<(), Error>
 {
-  if is_bk_mod_msg(ctx).await { return Ok(()); }
+  if !is_bk_mod_msg(ctx).await { return Ok(()); }
 
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
@@ -31,7 +31,7 @@ pub async fn cmd(
 
 async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: bool) {
   if let Some(post) = reddit_data.get(CFG_DATA_RE).unwrap().get(url) {
-    if post.get("removed").is_some() {
+    if post["removed"]["removed"].as_bool().unwrap() {
       send_embed_for_removed(ctx, url, post).await;
       return;
     }

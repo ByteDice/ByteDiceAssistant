@@ -2,7 +2,7 @@ use poise::serenity_prelude::{self as serenity, ChannelId, ComponentInteraction,
 use regex::Regex;
 use serde_json::Value;
 
-use crate::{data::get_toml_mutex, lang, messages::{embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, EmbedOptions, JSON_TEXT_END, JSON_TEXT_START}, Context, Data, Error};
+use crate::{data::get_toml_mutex, lang, messages::{decode_and_decompress_json, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, EmbedOptions, JSON_TEXT_END, JSON_TEXT_START}, Context, Data, Error};
 
 pub fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
   return mod_list.contains(&uid);
@@ -14,7 +14,7 @@ pub async fn is_bk_mod_msg(ctx: Context<'_>) -> bool {
 
   let sr = get_readable_subreddits(ctx.data()).await.unwrap();
   send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
-  return true
+  return false
 }
 
 
@@ -85,6 +85,5 @@ pub fn embed_to_json(embed: &Embed) -> Result<Value, serde_json::Error> {
   let msg_last_len = msg_lines.clone().last().unwrap().len();
 
   let msg_json_str = &msg_lines.clone().last().unwrap()[JSON_TEXT_START.len()..msg_last_len - JSON_TEXT_END.len()];
-  let msg_json: Result<Value, serde_json::Error> = serde_json::from_str(msg_json_str);
-  return msg_json;
+  return decode_and_decompress_json(msg_json_str.to_string());
 }

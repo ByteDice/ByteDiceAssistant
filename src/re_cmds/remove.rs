@@ -16,7 +16,7 @@ pub async fn cmd(
   #[description = "The reason of the removal."] reason: Option<String>
 ) -> Result<(), Error>
 {
-  if is_bk_mod_msg(ctx).await { return Ok(()); }
+  if !is_bk_mod_msg(ctx).await { return Ok(()); }
 
   let auth = &ctx.author().name;
   let r = send_cmd_json("remove_post_url", Some(json!([&url, &auth, &reason])), true).await.unwrap();

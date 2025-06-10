@@ -1,7 +1,13 @@
 use std::env;
+use std::io::{Read, Write};
 
 use crate::{lang, Args, Context};
 
+use base64::engine::general_purpose;
+use base64::Engine;
+use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
 use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, ReactionType, Timestamp, UserId};
@@ -47,7 +53,7 @@ impl Default for EmbedOptions {
 static DEFAULT_DC_COL: u32 = 5793266;
 static REMOVED_DC_COL: u32 = 16716032;
 
-pub static JSON_TEXT_START: &str = "-# JSON: ||`";
+pub static JSON_TEXT_START: &str = "-# Data: ||`";
 pub static JSON_TEXT_END:   &str = "`||";
 
 
@@ -230,12 +236,13 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
     .join("\n");
 
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
-
   let action_row = make_post_components();
+
+  let json_encoded = trim_compress_and_encode_json(post_data);
 
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
-    desc: format!("{}\n\n{}{}{}", trimmed, JSON_TEXT_START, serde_json::to_string(&post_data).unwrap(), JSON_TEXT_END),
+    desc: format!("{}\n\n{}{}{}", trimmed, JSON_TEXT_START, json_encoded, JSON_TEXT_END),
     col: Some(DEFAULT_DC_COL),
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
@@ -262,9 +269,11 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
     url
   );
 
+  let json_encoded = trim_compress_and_encode_json(post_data);
+
   return EmbedOptions { 
     title: Some(lang!("dc_msg_removed_square_brackets", post_data["post_data"]["title"].clone())),
-    desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, serde_json::to_string(&post_data).unwrap(), JSON_TEXT_END),
+    desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, json_encoded, JSON_TEXT_END),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
     ts:  Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
@@ -272,6 +281,31 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
     actionrows: Some(vec![action_row]),
     ..Default::default()
   };
+}
+
+
+pub fn trim_post_json(j: &Value) -> Value {
+  let mut json_trimmed = j.clone();
+  json_trimmed["post_data"].as_object_mut().unwrap().remove("media_urls");
+  return json_trimmed;
+}
+
+
+pub fn trim_compress_and_encode_json(j: &Value) -> String {
+  let trim = trim_post_json(j);
+  let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+  encoder.write_all(serde_json::to_string(&trim).unwrap().as_bytes()).unwrap();
+  let compressed = encoder.finish().unwrap();
+  return general_purpose::STANDARD.encode(&compressed);
+}
+
+
+pub fn decode_and_decompress_json(t: String) -> Result<Value, serde_json::Error> {
+  let compressed = general_purpose::STANDARD.decode(t).unwrap();
+  let mut decoder = ZlibDecoder::new(&compressed[..]);
+  let mut decompressed = String::new();
+  decoder.read_to_string(&mut decompressed).unwrap();
+  return serde_json::from_str(&decompressed);
 }
 
 

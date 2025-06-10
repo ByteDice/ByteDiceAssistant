@@ -21,7 +21,7 @@ pub async fn cmd(
   #[description = "Wether to approve it after adding it"] approve: Option<bool>
 ) -> Result<(), Error>
 {
-  if is_bk_mod_msg(ctx).await { return Ok(()); }
+  if !is_bk_mod_msg(ctx).await { return Ok(()); }
 
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());

@@ -34,7 +34,7 @@ pub async fn cmd(
   let posts_u = posts.as_object().unwrap();
 
   for (url, dat) in posts_u {
-    if dat.get("removed").is_some() { continue; }
+    if dat["removed"]["removed"].as_bool().unwrap() { continue; }
 
     let val: i32 = match category {
       TopCategory::Upvotes  => dat["post_data"]["upvotes"].as_i64().unwrap() as i32,

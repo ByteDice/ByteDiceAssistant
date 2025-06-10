@@ -26,7 +26,7 @@ pub async fn cmd(
     send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
     return Ok(());
   }
-  if post_data[&url].get("removed").is_some() {
+  if post_data[&url]["removed"]["removed"].as_bool().unwrap() {
     send_embed_for_removed(ctx, &url, &post_data[&url]).await;
     return Ok(());
   }
