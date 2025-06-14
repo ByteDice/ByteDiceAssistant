@@ -164,8 +164,10 @@ async fn main() {
   });
 
   if !args.nosched {
+    let dur = if args.test { Duration::from_secs(60) } else { Duration::from_secs(60 * 10) };
+
     let schedules: Vec<Schedule> = vec![
-      (Duration::from_secs(2 * 60), || Box::pin(read_reddit_inbox()))
+      (dur, || Box::pin(read_reddit_inbox()))
     ];
 
     run_schedules(schedules).await;

@@ -9,7 +9,7 @@ from macros import *
 
 DATA_PATH    = os.path.join(os.path.join(os.getcwd(), "data"))
 DB_PATH      = os.path.join(DATA_PATH, "db")
-DEFAULT_PATH = os.path.join(DATA_PATH, "default")
+DEFAULT_PATH = os.path.join(DATA_PATH, "defaults")
 CFG_PATH     = os.path.join(os.path.join(os.getcwd(), "cfg"))
 
 
@@ -91,7 +91,7 @@ def read_data(bot: botPy.Bot) -> bool:
       return False
 
     py_print("re_data.json not found, creating new from preset...")
-    with open(os.path.join(DATA_PATH, "re_data_preset.json", "r")) as f:
+    with open(os.path.join(DEFAULT_PATH, "re_data_preset.json"), "r") as f:
       data_preset_json = json.load(f)
 
     data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE VALUE", None)
@@ -150,7 +150,7 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
     if bot.args["dev"]: py_print(f"Added post \"{new_data.url}\" (Conditions bypassed)")
     return True
 
-  if new_data.url not in bot.data[botPy.RE_DATA_POSTS]:
+  elif new_data.url not in bot.data[botPy.RE_DATA_POSTS]:
     bot.data[botPy.RE_DATA_POSTS][new_data.url] = new_data.to_json()
     if bot.args["dev"]: py_print(f"Added post \"{new_data.url}\"")
     return True
@@ -159,6 +159,9 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
   
 
 def set_approve_post(bot: botPy.Bot, approved: bool, url: str) -> bool:
+  if url not in bot.data[botPy.RE_DATA_POSTS]:
+    return False
+
   if not bot.data[botPy.RE_DATA_POSTS][url]["removed"]["removed"]:
     bot.data[botPy.RE_DATA_POSTS][url]["approved"]["by_human"] = approved
     return True
@@ -204,6 +207,9 @@ def set_vote_post(
   remove_vote: bool = False,
 ) -> bool:
   if url not in bot.data[botPy.RE_DATA_POSTS]:
+    return False
+  
+  if bot.data[botPy.RE_DATA_POSTS][url]["removed"]["removed"]:
     return False
 
   votes = bot.data[botPy.RE_DATA_POSTS][url]["votes"]

@@ -19,7 +19,7 @@ async def is_cmd(cmd: str, text: str, bot: botPy.Bot) -> bool:
 
 
 async def respond_to_mention(bot: botPy.Bot) -> bool:
-  async for mention in bot.r.inbox.mentions(limit=25):
+  async for mention in bot.r.inbox.mentions(limit=100):
     if not mention.new:
       continue
 
@@ -33,13 +33,15 @@ async def respond_to_mention(bot: botPy.Bot) -> bool:
       await bk_week_add(mention, bot)
 
     else:
+      py_print("Mention was not a command.")
       await mention.mark_read()
 
   return True
 
 
 async def bk_week_add(mention: models.Comment, bot: botPy.Bot):
-  if not mention.subreddit.display_name not in bot.sr:
+  if bot.args["dev"]: py_print("Mention was a command: add_post")
+  if not mention.subreddit.display_name not in bot.sr_list:
     await mention.mark_read()
     return
 
@@ -58,23 +60,18 @@ async def bk_week_add(mention: models.Comment, bot: botPy.Bot):
 
   r = ""
   bd = bot.data[botPy.RE_DATA_POSTS]
+
   if short_url not in bd:
-    posts.add_post_url(bot, short_url)
-    r = "Successfully added this post to the data!"
+    if not is_mod: r = "Successfully added your post to the weekly art submissions!"
+    if is_mod: r = "[MOD ACTION] Successfully added this post to the weekly art submissions!"
+  else:
+    if bd[short_url]["removed"]["removed"] and is_mod:
+      r = "[MOD ACTION] Successfully un-removed this post from the weekly art submissions!"
+    elif not bd[short_url]["removed"]["removed"]:
+      r = "Couldn't add this post to the submissions! Luckily, it's already there!"
 
-  if short_url in bd and is_mod:
-    if "removed" in bd[short_url]:
-      r = "[MOD ACTION] Successfully un-removed this post from the data!"
-    else:
-      r = "[MOD ACTION] Successfully added this post to the data!"
+  await posts.add_post_url(bot, short_url)
 
-    post = await posts.from_url(bot, short_url)
-    post_data = posts.get_post_details(post[1])
-    data.add_post_to_data(bot, post_data, True)
-  
-  elif short_url in bd:
-    r = "Could not add this post to the data. Luckily, it's already there, so there's nothing to worry about!"
-
-
-  await mention.reply(r + " Thank you for participating!" + "\n\n" + BOT_ACTION_POSTFIX)
+  if r != "":
+    await mention.reply(r + " Thank you for participating!" + "\n\n" + BOT_ACTION_POSTFIX)
   await mention.mark_read()

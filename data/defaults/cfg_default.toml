@@ -1,3 +1,7 @@
+[general]
+# The discord bots status text
+status = "🎲 https://bytedice.net"
+
 [reddit]
 # Which subreddits the bot will scan when executing "re"-category commands.
 # Is automatically disabled when `disabled_categories` includes "re".
