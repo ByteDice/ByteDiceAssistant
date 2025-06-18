@@ -1,5 +1,5 @@
 use crate::messages::send_dm;
-use crate::{errln, lang, rs_println, Args};
+use crate::{errln, lang, rs_println, Args, LANG_NAME};
 
 use std::fs;
 use std::ffi::CString;
@@ -21,7 +21,17 @@ pub async fn start(args: Args) -> PyResult<()> {
 
   let code = get_code(&format!("{}{}main.py", path, slash));
   let py_args = args_str.replace(":true", ":True").replace(":false", ":False");
-  let app_path = CString::new(format!("args = {}\n{}", py_args, code)).unwrap();
+  let app_path: CString;
+  
+  unsafe {
+    app_path = CString::new(
+      format!("args = {}\nlang_name = {}\n{}",
+        py_args,
+        LANG_NAME.clone().unwrap(),
+        code
+      )
+    ).unwrap();
+  }
   
   let mut traceback: String = String::new();
   let mut is_error = false;

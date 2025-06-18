@@ -4,7 +4,7 @@ use std::path::Path;
 use serde_json::{self, Value, json};
 use tokio::sync::Mutex;
 
-use crate::{errln, rs_println, Data, Error, CFG_DATA_RE, LANG};
+use crate::{errln, rs_println, Data, Error, CFG_DATA_RE, LANG, LANG_NAME};
 use crate::websocket::send_cmd_json;
 
 
@@ -220,9 +220,10 @@ pub fn load_lang_data(lang: String) {
   }
 
   let str_data = fs::read_to_string(full_path).unwrap();
-  let json_data = serde_json::from_str(&str_data).unwrap();
+  let json_data: Option<Value> = serde_json::from_str(&str_data).unwrap();
 
   unsafe {
     LANG = json_data;
+    LANG_NAME = Some(lang);
   };
 }

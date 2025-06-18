@@ -7,6 +7,7 @@ import bot as botPy
 import data
 import posts
 import cmds
+import macros
 
 ws_global = None
 is_connected = False
@@ -74,16 +75,16 @@ async def json_to_func(v: dict, bot: botPy.Bot) -> dict:
   r = False
 
   match v["value"]:
-    case "update_data_file": r =       data .write_data        (bot)
-    case "respond_mentions": r = await cmds .respond_to_mention(bot)
-    case "add_new_posts":    r = await posts.add_new_posts     (bot, *v["args"])
-    case "add_post_url":     r = await posts.add_post_url      (bot, *v["args"])
-    case "remove_post_url":  r =       data .remove_post       (bot, *v["args"])
-    case "set_approve_post": r =       data .set_approve_post  (bot, *v["args"])
-    case "set_vote_post":    r =       data .set_vote_post     (bot, *v["args"])
-    case "remove_old_posts": r =       data .remove_old_posts  (bot, *v["args"])
-    case "update_cfg":       r = await bot  .update_cfg_str    (*v["args"])
-    case "stop_praw":        r = await bot  .stop              ()
+    case "update_data_file": r =       data  .write_data        (bot)
+    case "respond_mentions": r = await cmds  .respond_to_mention(bot)
+    case "add_new_posts":    r = await posts .add_new_posts     (bot, *v["args"])
+    case "add_post_url":     r = await posts .add_post_url      (bot, *v["args"])
+    case "remove_post_url":  r =       data  .remove_post       (bot, *v["args"])
+    case "set_approve_post": r =       data  .set_approve_post  (bot, *v["args"])
+    case "set_vote_post":    r =       data  .set_vote_post     (bot, *v["args"])
+    case "remove_old_posts": r =       data  .remove_old_posts  (bot, *v["args"])
+    case "update_cfg":       r = await bot   .update_cfg_str    (*v["args"])
+    case "stop_praw":        r = await bot   .stop              ()
     case _: value_supported = False
 
   print_result = v["print"]

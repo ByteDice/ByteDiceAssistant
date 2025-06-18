@@ -21,7 +21,9 @@ pub async fn cmd(
   let d_str = toml::to_string(&d)?;
   let r = send_cmd_json("update_cfg", Some(json!([d_str])), true).await;
 
-  if r.is_some() && r.unwrap()["value"].as_bool().unwrap() {
+  if r.is_none() { return Ok(()); }
+
+  if r.unwrap()["value"].as_bool().unwrap() {
     send_msg(
       ctx,
       lang!("dc_msg_reload_cfg_success", toml::to_string_pretty(&d).unwrap()),

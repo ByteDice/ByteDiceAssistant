@@ -11,6 +11,10 @@ subreddits = "bytedicetesting"
 # How many posts the bot scans when running `/re_updatediscord`.
 fetch_limit = 100
 
+# A list of flairs the post must be tagged under to be scraped.
+# Leave empty to search for everything
+search_flairs = ["Original Art"]
+
 [commands]
 # Disabled selected command categories. All commands and their categories can be viewed in the README.
 # "admin" and "owner" categories are always enabled.

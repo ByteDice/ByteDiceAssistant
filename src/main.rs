@@ -95,8 +95,9 @@ struct Data {
 
 static CFG_DATA_RE: &str = "posts";
 
-pub static mut LANG:   Option<serde_json::Value> = None;
-pub static mut NOPING: bool = false;
+pub static mut LANG_NAME: Option<String> = None;
+pub static mut LANG:      Option<serde_json::Value> = None;
+pub static mut NOPING:    bool = false;
 
 
 #[tokio::main]

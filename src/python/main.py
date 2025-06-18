@@ -19,9 +19,12 @@ async def main():
 
   # args is supposed to be undefined.
   # It gets defined in Rust.
-  try: await bot.set_args(args)
+  try:
+    await bot.set_args(args)
+    init_lang(lang_name)
   except NameError:
-    py_print("No command args found from Rust. Don't worry though, we have backup in place.")
+    py_print("No command args or language name found from Rust. Don't worry though, we have backup in place.")
+    init_lang("en")
 
   if bot.args["dev"]:
     py_print("ARGS:", str(bot.args))

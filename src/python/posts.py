@@ -14,7 +14,7 @@ async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
   cross_emoji = emoji.emojize(":cross_mark:")
 
   py_print("Fetching posts...")
-  posts = await fetch_posts_with_flair(bot, "Original Art")
+  posts = await fetch_posts_with_flair(bot, bot.flairs)
 
   py_print("Evaluating posts...")
 
@@ -65,11 +65,15 @@ async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
   return True
 
 
-async def fetch_posts_with_flair(bot: botPy.Bot, flair_name: str) -> list[models.Submission]:
+async def fetch_posts_with_flair(bot: botPy.Bot, flair_names: list[str]) -> list[models.Submission]:
   posts: list[models.Submission] = []
 
+  flair_names_str = \
+    f"flair:{flair_names[0]}" if len(flair_names) == 1\
+    else " OR ".join(f"flair:{flair}" for flair in flair_names)
+
   # ~36 OG-art posts per week, round limit to 50, 75 or 100
-  async for post in bot.sr.search(f"flair:\"{flair_name}\"", sort="new", limit=bot.fetch_limit):
+  async for post in bot.sr.search(f"{flair_names_str}", sort="new", limit=bot.fetch_limit):
     posts.append(post)
 
   return posts

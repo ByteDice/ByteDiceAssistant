@@ -70,7 +70,7 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>, print_outp
          { return r; }
     }
 
-    if !["respond_mentions"].contains(&func_name) || <Args as clap::Parser>::parse().dev {
+    if <Args as clap::Parser>::parse().dev {
       rs_println!("Received from Python: [RESPONSE] {:?}", r);
     }
 

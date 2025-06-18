@@ -41,6 +41,7 @@ class Bot:
     self.sr = None
     self.data_f: TextIOWrapper = None
     self.data: dict = {}
+    self.flairs: list[str] = []
 
   async def initialize(self):
     self.sr = await self.r.subreddit("+".join(self.sr_list))
@@ -58,13 +59,12 @@ class Bot:
   
   async def update_cfg_str(self, new_cfg: str) -> bool:
     json_cfg = toml.loads(new_cfg)
-    self.sr_list = json_cfg[CFG_DATA_RE]["subreddits"].split("+")
-    self.sr = await self.r.subreddit("+".join(self.sr_list))
-    self.fetch_limit = json_cfg[CFG_DATA_RE]["fetch_limit"]
+    self.update_cfg(json_cfg)
     return True
   
   async def update_cfg(self, new_cfg: dict) -> bool:
     self.sr_list = new_cfg[CFG_DATA_RE]["subreddits"].split("+")
     self.sr = await self.r.subreddit("+".join(self.sr_list))
     self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
+    self.flairs = new_cfg[CFG_DATA_RE]["search_flair"]
     return True
