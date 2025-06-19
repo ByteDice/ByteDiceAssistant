@@ -144,6 +144,8 @@ def add_post_to_data(bot: botPy.Bot, new_data: PostData, bypass_conditions: bool
     new_data.removed = False
     new_data.removed_by = None
     new_data.removed_reason = None
+    if bot.args["dev"]: py_print(f"Un-removed post \"{new_data.url}\"")
+    return True
 
   if bypass_conditions:
     bot.data[botPy.RE_DATA_POSTS][new_data.url] = new_data.to_json()

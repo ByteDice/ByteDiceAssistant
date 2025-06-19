@@ -25,7 +25,7 @@ pub async fn start(args: Args) -> PyResult<()> {
   
   unsafe {
     app_path = CString::new(
-      format!("args = {}\nlang_name = {}\n{}",
+      format!("args = {}\nlang_name = \"{}\"\n{}",
         py_args,
         LANG_NAME.clone().unwrap(),
         code

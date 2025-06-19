@@ -66,5 +66,5 @@ class Bot:
     self.sr_list = new_cfg[CFG_DATA_RE]["subreddits"].split("+")
     self.sr = await self.r.subreddit("+".join(self.sr_list))
     self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
-    self.flairs = new_cfg[CFG_DATA_RE]["search_flair"]
+    self.flairs = new_cfg[CFG_DATA_RE]["search_flairs"]
     return True

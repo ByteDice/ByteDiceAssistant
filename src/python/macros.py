@@ -26,6 +26,8 @@ def py_error(*args):
 
 
 def lang(k: str) -> str:
+  if G_LANG == {}:
+    py_error("Language must be initialized before use!")
   t = G_LANG.get(k)
   if k is None: py_error(f"Key not found in language \"{G_LANG_NAME}\": {k}")
   return str(t)
