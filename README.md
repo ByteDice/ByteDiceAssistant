@@ -42,7 +42,7 @@ An automation tool primarily made for myself (Byte Dice) but publicly available 
 ### Dependencies:
 
 This program uses Rust (v1.82.0) and Python (v3.11.4), you can likely use other versions if they are compatible.\
-It is required to install all used Python modules. You can find those in [req.txt](/req.txt). Installation instructions are in the *How to Run* section.
+It is required to install all used Python modules. You can find those in [req.txt](/req.txt). Installation instructions are in the *How to start the program* section.
 
 ### Environment variables:
 | **Name**               | **Description**                                                                                                                                                                                                                                         |
@@ -85,17 +85,14 @@ You can find config files in the [cfg/](cfg/) folder. You can also find the defa
 * Set the environment variables (listed above).
   * On Windows:
     * Run `setx VARIABLE_NAME "value in quotes"` in a terminal.
-    
   * On Linux:
     * Run `sudo nano /etc/environment` or `sudo vim /etc/environment` in the terminal (and enter your password if prompted to).
     * Press `i` (only if you used VIM).
     * Write `VARIABLE_NAME="value"` + a new line for every variable.
     * if nano: `ctrl + O` (and press enter) then `ctrl + X`.
     * if VIM: press `esc` then write `:wq` (and press enter).
-
   * On macOS:
     * Probably the same as Linux, but I don't use this OS so I have no clue.
-
 * Restart the terminal if you added/changed any environment variables.
 * Run `cd path/to/extracted/folder` to navigate to the downloaded files (replace `path/to/extracted/folder` with your actual path).
 * Install all python modules with `pip install -r req.txt`.
