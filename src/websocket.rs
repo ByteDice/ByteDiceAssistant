@@ -152,12 +152,12 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
       }
     }
     tungstenite::Message::Binary(bytes) => {
-      if args.dev && !args.noping {
+      if args.dev && args.ping {
         rs_println!("[Binary] from Python: {:?}", bytes);
       }
     }
     _ => {
-      if args.dev && !args.noping {
+      if args.dev && args.ping {
         rs_println!("Received from Python: [UNKNOWN / OTHER]");
       }
     }

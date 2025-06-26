@@ -1,4 +1,8 @@
 [general]
+# The language of the bot. Available languages can be found in the data/lang folder.
+# NOTE: Do not include the file extension of the language. For example, "en.json" is just "en".
+lang = "en"
+
 # The discord bots status text
 status = "🎲 https://bytedice.net"
 
@@ -15,6 +19,12 @@ fetch_limit = 100
 # Leave empty to search for everything
 search_flairs = ["Original Art"]
 
+# Command aliases for the Reddit bot, since those aren't autocomplete-able.
+# TODO: this
+[reddit.aliases]
+add_post = []
+
+
 [commands]
 # Disabled selected command categories. All commands and their categories can be viewed in the README.
 # "admin" and "owner" categories are always enabled.
@@ -24,3 +34,6 @@ disabled_categories = [
   # "help"
   # "re"
 ]
+
+# The chance (between 0..1) for the `/8_ball` command to output a "quirky" answer.
+eight_ball_quirky_chance = 0.2

@@ -1,4 +1,4 @@
-import asyncpraw.models as models
+import asyncpraw.models as models # type: ignore
 
 from macros import *
 import bot as botPy

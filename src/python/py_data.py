@@ -2,6 +2,7 @@ import os
 import toml
 import json
 import time
+from typing import Any
 
 import bot as botPy
 from macros import *
@@ -17,10 +18,11 @@ class PostData:
   def __init__(
     self,
     url:               str,
+    subreddit:         str,
     title:             str,
     upvotes:           int,
     date_unix:         int,
-    media_type:        str,
+    media_type:        str | None,
     media_urls:        list[str],
     removed:           bool       = False,
     removed_by:        str | None = None,
@@ -33,6 +35,7 @@ class PostData:
     approved_by_human: bool       = False,
     approved_by_ris:   bool       = False
   ):
+    self.subreddit          = subreddit
     self.removed            = removed
     self.removed_by         = removed_by
     self.removed_reason     = removed_reason
@@ -50,7 +53,7 @@ class PostData:
     self.approved_by_human  = approved_by_human
     self.approved_by_ris    = approved_by_ris
   
-  def to_json(self):
+  def to_json(self) -> dict[str, Any]:
     return {
       "removed": {
         "removed": self.removed,
@@ -58,6 +61,7 @@ class PostData:
         "reason": self.removed_reason
       },
       "post_data": {
+        "subreddit": self.subreddit,
         "title": self.title,
         "upvotes": self.upvotes,
         "date_unix": self.date_unix,
@@ -92,10 +96,9 @@ def read_data(bot: botPy.Bot) -> bool:
 
     py_print("re_data.json not found, creating new from preset...")
     with open(os.path.join(DEFAULT_PATH, "re_data_preset.json"), "r") as f:
-      data_preset_json = json.load(f)
+      data_preset_json: dict[str, Any] = json.load(f)
 
     data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE VALUE", None)
-    data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE VALUE DELETED", None)
 
     with open(r_path, "w") as f:
       json.dump(data_preset_json, f, indent = 2)
@@ -110,6 +113,8 @@ def read_data(bot: botPy.Bot) -> bool:
 
 
 def write_data(bot: botPy.Bot) -> bool:
+  if bot.data_f is None: return False
+
   bot.data_f.seek(0)
   json.dump(bot.data, bot.data_f, indent=2)
   bot.data_f.truncate()
@@ -128,7 +133,7 @@ async def read_cfg(bot: botPy.Bot) -> bool:
       data_preset_json = toml.load(f)
 
     with open(r_path, "w") as f:
-      toml.dump(data_preset_json, f, indent = 2)
+      toml.dump(data_preset_json, f, indent = 2) # type: ignore
 
     bot.data_f = open(r_path, "r+")
 
@@ -224,12 +229,12 @@ def set_vote_post(
   if remove_vote:
     if user not in target_voters:
       return False
-    target_voters.remove(user)
+    target_voters.remove(user) # type: ignore
     
   else:
     if user in target_voters:
       return False
-    target_voters.add(user)
+    target_voters.add(user) # type: ignore
  
   bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_re"]  = list(re_voters)
   bot.data[botPy.RE_DATA_POSTS][url]["votes"]["voters_dc"]  = list(dc_voters)

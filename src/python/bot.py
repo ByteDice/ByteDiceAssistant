@@ -1,7 +1,7 @@
 from io import TextIOWrapper
-import asyncpraw as praw
+import asyncpraw as praw # type: ignore
 import os
-from typing import Final
+from typing import Final, Any
 from macros import *
 import toml
 
@@ -11,11 +11,11 @@ CFG_DATA_RE:   Final[str] = "reddit"
 
 
 class Bot:
-  args:     dict = {"NO_RUST": True, "dev": True, "py": True, "port": 2920}
-  r_id:     str = os.environ.get("ASSISTANT_R_ID")
-  secret:   str = os.environ.get("ASSISTANT_R_TOKEN")
-  username: str = os.environ.get("ASSISTANT_R_NAME")
-  password: str = os.environ.get("ASSISTANT_R_PASS")
+  args: dict[str, Any] = {"NO_RUST": True, "dev": True, "py": True, "port": 2920}
+  r_id:     str | None = os.environ.get("ASSISTANT_R_ID")
+  secret:   str | None = os.environ.get("ASSISTANT_R_TOKEN")
+  username: str | None = os.environ.get("ASSISTANT_R_NAME")
+  password: str | None = os.environ.get("ASSISTANT_R_PASS")
 
   fetch_limit = 0
 
@@ -39,14 +39,14 @@ class Bot:
     )
     self.sr_list: list[str] = ["bytedicetesting"]
     self.sr = None
-    self.data_f: TextIOWrapper = None
-    self.data: dict = {}
+    self.data_f: TextIOWrapper | None = None
+    self.data: dict[str, Any] = {}
     self.flairs: list[str] = []
 
   async def initialize(self):
     self.sr = await self.r.subreddit("+".join(self.sr_list))
 
-  async def set_args(self, args: dict):
+  async def set_args(self, args: dict[str, Any]):
     self.args = args
 
   async def stop(self) -> bool:
@@ -59,12 +59,13 @@ class Bot:
   
   async def update_cfg_str(self, new_cfg: str) -> bool:
     json_cfg = toml.loads(new_cfg)
-    self.update_cfg(json_cfg)
+    await self.update_cfg(json_cfg)
     return True
   
-  async def update_cfg(self, new_cfg: dict) -> bool:
+  async def update_cfg(self, new_cfg: dict[str, Any]) -> bool:
     self.sr_list = new_cfg[CFG_DATA_RE]["subreddits"].split("+")
     self.sr = await self.r.subreddit("+".join(self.sr_list))
     self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
     self.flairs = new_cfg[CFG_DATA_RE]["search_flairs"]
+    init_lang(new_cfg["general"]["lang"])
     return True

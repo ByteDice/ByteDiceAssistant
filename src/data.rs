@@ -95,7 +95,6 @@ fn generate_re_data() {
 
   if let Some(bk_week) = preset_json[CFG_DATA_RE].as_object_mut() {
     bk_week.remove("EXAMPLE VALUE");
-    bk_week.remove("EXAMPLE VALUE DELETED");
   }
 
   let json_str = serde_json::to_string_pretty(&preset_json).unwrap();
@@ -116,7 +115,7 @@ pub async fn write_re_data() {
 }
 
 
-pub async fn read_cfg_data(data: &Data, wipe: bool) {
+pub async fn read_cfg_data(data: &Data, wipe: bool) -> Option<Value> {
   if !Path::new(DATA_PATH_CFG).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
@@ -128,9 +127,10 @@ pub async fn read_cfg_data(data: &Data, wipe: bool) {
   let str_data = fs::read_to_string(DATA_PATH_CFG).unwrap();
   let json_data: toml::Value = str_data.parse().unwrap();
   let mut cfg_data = data.cfg.lock().await;
-  *cfg_data = Some(json_data);
+  *cfg_data = Some(json_data.clone());
 
-  send_cmd_json("update_cfg", Some(json!([str_data])), true).await;
+  let r = send_cmd_json("update_cfg", Some(json!([toml::to_string(&json_data).unwrap()])), true).await;
+  return r;
 }
 
 

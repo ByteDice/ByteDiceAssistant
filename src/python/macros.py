@@ -1,5 +1,6 @@
-import json
 import os
+import json
+
 from printColors import PrintColors
 
 
@@ -8,14 +9,15 @@ G_LANG: dict[str, str] = {}
 DATA_PATH_LANG: str = "./data/lang/"
 
 
-def py_print(*args):
+def py_print(*args: str):
   print(
     PrintColors.FG.blue + "Py",
     "-",
     " ".join(args) + PrintColors.Special.reset
   )
 
-def py_error(*args):
+
+def py_error(*args: str):
   print(
     PrintColors.BG.red + "ERROR" + PrintColors.Special.reset,
     PrintColors.FG.blue + "Py",
@@ -29,13 +31,13 @@ def lang(k: str) -> str:
   if G_LANG == {}:
     py_error("Language must be initialized before use!")
   t = G_LANG.get(k)
-  if k is None: py_error(f"Key not found in language \"{G_LANG_NAME}\": {k}")
+  if t is None: py_error(f"Key not found in language \"{G_LANG_NAME}\": {k}")
   return str(t)
 
 
 def init_lang(lang_name: str):
   global G_LANG, G_LANG_NAME
-  G_LANG_NAME = lang_name
+  G_LANG_NAME = lang_name # type: ignore
 
   full_path = f"{DATA_PATH_LANG}{lang_name}.json"
 
@@ -50,4 +52,4 @@ def init_lang(lang_name: str):
     except json.JSONDecodeError as e:
       py_error(f"Failed to parse JSON for language \"{lang_name}\":\n{e}")
 
-  G_LANG = json_data
+  G_LANG = json_data # type: ignore

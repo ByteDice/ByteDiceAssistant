@@ -219,6 +219,7 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
 
   let desc_str = lang!(
     "dc_msg_embed_re_post",
+    post_data["post_data"]["subreddit"].as_str().unwrap(),
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     post_data["votes"]["mod_voters"].as_array().unwrap().len(),
     if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },

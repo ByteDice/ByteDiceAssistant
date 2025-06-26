@@ -68,12 +68,10 @@ struct Args {
   wipe: bool,
   #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
   test: bool,
-  #[arg(long, help = "Removes the annoying ping prints.")]
-  noping: bool,
+  #[arg(long, help = "Adds annoying ping prints.")]
+  ping: bool,
   #[arg(long, help = "Makes the program not use the schedules.")]
-  nosched: bool,
-  #[arg(long, default_value = "en", help = "Which language file to use (Do not include file extensions)")]
-  lang: String
+  nosched: bool
 }
 
 
@@ -104,12 +102,7 @@ pub static mut NOPING:    bool = false;
 async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
-  unsafe { NOPING = args.noping; }
-  
-
-  rs_println!("Fetching language file...");
-  data::load_lang_data(args.clone().lang);
-  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", lang!("log_lang_load_success"));
+  unsafe { NOPING = !args.ping; }
 
   let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
@@ -118,7 +111,14 @@ async fn main() {
     .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
     .collect();
 
+  rs_println!("Generating and/or fetching data and config...");
   let data = gen_data(args.clone(), own_vec_u64.clone()).await;
+
+  rs_println!("Fetching language file...");
+  let data_binding = get_toml_mutex(&data.cfg).await.unwrap();
+  let lang_cfg = data_binding["general"]["lang"].as_str().unwrap();
+  data::load_lang_data(lang_cfg.to_string());
+  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", lang!("log_lang_load_success"));
 
   if args.test             { println!("-----             USING TEST BOT            -----"); }
   if args.dev              { println!("-----            DEV MODE ENABLED           -----"); }
