@@ -42,6 +42,7 @@ class Bot:
     self.data_f: TextIOWrapper | None = None
     self.data: dict[str, Any] = {}
     self.flairs: list[str] = []
+    self.aliases: dict[str, list[str]] = {}
 
   async def initialize(self):
     self.sr = await self.r.subreddit("+".join(self.sr_list))
@@ -63,9 +64,10 @@ class Bot:
     return True
   
   async def update_cfg(self, new_cfg: dict[str, Any]) -> bool:
-    self.sr_list = new_cfg[CFG_DATA_RE]["subreddits"].split("+")
     self.sr = await self.r.subreddit("+".join(self.sr_list))
+    self.sr_list     = new_cfg[CFG_DATA_RE]["subreddits"].split("+")
     self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
-    self.flairs = new_cfg[CFG_DATA_RE]["search_flairs"]
+    self.flairs      = new_cfg[CFG_DATA_RE]["search_flairs"]
+    self.aliases     = new_cfg[CFG_DATA_RE]["aliases"]
     init_lang(new_cfg["general"]["lang"])
     return True

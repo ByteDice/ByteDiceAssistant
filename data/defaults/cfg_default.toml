@@ -20,9 +20,8 @@ fetch_limit = 100
 search_flairs = ["Original Art"]
 
 # Command aliases for the Reddit bot, since those aren't autocomplete-able.
-# TODO: this
 [reddit.aliases]
-add_post = []
+add_post = ["weekly_art", "weekly"]
 
 
 [commands]

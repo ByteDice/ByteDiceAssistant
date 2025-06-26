@@ -11,7 +11,14 @@ async def make_cmd(cmd: str, bot: botPy.Bot) -> str:
 
 async def is_cmd(cmd: str, text: str, bot: botPy.Bot) -> bool:
   command: str = await make_cmd(cmd, bot)
-  return command.lower() in text.lower()
+
+  if command.lower() in text.lower(): return True
+
+  for alias in bot.aliases[cmd]:
+    a_cmd = await make_cmd(alias, bot)
+    if a_cmd.lower() in text.lower(): return True
+  
+  return False
 
 
 async def respond_to_mention(bot: botPy.Bot) -> bool:
