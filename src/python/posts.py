@@ -127,7 +127,7 @@ def get_post_details(post: models.Submission, added_by_h: bool = False) -> py_da
 
   return py_data.PostData(
     post.shortlink,
-    post.subreddit,
+    post.subreddit.display_name,
     post.title,
     post.score,
     int(post.created_utc),
