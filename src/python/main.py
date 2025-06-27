@@ -58,5 +58,7 @@ async def main():
 
   await bot.stop()
 
-
-asyncio.run(main())
+try:
+  asyncio.run(main())
+except KeyboardInterrupt:
+  raise SystemExit

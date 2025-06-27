@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::send_embed_for_post, rs_println, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{send_embed_for_post, to_shorturl}, rs_println, Context, Error, CFG_DATA_RE};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -19,10 +19,13 @@ pub async fn cmd(
 {
   data::update_re_data(ctx.data()).await;
 
+  let shorturl_u = to_shorturl(&url);
+  let shorturl = &shorturl_u.unwrap_or(url.clone());
+
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
-    send_embed_for_post(ctx, post, &url).await?;
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, &shorturl).await? {
+    send_embed_for_post(ctx, post, &shorturl).await?;
   }
 
   return Ok(());

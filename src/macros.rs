@@ -25,6 +25,19 @@ macro_rules! rs_errln {
 
 
 #[macro_export]
+macro_rules! rs_warnln {
+  ($($arg:tt)*) => {
+    println!("{}WARNING{} RS - {}{}",
+      "\x1b[33m",
+      "\x1b[0m\x1b[31m",
+      format!($($arg)*),
+      "\x1b[0m"
+    );
+  };
+}
+
+
+#[macro_export]
 macro_rules! errln {
   ($($arg:tt)*) => {
     println!("{}ERROR{} - {}",
@@ -33,6 +46,18 @@ macro_rules! errln {
       format!($($arg)*)
     );
     std::process::exit(1);
+  };
+}
+
+
+#[macro_export]
+macro_rules! warnln {
+  ($($arg:tt)*) => {
+    println!("{}WARNING{} - {}",
+      "\x1b[33m",
+      "\x1b[0m",
+      format!($($arg)*)
+    );
   };
 }
 

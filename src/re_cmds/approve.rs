@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::is_bk_mod_msg, websocket, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket, Context, Error, CFG_DATA_RE};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -20,10 +20,13 @@ pub async fn cmd(
 {
   if !is_bk_mod_msg(ctx).await { return Ok(()); }
 
+  let shorturl_u = to_shorturl(&url);
+  let shorturl = &shorturl_u.unwrap_or(url.clone());
+
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  approve_cmd(ctx, &url, &reddit_data, !disapprove.unwrap_or(false)).await;
+  approve_cmd(ctx, &shorturl, &reddit_data, !disapprove.unwrap_or(false)).await;
   
   return Ok(());
 }

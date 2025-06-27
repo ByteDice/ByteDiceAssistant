@@ -4,7 +4,7 @@ use std::path::Path;
 use serde_json::{self, Value, json};
 use tokio::sync::Mutex;
 
-use crate::{errln, rs_println, Data, Error, CFG_DATA_RE, LANG, LANG_NAME};
+use crate::{errln, rs_println, rs_warnln, Data, Error, CFG_DATA_RE, LANG, LANG_NAME};
 use crate::websocket::send_cmd_json;
 
 
@@ -94,7 +94,10 @@ fn generate_re_data() {
   let mut preset_json: Value = serde_json::from_str(&preset_str).unwrap();
 
   if let Some(bk_week) = preset_json[CFG_DATA_RE].as_object_mut() {
-    bk_week.remove("EXAMPLE VALUE");
+    bk_week.remove("EXAMPLE URL");
+  }
+  else {
+    rs_warnln!("Couldn't find key \"{}\" in the Reddit data file ({})!", CFG_DATA_RE, DATA_PATH_RE);
   }
 
   let json_str = serde_json::to_string_pretty(&preset_json).unwrap();

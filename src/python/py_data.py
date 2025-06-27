@@ -98,7 +98,7 @@ def read_data(bot: botPy.Bot) -> bool:
     with open(os.path.join(DEFAULT_PATH, "re_data_preset.json"), "r") as f:
       data_preset_json: dict[str, Any] = json.load(f)
 
-    data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE VALUE", None)
+    data_preset_json[botPy.RE_DATA_POSTS].pop("EXAMPLE URL", None)
 
     with open(r_path, "w") as f:
       json.dump(data_preset_json, f, indent = 2)

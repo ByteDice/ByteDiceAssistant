@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::data::{get_mutex_data, update_re_data};
+use crate::data::{get_mutex_data};
 use crate::messages::send_msg;
 use crate::re_cmds::get::get_post_from_data;
 use crate::{data, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
@@ -37,7 +37,7 @@ pub async fn cmd(
       send_msg(
         ctx,
         r#"Unknown error!
-        Error trace: `bk_week_cmds.rs -> bk_week_add() -> Unknown error`.
+        Error trace: `re_cmds/add.rs -> cmd() -> Unknown error`.
         Common reasons: The URL provided was likely invalid or 403: forbidden (e.g a private subreddit)."#.to_string(),
         true,
         true
@@ -55,8 +55,7 @@ pub async fn cmd(
     if a { send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await; }
   }
 
-  update_re_data(ctx.data()).await;
-  if let Some(post) = get_post_from_data(ctx, &reddit_data, &url).await? {
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, &shorturl).await? {
     send_embed_for_post(ctx, post, &url).await?;
   }
 
