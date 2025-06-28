@@ -26,25 +26,25 @@ pub async fn cmd(
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());
 
+  let a = approve.unwrap_or(false);
+  let r = send_cmd_json("add_post_url", Some(json!([&shorturl, a, true])), true).await.unwrap();
+
+  if !r["value"].as_bool().unwrap() {
+    send_msg(
+      ctx,
+      r#"Unknown error!
+      Error trace: `re_cmds/add.rs -> cmd() -> Unknown error`.
+      Common reasons: The URL provided was likely invalid or 403: forbidden (e.g a private subreddit)."#.to_string(),
+      true,
+      true
+    ).await;
+    return Ok(());
+  }
+  
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
   if let Some(bk_week) = reddit_data.get(CFG_DATA_RE) {
-    let a = approve.unwrap_or(false);
-    let r = send_cmd_json("add_post_url", Some(json!([&shorturl, a, true])), true).await.unwrap();
-
-    if !r["value"].as_bool().unwrap() {
-      send_msg(
-        ctx,
-        r#"Unknown error!
-        Error trace: `re_cmds/add.rs -> cmd() -> Unknown error`.
-        Common reasons: The URL provided was likely invalid or 403: forbidden (e.g a private subreddit)."#.to_string(),
-        true,
-        true
-      ).await;
-      return Ok(());
-    }
-
     if let Some(post) = bk_week.get(shorturl) {
       if post["removed"]["removed"].as_bool().unwrap()
            { send_msg(ctx, lang!("dc_msg_re_post_unremove_success", &shorturl), true, true).await; }
