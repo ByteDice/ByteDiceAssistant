@@ -64,8 +64,6 @@ class Bot:
     return True
   
   async def update_cfg(self, new_cfg: dict[str, Any]) -> bool:
-    self.sr = await self.r.subreddit("+".join(self.sr_list))
-    self.sr_list     = new_cfg[CFG_DATA_RE]["subreddits"].split("+")
     self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
     self.flairs      = new_cfg[CFG_DATA_RE]["search_flairs"]
     self.aliases     = new_cfg[CFG_DATA_RE]["aliases"]
