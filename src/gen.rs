@@ -79,6 +79,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
   let mut cmds = vec![
     // GENERIC
     cmds::help::cmd(),
+    cmds::whoami::cmd(),
     cmds::ping::cmd(),
     cmds::eight_ball::cmd(),
     // REDDIT

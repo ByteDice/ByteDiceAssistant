@@ -55,6 +55,7 @@
   "dc_msg_update_removing_dupe": "{0}Removing duplicate posts...",
   "dc_msg_update_removing_old": "{0}Removing old posts (threshold: {1}d)...",
   "dc_msg_update_removing": "{0}Removing removed posts...",
+  "dc_msg_whoami": "**Bot \"owner\":** {0}\n**BK moderator:** {1}",
   "log_lang_load_success": "Successfully loaded the english language file!",
   "none": "None",
   "py_re_response_suffix": "^(I am not an AI, I am just a bot. This action was performed automatically by the way. You can report bugs and view my source code [here](https://github.com/ByteDice/ByteDiceAssistant)!)",

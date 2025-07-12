@@ -8,8 +8,8 @@ use crate::{lang, messages::send_msg, Context, Cmd, Error};
 enum HelpOptions {
   Admin,
   All,
-  BkWeek,
-  BkWeekReddit,
+  Reddit,
+  RedditBot,
   Generic
 }
 
@@ -97,8 +97,8 @@ async fn send_single_help(ctx: Context<'_>, mut cmd_name: String) {
 
 async fn send_category_help(ctx: Context<'_>, category: HelpOptions) {
   match category {
-    HelpOptions::BkWeekReddit => send_bk_week_help_re(ctx).await,
-    HelpOptions::BkWeek =>       send_bk_week_help   (ctx).await,
+    HelpOptions::RedditBot =>    send_bk_week_help_re(ctx).await,
+    HelpOptions::Reddit =>       send_bk_week_help   (ctx).await,
     HelpOptions::Generic =>      send_generic_help   (ctx).await,
     HelpOptions::Admin =>        send_admin_help     (ctx).await,
     HelpOptions::All =>          send_all_help       (ctx).await

@@ -10,6 +10,7 @@ mod cmds {
   pub mod reload_cfg;
   pub mod send;
   pub mod stop;
+  pub mod whoami;
 }
 mod re_cmds {
   pub mod add;
