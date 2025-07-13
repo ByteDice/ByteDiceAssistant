@@ -55,6 +55,7 @@
   "dc_msg_update_removing_dupe": "{0}Suppression des posts en double...",
   "dc_msg_update_removing_old": "{0}Suppression des anciens posts (seuil : {1}j)...",
   "dc_msg_update_removing": "{0}Suppression des posts supprimés...",
+  "dc_msg_whoami": "**Propriétaire du bot :** {0}\n**Modérateur BK :** {1}",
   "log_lang_load_success": "Fichier de langue français chargé avec succès !",
   "none": "Aucun",
   "py_re_response_suffix": "^(Je ne suis pas une IA, juste un bot. Cette action a été effectuée automatiquement. Vous pouvez signaler des bugs et consulter mon code source [ici](https://github.com/ByteDice/ByteDiceAssistant) !)",
