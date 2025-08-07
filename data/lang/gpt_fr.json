@@ -14,7 +14,7 @@
   "dc_msg_dm_python_err_socket": "Erreur Python interne inconnue : erreur de réponse WebSocket",
   "dc_msg_dm_python_err": "Erreur Python interne inconnue :\n```\n{0}\n```",
   "dc_msg_embed_default_embed_desc": "Description par défaut de l'encart en anglais.",
-  "dc_msg_embed_re_post": "Spoilers et anonymiseur de durée des votes pour une évaluation équitable !\n## Données du post :\n**Subreddit :** {0}\n**Votes positifs du post :** ||`{1:>6}`||\n**Votes des modérateurs :** ||`{2:>6}`||\n**Type de média :** `{3}`\n**URL :** ||<{4}>||\n\n## Données d'inscription :\n**Ajouté par :** humain : {5} | bot : {6}\n**Approuvé par :** humain : {7} | bot : [non implémenté]",
+  "dc_msg_embed_re_post": "Spoilers et anonymiseur de durée des votes pour une évaluation équitable !\n## Données du post :\n**Subreddit :** {0}\n**Votes positifs du post :** ||`{1:>6}`||\n**Votes des modérateurs :** ||`{2:>6}`||\n**Type de média :** `{3}`\n## Données d'inscription :\n**Ajouté par :** humain : {4} | bot : {5}\n**Approuvé:** {6}",
   "dc_msg_embed_re_removed": "## Supprimé par `{0}`\n**Raison :** {1}\n**URL** : ||<{2}>||",
   "dc_msg_err_trace": "Erreur inconnue !\nTrace de l’erreur : {0}",
   "dc_msg_failed_shorturl_conversion": "Échec de la conversion en shortURL : format d’URL Reddit invalide.",

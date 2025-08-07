@@ -14,7 +14,7 @@
   "dc_msg_dm_python_err_socket": "Unknown internal Python error occurred: Websocket response error",
   "dc_msg_dm_python_err": "Unknown internal Python Error:\n```\n{0}\n```",
   "dc_msg_embed_default_embed_desc": "Default english embed description.",
-  "dc_msg_embed_re_post": "Spoilers and vote length anonymizer for fair review!\n## Post Data:\n**Subreddit:** {0}\n**Post upvotes:** ||`{1:>6}`||\n**Moderator votes:** ||`{2:>6}`||\n**Media type:** `{3}`\n**URL:** ||<{4}>||\n\n## Listing Data:\n**Added by:** human: {5} | bot: {6}\n**Approved by:** human: {7} | bot: [not implemented]",
+  "dc_msg_embed_re_post": "Spoilers and vote length anonymizer for fair review!\n## Post Data:\n**Subreddit:** {0}\n**Post upvotes:** ||`{1:>6}`||\n**Moderator votes:** ||`{2:>6}`||\n**Media type:** `{3}`\n## Listing Data:\n**Added by:** human: {4} | bot: {5}\n**Approved:** {6}",
   "dc_msg_embed_re_removed": "## Removed by `{0}`\n**Reason:** {1}\n**URL**: ||<{2}>||",
   "dc_msg_err_trace": "Unknown error!\nError trace: {0}",
   "dc_msg_failed_shorturl_conversion": "Couldn't convert to shortURL: Invalid Reddit URL format.",

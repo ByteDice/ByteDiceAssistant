@@ -11,6 +11,7 @@ use flate2::Compression;
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
 use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, ReactionType, Timestamp, UserId};
+use serde_json::json;
 
 
 #[derive(Clone)]
@@ -223,7 +224,6 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     post_data["votes"]["mod_voters"].as_array().unwrap().len(),
     if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
-    url,
 
     if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
     if post_data["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
@@ -287,7 +287,25 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
 
 pub fn trim_post_json(j: &Value) -> Value {
   let mut json_trimmed = j.clone();
-  json_trimmed["post_data"].as_object_mut().unwrap().remove("media_urls");
+
+  if let Some(obj) = json_trimmed["post_data"].as_object_mut() {
+    obj.remove("media_urls");
+    obj.remove("subreddit");
+    obj.remove("title");
+    obj.remove("date_unix");
+    obj.remove("media_type");
+  }
+
+  if let Some(obj) = json_trimmed["votes"].as_object_mut() {
+    obj.remove("voters_re");
+    obj["voters_dc"] = json!(obj["voters_dc"].as_array().unwrap().len());
+    obj["mod_voters"] = json!(obj["mod_voters"].as_array().unwrap().len());
+  }
+
+  if let Some(obj) = json_trimmed["approved"].as_object_mut() {
+    obj.remove("by_ris");
+  }
+
   return json_trimmed;
 }
 
