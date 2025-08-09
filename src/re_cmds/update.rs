@@ -68,7 +68,7 @@ pub async fn cmd(
   // Adding new posts 
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_add", "✅\n")).await;
   let weekly_art = r_data[CFG_DATA_RE].as_object().unwrap();
-  add_posts(ctx, weekly_art, &msgs_json, max_age_secs).await;
+  add_posts(ctx, weekly_art, &msgs_json, max_age_secs, max_results_final).await;
   
   // Stop if only_add
   if only_add.unwrap_or(false) {
@@ -239,13 +239,15 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
 }
 
 
-async fn add_posts(ctx: Context<'_>, r_data: &Map<String, Value>, msgs_json: &Value, max_age: u64) {
+async fn add_posts(ctx: Context<'_>, r_data: &Map<String, Value>, msgs_json: &Value, max_age: u64, max_results: u16) {
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .expect("Time went backwards")
     .as_secs();
 
-  for url in r_data.keys() {
+  for (i, url) in r_data.keys().enumerate() {
+    if i + 1 > max_results.into() { break }
+
     if ["no_change", "updated", "removed", "old", "duplicates"]
       .iter()
       .any(|key| msgs_json[key].as_object().unwrap().contains_key(url))
