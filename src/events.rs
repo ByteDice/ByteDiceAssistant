@@ -54,24 +54,24 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
   let url = i_embed.url.clone().unwrap();
 
   return match component.data.custom_id.as_str() {
-    "approve_btn"   => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
-    "remove_btn"    => remove_btn (ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
-    "unapprove_btn" => approve_btn(ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
-    "unremove_btn"  => remove_btn (ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
-    "unvote_btn"    => vote_btn   (ctx, data, &component.member.as_ref().unwrap(), component, url, false).await,
-    "vote_btn"      => vote_btn   (ctx, data, &component.member.as_ref().unwrap(), component, url, true).await,
+    "approve_btn"   => approve_btn(ctx, data, component.member.as_ref().unwrap(), component, url, true).await,
+    "remove_btn"    => remove_btn (ctx, data, component.member.as_ref().unwrap(), component, url, true).await,
+    "unapprove_btn" => approve_btn(ctx, data, component.member.as_ref().unwrap(), component, url, false).await,
+    "unremove_btn"  => remove_btn (ctx, data, component.member.as_ref().unwrap(), component, url, false).await,
+    "unvote_btn"    => vote_btn   (ctx, data, component.member.as_ref().unwrap(), component, url, false).await,
+    "vote_btn"      => vote_btn   (ctx, data, component.member.as_ref().unwrap(), component, url, true).await,
     _ => Err("Message button with that ID isn't handled.".into())
   }
 }
 
 
 async fn update_embed(ctx: &serenity::Context, url: &str, new_data: &Value, c_id: &ChannelId, m_id: &MessageId) {
-  let e: EmbedOptions;
   let remove = new_data["removed"]["removed"].as_bool().unwrap();
-  if remove { e = make_removed_embed(new_data, url, true); }
-  else      { e = make_post_embed   (new_data, url, true); }
-
-  serenity_edit_msg_embed(ctx, &c_id, &m_id, e).await;
+  let e: EmbedOptions =
+    if remove { make_removed_embed(new_data, url, true) }
+    else      { make_post_embed   (new_data, url, true) };
+  
+  serenity_edit_msg_embed(ctx, c_id, m_id, e).await;
 }
 
 
@@ -106,14 +106,12 @@ async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, co
 async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, remove: bool) -> Result<(), Error> {
   if !is_bk_mod_serenity(ctx, data, c_member, component).await { return Ok(()); }
 
-  let r: Value;
-
-  if remove {
-    r = send_cmd_json("remove_post_url", Some(json!([&url, &c_member.user.name, None::<String>])), true).await.unwrap();
+  let r: Value = if remove {
+    send_cmd_json("remove_post_url", Some(json!([&url, &c_member.user.name, None::<String>])), true).await.unwrap()
   }
   else {
-    r = send_cmd_json("add_post_url", Some(json!([&url, false, true])), true).await.unwrap();
-  }
+    send_cmd_json("add_post_url", Some(json!([&url, false, true])), true).await.unwrap()
+  };
 
   let c_id = component.channel_id;
   let m_id = component.message.id;
@@ -157,11 +155,11 @@ async fn vote_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, compo
       serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_success"), true).await;
     }
   }
-  else {
-    if new_data["removed"]["removed"].as_bool().unwrap() {
-      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_vote_removed_post"), true).await;
-    }
-    else if !vote { serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_havent"), true).await; }
+  else if new_data["removed"]["removed"].as_bool().unwrap() {
+    serenity_send_msg(ctx, component, lang!("dc_msg_re_post_vote_removed_post"), true).await;
+  }
+  else if !vote {
+    serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_havent"), true).await;
   }
 
   return Ok(());

@@ -66,7 +66,7 @@ macro_rules! warnln {
 macro_rules! lang {
   ($key:expr) => {
     {
-      use crate::{LANG, errln};
+      use $crate::{LANG, errln};
       let value = unsafe {
         LANG
           .as_ref()
@@ -80,7 +80,7 @@ macro_rules! lang {
     }
   };
   ($key:expr, $($arg:expr),*) => {{
-    use crate::{LANG, errln};
+    use $crate::{LANG, errln};
     use formatx::formatx;
 
     let value = unsafe {

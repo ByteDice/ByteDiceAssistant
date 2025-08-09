@@ -69,9 +69,9 @@ struct Args {
   wipe: bool,
   #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
   test: bool,
-  #[arg(long, help = "Adds annoying ping prints.")]
+  #[arg(long, help = "Adds annoying prints when the websockets send a ping. Why though?")]
   ping: bool,
-  #[arg(long, help = "Makes the program not use the schedules.")]
+  #[arg(long, help = "Makes the program not use the schedule system.")]
   nosched: bool
 }
 
@@ -150,7 +150,7 @@ async fn main() {
   let python_args = args.clone();
   let rust_args = args.clone();
 
-  if !run_py { rs_println!("[IMPORTANT] You have disabled the \"re\" commands in the CFG. The app will not run the Python code nor the websockets to save resources!"); }
+  if !run_py { rs_println!("[IMPORTANT] You have disabled the \"re\" commands in the CFG. The app will not run the Python code and the websockets to save resources!"); }
 
   let rust = thread::spawn(move || {
     rt_rs.block_on(async {

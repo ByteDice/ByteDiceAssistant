@@ -9,40 +9,33 @@ import bot as botPy
 from macros import *
 
 
-async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
+async def add_new_posts(bot: botPy.Bot, max_age: int, max_results: int) -> bool:
   check_emoji = emoji.emojize(":check_mark_button:")
   cross_emoji = emoji.emojize(":cross_mark:")
 
   py_print("Fetching posts...")
-  posts = await fetch_posts_with_flair(bot, bot.flairs)
+  posts = await fetch_posts_with_flair(bot, bot.flairs, max_age, max_results)
 
   py_print("Evaluating posts...")
 
   added_posts = 0
   without_media = 0
   not_added = 0
-  old_posts = 0
   for post in posts:
-    media = has_media(post)
+    details = get_post_details(post)
 
-    media_urls = "\n        ".join(media[3])
+    media_urls = "\n        ".join(details.media_urls)
+    media_check = check_emoji if details.media_type is not None else cross_emoji
 
     if bot.args["dev"]:
       py_print(
-        f"\n{post.title}",
-        f"\n    {post.shortlink}"
-        f"\n    {check_emoji if media[0] else cross_emoji} Media ({media[1]}) [{media[2]}]",
+        f"\n{details.title}",
+        f"\n    {details.url}"
+        f"\n    {media_check} Media ({details.media_type}) [{len(details.media_urls)}]",
         f"\n        {media_urls}\n"
       )
-    
-    details = get_post_details(post)
-    now = int(time.time())
 
-    if now - details.date_unix > max_age and max_age > 0:
-      old_posts += 1
-      continue
-
-    if not media[0]:
+    if details.media_type is not None:
       without_media += 1
       continue
     
@@ -57,25 +50,32 @@ async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
   py_print(f"Successfully fetched {len(posts)} posts.\n" +
            f"     Out of which were {added_posts} added.\n" +
            f"     {without_media} had no media, " +
-           f"{not_added} are removed or already existed, " +
-           f"and {old_posts} were older than the max age threshold.")
+           f"     {not_added} are removed or already existed, ")
 
   py_data.write_data(bot)
 
   return True
 
 
-async def fetch_posts_with_flair(bot: botPy.Bot, flair_names: list[str]) -> list[models.Submission]:
+async def fetch_posts_with_flair(
+  bot: botPy.Bot,
+  flair_names: list[str],
+  max_age_secs: int,
+  max_results: int
+) -> list[models.Submission]:
   posts: list[models.Submission] = []
 
   flair_names_str = \
-    f"flair:{flair_names[0]}" if len(flair_names) == 1\
-    else " OR ".join(f"flair:{flair}" for flair in flair_names)
+    f"flair:{flair_names[0].replace(" ", "_")}" if len(flair_names) == 1\
+    else " OR ".join(f"flair:{flair.replace(" ", "_")}" for flair in flair_names)
 
   if bot.sr is None: return []
 
-  # ~36 OG-art posts per week, round limit to 50, 75 or 100
-  async for post in bot.sr.search(f"{flair_names_str}", sort="new", limit=bot.fetch_limit):
+  now = int(time.time())
+
+  # ~20 OG-art posts per week, round limit to 50, 75 or 100 for 2 subreddits
+  async for post in bot.sr.search(f"{flair_names_str}", sort="new", limit=max_results):
+    if now - int(post.created_utc) > max_age_secs and max_age_secs > 0: continue
     posts.append(post)
 
   return posts

@@ -7,17 +7,13 @@ import bot as botPy
 import py_data
 import py_websocket
 
-
 async def main():
   sys.stdout.reconfigure(encoding="utf-8") # type: ignore
 
   py_print("Creating Reddit bot...")
   bot = botPy.Bot()
 
-  await bot.initialize()
-  py_print(f"Successfully created Reddit bot: {await bot.r.user.me()}")
-
-  # args is supposed to be undefined.
+  # args and lang_name are supposed to be undefined.
   # It gets defined in Rust.
   try:
     await bot.set_args(args) # type: ignore
@@ -47,7 +43,9 @@ async def main():
     if data_retries == 5 and not rd:
       raise Exception("Couldn't read re_data.json: File doesn't exist")
 
-  py_print("Successfully read data!")
+  py_print("Successfully read all data!")
+
+  py_print(f"Successfully created Reddit bot: {await bot.r.user.me()}")
 
   if not bot.args["py"]:
     py_print("Connecting to local websocket...")

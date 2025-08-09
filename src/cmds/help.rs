@@ -164,7 +164,7 @@ fn separate_by_category(cmds: Vec<&Cmd>) -> Vec<(String, Vec<&Cmd>)> {
   for cmd in cmds {
     grouped
       .entry(cmd.category.clone().unwrap_or("No category".to_string()))
-      .or_insert_with(Vec::new).push(cmd);
+      .or_default().push(cmd);
   }
   
   return grouped.into_iter().collect();

@@ -25,12 +25,12 @@ pub async fn cmd(
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());
   
-  if post_data.get(&shorturl).is_none() {
+  if post_data.get(shorturl).is_none() {
     send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
     return Ok(());
   }
   if post_data[&shorturl]["removed"]["removed"].as_bool().unwrap() {
-    send_embed_for_removed(ctx, &shorturl, &post_data[&shorturl]).await;
+    send_embed_for_removed(ctx, shorturl, &post_data[&shorturl]).await;
     return Ok(());
   }
 

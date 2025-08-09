@@ -39,9 +39,9 @@ pub async fn cmd(
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  if let Some(post) = get_post_from_data(ctx, &reddit_data, &shorturl).await? {
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, shorturl).await? {
     if post["removed"]["removed"].as_bool().unwrap() {
-      send_embed_for_removed(ctx, &shorturl, &post).await;
+      send_embed_for_removed(ctx, shorturl, &post).await;
     }
   }
 

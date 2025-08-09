@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{data::{self, get_mutex_data, get_toml_mutex, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
 
 #[poise::command(
   slash_command,
@@ -17,12 +17,16 @@ use crate::{data::{self, get_mutex_data, DC_POSTS_CHANNEL_KEY}, lang, messages::
 /// Updates the bound Discord channel with the bot's current Reddit data.
 pub async fn cmd(
   ctx: Context<'_>,
-  #[description = "Only adds new posts, leaves everything else unchanged."]
+  #[description = "Make this true to only add new posts and leave everything else unchanged."]
     only_add: Option<bool>,
-  #[description = "The max age of a post (in days). Any post older than this will be removed. (0 is infinite.)"]
+  #[description = "The max age of a post in days. Any post older than this will be removed. (0 is infinite)"]
   #[min = 0]
   #[max = 65535]
-    max_age: Option<u16>
+    max_age: Option<u16>,
+  #[description = "The max amount of posts to fetch (no value uses default value)."]
+  #[min = 1]
+  #[max = 100]
+    max_results: Option<u16>
 ) -> Result<(), Error>
 {
   let http = ctx.http();
@@ -35,7 +39,11 @@ pub async fn cmd(
   let max_age_u = max_age.unwrap_or(8);
   let max_age_secs = max_age_u as u64 * (60 * 60 * 24);
 
-  send_cmd_json("add_new_posts", Some(json!([max_age_secs])), true).await;
+  let max_results_toml = &get_toml_mutex(&ctx.data().cfg).await.unwrap();
+  let max_results_pre = max_results_toml["reddit"]["fetch_limit"].as_integer().unwrap();
+  let max_results_final = max_results.unwrap_or(max_results_pre as u16);
+
+  send_cmd_json("add_new_posts", Some(json!([max_age_secs, max_results_final])), true).await;
   data::update_re_data(ctx.data()).await;
   let r_data = get_mutex_data(&ctx.data().reddit_data).await?;
 

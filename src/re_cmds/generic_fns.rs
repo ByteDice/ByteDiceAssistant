@@ -13,7 +13,7 @@ pub async fn is_bk_mod_msg(ctx: Context<'_>) -> bool {
   if is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) { return true; }
 
   let sr = get_readable_subreddits(ctx.data()).await.unwrap();
-  send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), false, false).await;
+  send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), true, true).await;
   return false
 }
 
@@ -71,9 +71,16 @@ pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
 
 pub async fn get_readable_subreddits(data: &Data) -> Result<String, Error> {
   let d = get_toml_mutex(&data.cfg).await.unwrap();
-  let sr = d["reddit"]["subreddits"].as_str().ok_or("Item of key \"subreddit\" is not a string type.\nTrace: `get_readable_subreddits -> let sr = ...`")?;
-  let split: Vec<&str> = sr.split("+").collect();
-  let join = split.join(", r/");
+  let sr = d["reddit"]["subreddits"].as_array().unwrap();
+  let sr_str: Vec<&str> = sr
+    .iter()
+    .map(|v| v.as_str().unwrap())
+    .collect();
+
+  let mut join = sr_str.join(", r/");
+
+  if join.len() != 0 { join = format!("r/{}", join); }
+  else { join = "[no subreddits assigned]".to_string(); }
 
   return Ok(join);
 }

@@ -9,7 +9,8 @@ import toml
 RE_DATA_POSTS: Final[str] = "posts"
 CFG_DATA_RE:   Final[str] = "reddit"
 
-
+# TODO: add wipe arg
+# TODO: add test-bot arg
 class Bot:
   args: dict[str, Any] = {"NO_RUST": True, "dev": True, "py": True, "port": 2920}
   r_id:     str | None = os.environ.get("ASSISTANT_R_ID")
@@ -21,7 +22,7 @@ class Bot:
 
   useragent: str =\
     f"{username} by u/RandomPersonDotExe aka u/Byte_Dice"\
-      if r_id == "YmZjr4zLr2qtHdpQXtj0sBOOdJzrXQ"\
+      if r_id == "YmZjr4zLr2qtHdpQXtj0sBOOdJzrXQ" or r_id == "Q-eBDGS8sFHlUCi9kpBepQ"\
     else f"{username} (Original program by u/RandomPersonDotExe aka u/Byte_Dice)"
 
   if password is None:
@@ -37,15 +38,12 @@ class Bot:
       password =      self.password,
       user_agent =    self.useragent
     )
-    self.sr_list: list[str] = ["bytedicetesting"]
+    self.sr_list: list[str] = []
     self.sr = None
     self.data_f: TextIOWrapper | None = None
     self.data: dict[str, Any] = {}
     self.flairs: list[str] = []
     self.aliases: dict[str, list[str]] = {}
-
-  async def initialize(self):
-    self.sr = await self.r.subreddit("+".join(self.sr_list))
 
   async def set_args(self, args: dict[str, Any]):
     self.args = args
@@ -67,5 +65,8 @@ class Bot:
     self.fetch_limit = new_cfg[CFG_DATA_RE]["fetch_limit"]
     self.flairs      = new_cfg[CFG_DATA_RE]["search_flairs"]
     self.aliases     = new_cfg[CFG_DATA_RE]["aliases"]
+    self.sr_list     = new_cfg[CFG_DATA_RE]["subreddits"]
+    self.sr = await self.r.subreddit("+".join(self.sr_list))
     init_lang(new_cfg["general"]["lang"])
+    py_print("Successfully updated the configs!")
     return True

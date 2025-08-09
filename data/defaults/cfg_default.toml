@@ -9,9 +9,7 @@ status = "🎲 https://bytedice.net"
 [reddit]
 # Which subreddits the bot will scan when executing "re"-category commands.
 # Is automatically disabled when `disabled_categories` includes "re".
-# Separate multiple subreddits with a "+", e.g "memes+askreddit".
-# [REQUIRES RESTART]
-subreddits = "bytedicetesting"
+subreddits = ["bytedicetesting"]
 
 # How many posts the bot scans when running `/re_updatediscord`.
 fetch_limit = 100

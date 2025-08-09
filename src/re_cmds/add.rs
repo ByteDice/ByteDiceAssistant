@@ -55,7 +55,7 @@ pub async fn cmd(
     if a { send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await; }
   }
 
-  if let Some(post) = get_post_from_data(ctx, &reddit_data, &shorturl).await? {
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, shorturl).await? {
     send_embed_for_post(ctx, post, &url).await?;
   }
 

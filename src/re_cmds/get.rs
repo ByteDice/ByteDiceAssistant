@@ -24,8 +24,8 @@ pub async fn cmd(
 
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  if let Some(post) = get_post_from_data(ctx, &reddit_data, &shorturl).await? {
-    send_embed_for_post(ctx, post, &shorturl).await?;
+  if let Some(post) = get_post_from_data(ctx, &reddit_data, shorturl).await? {
+    send_embed_for_post(ctx, post, shorturl).await?;
   }
 
   return Ok(());

@@ -19,8 +19,9 @@ pub async fn cmd(
   #[description = "Type \"i want to stop the bot now\" to confirm."] confirmation: Option<String>,
 ) -> Result<(), Error>
 {
-  let should_stop = ctx.data().args.dev
-    || confirmation.unwrap_or_default().to_lowercase() == "i want to stop the bot now";
+  let stop_confirm = "i want to stop the bot now".replace(" ", "");
+  let confirm_formatted = confirmation.unwrap_or_default().to_lowercase().replace(" ", "");
+  let should_stop = ctx.data().args.dev || confirm_formatted == stop_confirm;
 
   if should_stop {
     let msg = send_msg(ctx, lang!("dc_msg_owner_data_save"), true, true).await.unwrap();

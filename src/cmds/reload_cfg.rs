@@ -14,7 +14,7 @@ pub async fn cmd(
   ctx: Context<'_>
 ) -> Result<(), Error>
 {
-  let r = read_cfg_data(&ctx.data(), false).await;
+  let r = read_cfg_data(ctx.data(), false).await;
   let d = get_toml_mutex(&ctx.data().cfg).await.unwrap();
 
   if r.is_none() { return Ok(()); }

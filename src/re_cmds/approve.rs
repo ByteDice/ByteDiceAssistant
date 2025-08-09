@@ -26,7 +26,7 @@ pub async fn cmd(
   data::update_re_data(ctx.data()).await;
   let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
 
-  approve_cmd(ctx, &shorturl, &reddit_data, !disapprove.unwrap_or(false)).await;
+  approve_cmd(ctx, shorturl, &reddit_data, !disapprove.unwrap_or(false)).await;
   
   return Ok(());
 }
