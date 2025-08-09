@@ -264,10 +264,10 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
 
   let desc = lang!(
     "dc_msg_embed_re_removed",
-    post_data["removed"]["by"].as_str().unwrap(),
-    if !post_data["removed"]["reason"].is_null() { post_data["removed"]["reason"].as_str().unwrap() }
+    if !post_data["removed"]["by"].is_null() { post_data["removed"]["by"].as_str().unwrap() }
       else { &none },
-    url
+    if !post_data["removed"]["reason"].is_null() { post_data["removed"]["reason"].as_str().unwrap() }
+      else { &none }
   );
 
   let json_encoded = trim_compress_and_encode_json(post_data);
