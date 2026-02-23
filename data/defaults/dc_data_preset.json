@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "SERVER ID": {
+      "re_posts_channel": 0,
+      "re_disabled": false
+    }
+  }
+}

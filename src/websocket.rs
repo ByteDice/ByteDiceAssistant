@@ -9,7 +9,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 
 use crate::messages::send_dm;
-use crate::rs_println;
+use crate::{lang, rs_println};
 use crate::Args;
 
 type Sender = Arc<Mutex<Option<futures::stream::SplitSink<tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>, tungstenite::Message>>>>;
@@ -47,7 +47,7 @@ pub async fn send_msg(msg: &str) {
 
 
 #[allow(static_mut_refs)]
-pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<Value> {
+pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>, print_output: bool) -> Option<Value> {
   unsafe {
     let Some(sender) = &GLOBAL_SENDER else { return None };
     let mut sender = sender.lock().await;
@@ -56,7 +56,7 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
     let unw_args = func_args.unwrap_or(json!([]));
 
     let json_str = format!(
-      "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}}}",
+      "json:{{\"type\": \"function\", \"value\":\"{}\", \"args\": {}, \"print\": {print_output}}}",
       func_name, unw_args
     );
 
@@ -65,12 +65,17 @@ pub async fn send_cmd_json(func_name: &str, func_args: Option<Value>) -> Option<
     }
 
     let r = receive_response().await;
-    if !["respond_mentions"].contains(&func_name) || <Args as clap::Parser>::parse().dev {
+    if let Some(rs) = r.clone() {
+      if !rs.get("print").unwrap_or(&json![false]).as_bool().unwrap()
+         { return r; }
+    }
+
+    if <Args as clap::Parser>::parse().dev {
       rs_println!("Received from Python: [RESPONSE] {:?}", r);
     }
 
     if r.is_none() {
-      rs_println!("--- Response from Python is None!");
+      rs_println!("[IMPORTANT] Response from Python is None!");
     }
 
     return r;
@@ -99,7 +104,7 @@ async fn receive_response() -> Option<Value> {
 
 
 pub async fn start(args: Args, owners: Vec<u64>) {
-  rs_println!("Starting local websocket...");
+  rs_println!("Running local websocket...");
   let ip = format!("127.0.0.1:{}", args.port);
   let listener = TcpListener::bind(&ip).await.unwrap();
   rs_println!("WebSocket server running on ws://{}", ip);
@@ -134,7 +139,7 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
       if let Some(stripped) = text.strip_prefix("json:") {
         let t_json: Value = serde_json::from_str(stripped).unwrap();
         if t_json.get("error").is_some() {
-          send_dm("Unknown internal Python error occurred: Websocket response error.".to_string(), args, owners).await;
+          send_dm(lang!("dc_msg_dm_python_err_socket"), args, owners).await;
         }
       }
 
@@ -147,12 +152,12 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
       }
     }
     tungstenite::Message::Binary(bytes) => {
-      if args.dev && !args.noping {
+      if args.dev && args.ping {
         rs_println!("[Binary] from Python: {:?}", bytes);
       }
     }
     _ => {
-      if args.dev && !args.noping {
+      if args.dev && args.ping {
         rs_println!("Received from Python: [UNKNOWN / OTHER]");
       }
     }

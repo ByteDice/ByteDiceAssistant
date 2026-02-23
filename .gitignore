@@ -3,10 +3,12 @@ target/
 Cargo.lock
 **/*.rs.bk
 *.pdb
-__pycache__/
+**/__pycache__/
 .vscode/
 
 # program-created data
-data/reddit_data.json
-data/discord_data.json
-data/cfg.json
+**/reddit_data.json
+**/discord_data.json
+**/re_data.json
+**/dc_data.json
+**/cfg.toml

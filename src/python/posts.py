@@ -1,54 +1,45 @@
 import emoji
-from asyncpraw import models
-import asyncprawcore as prawcore
-import asyncpraw.exceptions as exc
+from asyncpraw import models # type: ignore
+import asyncprawcore as prawcore # type: ignore
+import asyncpraw.exceptions as exc # type: ignore
 import time
 
-import data
+import py_data
 import bot as botPy
 from macros import *
 
 
-async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
+async def add_new_posts(bot: botPy.Bot, max_age: int, max_results: int) -> bool:
   check_emoji = emoji.emojize(":check_mark_button:")
   cross_emoji = emoji.emojize(":cross_mark:")
 
   py_print("Fetching posts...")
-  posts = await fetch_posts_with_flair(bot, "Original Art")
+  posts = await fetch_posts_with_flair(bot, bot.flairs, max_age, max_results)
 
   py_print("Evaluating posts...")
 
   added_posts = 0
   without_media = 0
   not_added = 0
-  old_posts = 0
   for post in posts:
-    media = has_media(post)
+    details = get_post_details(post)
 
-    media_urls = "\n        ".join(media[3])
+    media_urls = "\n        ".join(details.media_urls)
+    media_check = check_emoji if details.media_type is not None else cross_emoji
 
     if bot.args["dev"]:
       py_print(
-        f"\n{post.title}",
-        f"\n    {post.shortlink}"
-        f"\n    {check_emoji if media[0] else cross_emoji} Media ({media[1]}) [{media[2]}]",
+        f"\n{details.title}",
+        f"\n    {details.url}"
+        f"\n    {media_check} Media ({details.media_type}) [{len(details.media_urls)}]",
         f"\n        {media_urls}\n"
       )
-    
-    details = get_post_details(post)
-    now = int(time.time())
 
-    if now - details.date_unix > max_age and max_age > 0:
-      old_posts += 1
-      continue
-
-    if not media[0]:
+    if details.media_type is not None:
       without_media += 1
       continue
-
-    post_added = False
     
-    post_added = data.add_post_to_data(
+    post_added = py_data.add_post_to_data(
       bot,
       details
     )
@@ -57,26 +48,41 @@ async def add_new_posts(bot: botPy.Bot, max_age: int) -> bool:
     else: not_added += 1
 
   py_print(f"Successfully fetched {len(posts)} posts.\n" +
-           f"       Out of which were {added_posts} added.\n" +
-           f"       {without_media} had no media, " +
-           f"{not_added} are removed or already existed, " +
-           f"and {old_posts} were older than the max age threshold.")
+           f"     Out of which were {added_posts} added.\n" +
+           f"     {without_media} had no media, " +
+           f"     {not_added} are removed or already existed, ")
+
+  py_data.write_data(bot)
 
   return True
 
 
-async def fetch_posts_with_flair(bot: botPy.Bot, flair_name: str) -> list[models.Submission]:
+async def fetch_posts_with_flair(
+  bot: botPy.Bot,
+  flair_names: list[str],
+  max_age_secs: int,
+  max_results: int
+) -> list[models.Submission]:
   posts: list[models.Submission] = []
 
-  # ~36 OG-art posts per week, round limit to 50, 75 or 100
-  async for post in bot.sr.search(f"flair:\"{flair_name}\"", sort="new", limit=bot.fetch_limit):
+  flair_names_str = \
+    f"flair:{flair_names[0].replace(" ", "_")}" if len(flair_names) == 1\
+    else " OR ".join(f"flair:{flair.replace(" ", "_")}" for flair in flair_names)
+
+  if bot.sr is None: return []
+
+  now = int(time.time())
+
+  # ~20 OG-art posts per week, round limit to 50, 75 or 100 for 2 subreddits
+  async for post in bot.sr.search(f"{flair_names_str}", sort="new", limit=max_results):
+    if now - int(post.created_utc) > max_age_secs and max_age_secs > 0: continue
     posts.append(post)
 
   return posts
 
 
-def has_media(post: models.Submission) -> tuple[bool, str, int, list[str]]:
-  media_type: str = None
+def has_media(post: models.Submission) -> tuple[bool, str | None, int, list[str]]:
+  media_type: str | None = None
   media_count = 0
   media_urls: list[str] = []
 
@@ -105,7 +111,7 @@ def has_media(post: models.Submission) -> tuple[bool, str, int, list[str]]:
   return (media_type != None, media_type, media_count, media_urls)
 
 
-async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
+async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission | None]:
   try:
     post: models.Submission = await bot.r.submission(url=url)
     return True, post
@@ -116,11 +122,12 @@ async def from_url(bot: botPy.Bot, url: str) -> tuple[bool, models.Submission]:
     return False, None
 
 
-def get_post_details(post: models.Submission, added_by_h: bool = False) -> data.PostData:
+def get_post_details(post: models.Submission, added_by_h: bool = False) -> py_data.PostData:
   media = has_media(post)
 
-  return data.PostData(
+  return py_data.PostData(
     post.shortlink,
+    post.subreddit.display_name,
     post.title,
     post.score,
     int(post.created_utc),
@@ -131,12 +138,12 @@ def get_post_details(post: models.Submission, added_by_h: bool = False) -> data.
   )
 
 
-async def add_post_url(bot, url: str, approve: bool = False, added_by_h: bool = False) -> bool:
+async def add_post_url(bot: botPy.Bot, url: str, approve: bool = False, added_by_h: bool = False) -> bool:
   result, post = await from_url(bot, url)
 
-  if not result:
-    return False
-  
+  if not result: return False
+  if post is None: return False
+
   post_data = get_post_details(post, added_by_h)
   post_data.approved_by_human = approve
-  return data.add_post_to_data(bot, post_data, True)
+  return py_data.add_post_to_data(bot, post_data, True)

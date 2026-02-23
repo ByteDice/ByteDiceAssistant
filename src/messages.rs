@@ -1,10 +1,16 @@
 use std::env;
+use std::io::{Read, Write};
 
-use crate::{Args, Context};
+use crate::{lang, Args, Context};
 
+use base64::engine::general_purpose;
+use base64::Engine;
+use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
-use poise::serenity_prelude::{ChannelId, Color, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, Timestamp, UserId};
+use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, ReactionType, Timestamp, UserId};
 use serde_json::json;
 
 
@@ -24,12 +30,13 @@ pub struct EmbedOptions {
   pub ephemeral: bool,
   pub message: Option<String>,
   pub author: Option<Author>,
-  pub thumbnail: Option<String>
+  pub thumbnail: Option<String>,
+  pub actionrows: Option<Vec<CreateActionRow>>
 }
 impl Default for EmbedOptions {
   fn default() -> Self {
     return EmbedOptions {
-      desc: "default description".to_string(),
+      desc: lang!("dc_msg_embed_default_embed_desc"),
       title: None,
       col: None,
       url: None,
@@ -37,7 +44,8 @@ impl Default for EmbedOptions {
       ephemeral: false,
       message: None,
       author: None,
-      thumbnail: None
+      thumbnail: None,
+      actionrows: None
     };
   }
 }
@@ -45,7 +53,9 @@ impl Default for EmbedOptions {
 
 static DEFAULT_DC_COL: u32 = 5793266;
 static REMOVED_DC_COL: u32 = 16716032;
-pub static MANDATORY_MSG: &str = "Mandatory response, please ignore.";
+
+pub static JSON_TEXT_START: &str = "-# Data: ||`";
+pub static JSON_TEXT_END:   &str = "`||";
 
 
 fn none_to_empty(string: Option<String>) -> String {
@@ -105,6 +115,7 @@ pub async fn send_embed(
       embeds: vec![embed],
       content: options.message,
       ephemeral: Some(options.ephemeral),
+      components: options.actionrows,
       ..Default::default()
     };
 
@@ -112,13 +123,19 @@ pub async fn send_embed(
     return Some(msg.unwrap());
   }
   else {
-    let r = CreateMessage::new().embeds(vec![embed]);
+    let mut r = CreateMessage::new().embeds(vec![embed]);
+  
+    if let Some(actionrows) = options.actionrows {
+      r = r.components(actionrows);
+    }
+
     let _ = ctx.channel_id().send_message(ctx.http(), r).await;
     return None;
   }
 }
 
 
+#[allow(dead_code)]
 pub async fn http_send_embed(
   http: &Http,
   c_id: ChannelId,
@@ -127,7 +144,11 @@ pub async fn http_send_embed(
 {
   let embed = embed_from_options(options.clone());
 
-  let r = CreateMessage::new().embeds(vec![embed]);
+  let mut r = CreateMessage::new().embeds(vec![embed]);
+
+  if let Some(actionrows) = options.actionrows {
+    r = r.components(actionrows);
+  }
 
   let msg = c_id.send_message(http, r).await;
   return msg.ok();
@@ -194,25 +215,15 @@ pub async fn send_dm(msg: String, args: Args, owners: Vec<u64>) {
 }
 
 
-pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   let media_type = &post_data["post_data"]["media_type"];
 
-  let desc_str = format!(
-    r#"Sorted by what I think will be most important
-    Spoilers and vote length anonymizer for fair review!
-    ## Post Data:
-    **Media type:** `{}`
-    **Post upvotes:** ||`{:>6}`||
-    **Moderator votes:** ||`{:>6}`||
-    **URL:** ||<{}>||
-
-    ## Listing Data:
-    **Added by:** `{{ human: {}, bot: {} }}`
-    **Approved by:** `{{ human: {}, bot: [not implemented] }}`"#,
-    if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
+  let desc_str = lang!(
+    "dc_msg_embed_re_post",
+    post_data["post_data"]["subreddit"].as_str().unwrap(),
     post_data["post_data"]["upvotes"].as_i64().unwrap(),
     post_data["votes"]["mod_voters"].as_array().unwrap().len(),
-    url,
+    if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
 
     if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
     if post_data["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
@@ -225,17 +236,14 @@ pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions
     .collect::<Vec<_>>()
     .join("\n");
 
-  let json_min = json!(
-    {"post_data": json!({ "upvotes": post_data["post_data"]["upvotes"] }),
-    "added": post_data["added"],
-    "approved": post_data["approved"],
-    "votes": json!({"mod_voters": post_data["votes"]["mod_voters"]})}
-  );
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
+  let action_row = make_post_components();
+
+  let json_encoded = trim_compress_and_encode_json(post_data);
 
   return EmbedOptions { 
     title: Some(post_data["post_data"]["title"].as_str().unwrap().to_string()),
-    desc: format!("{}\n\nJSON: ||`{}`||", trimmed, serde_json::to_string(&json_min).unwrap()),
+    desc: format!("{}\n\n{}{}{}", trimmed, JSON_TEXT_START, json_encoded, JSON_TEXT_END),
     col: Some(DEFAULT_DC_COL),
     url: Some(url.to_string()),
     ts: Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
@@ -243,26 +251,96 @@ pub fn embed_post(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions
     thumbnail: media_urls.first()
       .and_then(|url| url.as_str().map(|s| s.to_string()))
       .or(None),
+    actionrows: Some(vec![action_row]),
     ..Default::default()
   };
 }
 
 
-pub fn embed_post_removed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+  let action_row = make_removed_components();
+
+  let none = lang!("none");
+
+  let desc = lang!(
+    "dc_msg_embed_re_removed",
+    if !post_data["removed"]["by"].is_null() { post_data["removed"]["by"].as_str().unwrap() }
+      else { &none },
+    if !post_data["removed"]["reason"].is_null() { post_data["removed"]["reason"].as_str().unwrap() }
+      else { &none }
+  );
+
+  let json_encoded = trim_compress_and_encode_json(post_data);
+
   return EmbedOptions { 
-    title: Some("REMOVED!".to_string()),
-    desc: format!(
-      "## Removed by `{}`\n**Reason:** {}\nURL: ||<{}>||\n\nJSON: ||`{}`||",
-      post_data["removed_by"].as_str().unwrap(),
-      if !post_data["remove_reason"].is_null() { post_data["remove_reason"].as_str().unwrap() }
-        else { "None" },
-      url,
-      serde_json::to_string(&post_data).unwrap()
-    ),
+    title: Some(lang!("dc_msg_removed_square_brackets", post_data["post_data"]["title"].clone())),
+    desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, json_encoded, JSON_TEXT_END),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
     ts:  Some(Timestamp::from_unix_timestamp(post_data["post_data"]["date_unix"].as_i64().unwrap()).unwrap()),
     ephemeral,
+    actionrows: Some(vec![action_row]),
     ..Default::default()
   };
+}
+
+
+pub fn trim_post_json(j: &Value) -> Value {
+  let mut json_trimmed = j.clone();
+
+  if let Some(obj) = json_trimmed["post_data"].as_object_mut() {
+    obj.remove("media_urls");
+    obj.remove("subreddit");
+    obj.remove("title");
+    obj.remove("date_unix");
+    obj.remove("media_type");
+  }
+
+  if let Some(obj) = json_trimmed["votes"].as_object_mut() {
+    obj.remove("voters_re");
+    obj["voters_dc"] = json!(obj["voters_dc"].as_array().unwrap().len());
+    obj["mod_voters"] = json!(obj["mod_voters"].as_array().unwrap().len());
+  }
+
+  if let Some(obj) = json_trimmed["approved"].as_object_mut() {
+    obj.remove("by_ris");
+  }
+
+  return json_trimmed;
+}
+
+
+pub fn trim_compress_and_encode_json(j: &Value) -> String {
+  let trim = trim_post_json(j);
+  let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+  encoder.write_all(serde_json::to_string(&trim).unwrap().as_bytes()).unwrap();
+  let compressed = encoder.finish().unwrap();
+  return general_purpose::STANDARD.encode(&compressed);
+}
+
+
+pub fn decode_and_decompress_json(t: String) -> Result<Value, serde_json::Error> {
+  let compressed = general_purpose::STANDARD.decode(t).unwrap();
+  let mut decoder = ZlibDecoder::new(&compressed[..]);
+  let mut decompressed = String::new();
+  decoder.read_to_string(&mut decompressed).unwrap();
+  return serde_json::from_str(&decompressed);
+}
+
+
+fn make_post_components() -> CreateActionRow {
+  return CreateActionRow::Buttons(vec![
+    CreateButton::new("vote_btn")     .label(lang!("dc_btn_vote"))     .emoji(ReactionType::Unicode("⬆️".to_string())),
+    CreateButton::new("unvote_btn")   .label(lang!("dc_btn_unvote")),
+    CreateButton::new("approve_btn")  .label(lang!("dc_btn_approve"))    .emoji(ReactionType::Unicode("✅".to_string())),
+    CreateButton::new("unapprove_btn").label(lang!("dc_btn_unapprove")) .emoji(ReactionType::Unicode("❌".to_string())),
+    CreateButton::new("remove_btn")   .label(lang!("dc_btn_remove"))     .emoji(ReactionType::Unicode("🗑️".to_string()))
+  ]);
+}
+
+
+fn make_removed_components() -> CreateActionRow {
+  return CreateActionRow::Buttons(vec![
+    CreateButton::new("unremove_btn").label(lang!("dc_btn_unremove")).emoji(ReactionType::Unicode("↩️".to_string()))
+  ]);
 }

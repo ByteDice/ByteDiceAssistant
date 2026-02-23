@@ -1,0 +1,37 @@
+[general]
+# The language of the bot. Available languages can be found in the data/lang folder.
+# NOTE: Do not include the file extension of the language. For example, "en.json" is just "en".
+lang = "en"
+
+# The discord bots status text
+status = "🎲 https://bytedice.net"
+
+[reddit]
+# Which subreddits the bot will scan when executing "re"-category commands.
+# Is automatically disabled when `disabled_categories` includes "re".
+subreddits = ["bytedicetesting"]
+
+# How many posts the bot scans when running `/re_updatediscord`.
+fetch_limit = 100
+
+# A list of flairs the post must be tagged under to be scraped.
+# Leave empty to search for everything
+search_flairs = ["Original Art"]
+
+# Command aliases for the Reddit bot, since those aren't autocomplete-able.
+[reddit.aliases]
+add_post = ["weekly_art", "weekly"]
+
+
+[commands]
+# Disabled selected command categories. All commands and their categories can be viewed in the README.
+# "admin" and "owner" categories are always enabled.
+# [REQUIRES RESTART]
+disabled_categories = [
+  # "fun",
+  # "help"
+  # "re"
+]
+
+# The chance (between 0..1) for the `/8_ball` command to output a "quirky" answer.
+eight_ball_quirky_chance = 0.2

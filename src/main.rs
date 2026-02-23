@@ -1,8 +1,29 @@
 #![warn(unused_extern_crates)]
 #![allow(clippy::needless_return)]
 
-mod cmds;
-mod bk_week_cmds;
+mod cmds {
+  pub mod add_server;
+  pub mod eight_ball;
+  pub mod embed;
+  pub mod help;
+  pub mod ping;
+  pub mod reload_cfg;
+  pub mod send;
+  pub mod stop;
+  pub mod whoami;
+}
+mod re_cmds {
+  pub mod add;
+  pub mod admin_bind;
+  pub mod approve;
+  pub mod generic_fns;
+  pub mod get;
+  pub mod remove;
+  pub mod shorturl;
+  pub mod top;
+  pub mod update;
+  pub mod vote;
+}
 mod events;
 mod messages;
 mod python;
@@ -10,26 +31,28 @@ mod macros;
 #[allow(unknown_lints)]
 mod websocket;
 mod data;
+mod schedule;
+mod gen;
 
-use std::collections::HashSet;
-use std::future::Future;
-use std::pin::Pin;
 use std::process;
 use std::thread;
 use std::time::Duration;
 use std::vec;
+use std::error::Error as StdErr;
 
 use clap::Parser;
-use poise::serenity_prelude::UserId;
-use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::Client;
+use r#gen::gen_bot;
+use r#gen::gen_data;
+use poise::Command;
+use schedule::run_schedules;
 use serde::Serialize;
 use serde_json::Value;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
-use tokio::time;
 use websocket::send_cmd_json;
+
+use crate::data::get_toml_mutex;
+use crate::schedule::Schedule;
 
 
 #[derive(Parser, Serialize, Clone)]
@@ -46,16 +69,16 @@ struct Args {
   wipe: bool,
   #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
   test: bool,
-  #[arg(long, help = "Removes the annoying ping prints.")]
-  noping: bool,
-  #[arg(long, help = "Makes the program not use the schedules.")]
+  #[arg(long, help = "Adds annoying prints when the websockets send a ping. Why though?")]
+  ping: bool,
+  #[arg(long, help = "Makes the program not use the schedule system.")]
   nosched: bool
 }
 
 
-type Error = Box<dyn std::error::Error + Send + Sync>;
+type Error       = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
-type Schedule = (Duration, fn() -> Pin<Box<dyn Future<Output = ()> + Send>>);
+type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
 
 
 struct Data {
@@ -63,19 +86,24 @@ struct Data {
   ball_prompts: [Vec<String>; 2],
   reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
-  cfg:          Mutex<Option<Value>>,
+  cfg:          Mutex<Option<toml::Value>>,
   bk_mods:      Vec<u64>,
-  args:         Args
+  args:         Args,
 }
 
 
-static BK_WEEK: &str = "bk_weekly_art_posts";
+static CFG_DATA_RE: &str = "posts";
+
+pub static mut LANG_NAME: Option<String> = None;
+pub static mut LANG:      Option<serde_json::Value> = None;
+pub static mut NOPING:    bool = false;
 
 
 #[tokio::main]
 async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
+  unsafe { NOPING = !args.ping; }
 
   let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
@@ -84,47 +112,64 @@ async fn main() {
     .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
     .collect();
 
-  if args.test { println!("----- USING TEST BOT -----"); }
-  if args.dev { println!("----- DEV MODE ENABLED -----"); }
+  rs_println!("Generating and/or fetching data and config...");
+  let data = gen_data(args.clone(), own_vec_u64.clone()).await;
+
+  rs_println!("Fetching language file...");
+  let data_binding = get_toml_mutex(&data.cfg).await.unwrap();
+  let lang_cfg = data_binding["general"]["lang"].as_str().unwrap();
+  data::load_lang_data(lang_cfg.to_string());
+  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", lang!("log_lang_load_success"));
+
+  if args.test             { println!("-----             USING TEST BOT            -----"); }
+  if args.dev              { println!("-----            DEV MODE ENABLED           -----"); }
   if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
-  if args.nosched { println!("----- NO SCHEDULES -----") }
+  if args.nosched          { println!("-----             NO SCHEDULES              -----"); }
 
   if args.py && !args.rs {
-    println!("----- PYTHON ONLY MODE -----");
+    println!("-----           PYTHON ONLY MODE            -----");
     rs_println!("ARGS: {}", args_str);
-    let _ = python::start(args);
+    let _ = python::start(args).await;
     process::exit(0);
   }
   else if args.rs && ! args.py {
-    println!("----- RUST ONLY MODE -----");
+    println!("-----            RUST ONLY MODE             -----");
     rs_println!("ARGS: {}", args_str);
-    start(args, own_vec_u64.clone()).await;
+    start(args, data).await;
     process::exit(0);
-  }
-  else if args.py && args.rs {
-    errln!("Invalid arguments: Arguments cannot include both --rs and --py.");
   }
 
   rs_println!("ARGS: {}", args_str);
 
-  let rt = Runtime::new().unwrap();
+  let cfg = get_toml_mutex(&data.cfg).await.unwrap();
+  let cfg_arr = cfg["commands"]["disabled_categories"].as_array().unwrap();
+  let run_py = !cfg_arr.iter().any(|val| val.as_str() == Some("re"));
+
+  let rt_rs = Runtime::new().unwrap();
+  let rt_py = Runtime::new().unwrap();
   let python_args = args.clone();
   let rust_args = args.clone();
 
+  if !run_py { rs_println!("[IMPORTANT] You have disabled the \"re\" commands in the CFG. The app will not run the Python code and the websockets to save resources!"); }
+
   let rust = thread::spawn(move || {
-    rt.block_on(async {
-      websocket::start(rust_args.clone(), own_vec_u64.clone()).await;
-      start(rust_args, own_vec_u64).await;
+    rt_rs.block_on(async {
+      if run_py { websocket::start(rust_args.clone(), own_vec_u64.clone()).await; }
+      start(rust_args, data).await;
     });
   });
 
-  let python = thread::spawn(|| {
-    let _ = python::start(python_args);
+  let python = thread::spawn(move || {
+    rt_py.block_on(async {
+      if run_py { let _ = python::start(python_args).await; }
+    });
   });
 
   if !args.nosched {
+    let dur = if args.test { Duration::from_secs(60) } else { Duration::from_secs(60 * 10) };
+
     let schedules: Vec<Schedule> = vec![
-      (Duration::from_secs(2 * 60), || Box::pin(read_reddit_inbox()))
+      (dur, || Box::pin(read_reddit_inbox()))
     ];
 
     run_schedules(schedules).await;
@@ -135,129 +180,17 @@ async fn main() {
 }
 
 
-async fn start(args: Args, owners: Vec<u64>) {
-  let data = gen_data(args.clone(), owners).await;
+async fn start(args: Args, data: Data) {
   let mut bot = gen_bot(data, args).await;
 
-  rs_println!("Starting bot...");
+  rs_println!("Starting Discord bot...");
   bot.start().await.unwrap();
 }
 
 
-async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
-  let ball_classic_str = std::fs::read_to_string("./data/8-ball_classic.txt").unwrap();
-  let ball_quirk_str   = std::fs::read_to_string("./data/8-ball_quirky.txt").unwrap();
-
-  let ball_classic: Vec<String> = ball_classic_str.lines().map(String::from).collect();
-  let ball_quirk:   Vec<String> = ball_quirk_str  .lines().map(String::from).collect();
-  
-  let mods_env = std::env::var("ASSISTANT_BK_MODS").unwrap_or("0".to_string());
-  let mods_vec_str: Vec<String> = mods_env.split(",").map(String::from).collect();
-  let mods_vec_u64: Vec<u64> = mods_vec_str
-    .iter()
-    .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_BK_MODS. Invalid syntax."))
-    .collect();
-
-  let data = Data {
-    owners,
-    ball_prompts: [ball_classic, ball_quirk],
-    bk_mods:      mods_vec_u64,
-    reddit_data:  None.into(),
-    discord_data: None.into(),
-    cfg:          None.into(),
-    args:         args.clone()
-  };
-
-  data::read_dc_data (&data, args.clone().wipe).await;
-  data::read_re_data (&data, args.clone().wipe).await;
-  data::read_cfg_data(&data, args.clone().wipe).await;
-
-  return data;
-}
-
-
-async fn gen_bot(data: Data, args: Args) -> Client {
-  let token =
-    if !args.test { std::env::var("ASSISTANT_TOKEN").expect("Missing ASSISTANT_TOKEN env var!") }
-    else { std::env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!") };
-
-  let intents = serenity::GatewayIntents::all();
-
-  let peek_len = 27;
-  let token_peek = &token[..peek_len];
-  let token_end_len = token[peek_len..].len();
-  rs_println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
-
-  let own: HashSet<UserId> = data.owners.clone().into_iter().map(UserId::from).collect();
-
-  let framework = poise::Framework::builder()
-    .options(poise::FrameworkOptions {
-      owners: own,
-      commands: vec![
-        cmds::help(),
-        cmds::ping(),
-        cmds::embed(),
-        cmds::send(),
-        cmds::stop(),
-        cmds::eight_ball(),
-        cmds::re_shorturl(),
-        cmds::add_server(),
-        // bk_week
-        bk_week_cmds::bk_week_get(),
-        bk_week_cmds::bk_week_add(),
-        bk_week_cmds::bk_week_remove(),
-        bk_week_cmds::bk_week_approve(),
-        bk_week_cmds::bk_week_update(),
-        bk_week_cmds::bk_week_vote(),
-        bk_week_cmds::bk_week_top(),
-        // bk_admin
-        bk_week_cmds::bk_admin_bind(),
-        // cfg
-        cmds::reload_cfg()
-      ],
-      event_handler: events::event_handler,
-      ..Default::default()
-    })
-    .setup(|ctx, _ready, framework| {
-      Box::pin(async move {
-        poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-        return Ok(data);
-      })
-    })
-    .build();
-
-  return serenity::ClientBuilder::new(token, intents)
-    .framework(framework)
-    .await
-    .unwrap();
-}
-
-
-async fn run_schedule<F: Fn() -> Pin<Box<dyn Future<Output = ()> + Send>>>(d: Duration, f: F) {
-  let mut ticker = time::interval(d);
-  loop {
-    ticker.tick().await;
-    f().await;
-  }
-}
-
-
-async fn run_schedules(schedules: Vec<Schedule>) {
-  let mut handles: Vec<JoinHandle<()>> = vec![];
-
-  rs_println!("Starting schedules...");
-  for (d, f) in schedules {
-    let handle = tokio::spawn(run_schedule(d, f));
-    handles.push(handle);
-  }
-
-  for handle in handles {
-    let _ = handle.await;
-  }
-}
-
-
 async fn read_reddit_inbox() {
-  unsafe { if !websocket::HAS_CONNECTED { return; } }
-  send_cmd_json("respond_mentions", None).await;
+  unsafe {
+    if !websocket::HAS_CONNECTED { return; }
+    send_cmd_json("respond_mentions", None, !NOPING).await;
+  }
 }
