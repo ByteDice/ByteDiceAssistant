@@ -4,7 +4,7 @@ use poise::serenity_prelude::UserId;
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
 
-use crate::{cmds, data::{self, get_toml_mutex}, events, re_cmds, rs_println, Args, Cmd, Data};
+use crate::{Args, Cmd, Data, cmds, data::{self, get_toml_mutex}, debug_cmds, events, re_cmds, rs_println};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -79,8 +79,6 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
   let mut cmds = vec![
     // GENERIC
     cmds::help::cmd(),
-    cmds::whoami::cmd(),
-    cmds::ping::cmd(),
     cmds::eight_ball::cmd(),
     // REDDIT
     re_cmds::add::cmd(),
@@ -94,11 +92,11 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     // [ADMIN / OWNER]
     cmds::embed::cmd(),
     cmds::send::cmd(),
-    cmds::stop::cmd(),
     cmds::add_server::cmd(),
-    cmds::reload_cfg::cmd(),
     // REDDIT [ADMIN / OWNER]
-    re_cmds::admin_bind::cmd()
+    re_cmds::admin_bind::cmd(),
+    // DEBUG
+    debug_cmds::main_cmd::cmd()
   ];
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 

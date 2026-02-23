@@ -1,16 +1,13 @@
 #![warn(unused_extern_crates)]
 #![allow(clippy::needless_return)]
+#![allow(static_mut_refs)]
 
 mod cmds {
   pub mod add_server;
   pub mod eight_ball;
   pub mod embed;
   pub mod help;
-  pub mod ping;
-  pub mod reload_cfg;
   pub mod send;
-  pub mod stop;
-  pub mod whoami;
 }
 mod re_cmds {
   pub mod add;
@@ -23,6 +20,13 @@ mod re_cmds {
   pub mod top;
   pub mod update;
   pub mod vote;
+}
+mod debug_cmds {
+  pub mod main_cmd;
+  pub mod stop;
+  pub mod ping;
+  pub mod reload_cfg;
+  pub mod whoami;
 }
 mod events;
 mod messages;

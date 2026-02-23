@@ -6,6 +6,13 @@ lang = "en"
 # The discord bots status text
 status = "🎲 https://bytedice.net"
 
+# Adds "(Commit #123)" at the end of the status
+statusCommitNumber = true
+
+# Changes "(Commit #123)" into "(Experimental #123)"
+# Requires statusCommitNumber to be true
+statusExperimentalCommit = false
+
 [reddit]
 # Which subreddits the bot will scan when executing "re"-category commands.
 # Is automatically disabled when `disabled_categories` includes "re".
@@ -31,6 +38,7 @@ disabled_categories = [
   # "fun",
   # "help"
   # "re"
+  # "debug"
 ]
 
 # The chance (between 0..1) for the `/8_ball` command to output a "quirky" answer.
