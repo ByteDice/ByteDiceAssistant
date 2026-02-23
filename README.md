@@ -83,18 +83,8 @@ You can find config files in the [cfg/](cfg/) folder. You can also find the defa
 * Download the code (and extract it if needed).
 * Open a terminal.
 * Set the environment variables (listed above).
-  * On Windows:
-    * Run `setx VARIABLE_NAME "value in quotes"` in a terminal.
-  * On Linux:
-    * Run `sudo nano /etc/environment` or `sudo vim /etc/environment` in the terminal (and enter your password if prompted to).
-    * Press `i` (only if you used VIM).
-    * Write `VARIABLE_NAME="value"` + a new line for every variable.
-    * if nano: `ctrl + O` (and press enter) then `ctrl + X`.
-    * if VIM: press `esc` then write `:wq` (and press enter).
-  * On macOS:
-    * Probably the same as Linux, but I don't use this OS so I have no clue.
-* Restart the terminal if you added/changed any environment variables.
-* Run `cd path/to/extracted/folder` to navigate to the downloaded files (replace `path/to/extracted/folder` with your actual path).
-* Install all python modules with `pip install -r req.txt`.
-* Run `cargo run` to start the program. You can view a list of options by running `cargo run -- --help` or `cargo run -- -h`.
-  * If you only want to run the Python code, you can either run `cargo run -- --py` or `python ./src/python/main.py`. The second option is recommended for better error output.
+* Run `setx VARIABLE_NAME "value in quotes"` in a terminal. (WINDOWS ONLY)
+* Restart the terminal if you added/changed the environment variables.
+* Run `$ cd path/to/extracted/folder`.
+* Run `$ cargo run`. You can view a list of options by running `$ cargo run -- --help` or `$ cargo run -- -h`.
+  * If you only want to run the Python code, you can either run `$ cargo run -- --py`, or `$ python ./src/python/main.py`. The second option is recommended for better performance.
