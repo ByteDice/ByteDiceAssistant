@@ -36,6 +36,8 @@ pub async fn start(args: Args) -> PyResult<()> {
   let mut traceback: String = String::new();
   let mut is_error = false;
 
+  Python::initialize();
+
   let _ = Python::attach(|py| -> Result<(), PyErr> {
     let syspath = py.import("sys")?.getattr("path")?.cast_into::<PyList>()?;
     syspath.insert(0, path)?;

@@ -51,7 +51,11 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
   let token_end_len = token[peek_len..].len();
   rs_println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
 
-  let own: HashSet<UserId> = data.owners.clone().into_iter().map(UserId::from).collect();
+  let own: HashSet<UserId> = data.owners
+      .clone()
+      .into_iter()
+      .filter_map(|i| if i == 0 { None } else { Some(UserId::from(i))})
+      .collect();
 
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
