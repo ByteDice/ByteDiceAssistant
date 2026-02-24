@@ -1,19 +1,7 @@
 use crate::{data::{self, get_toml_mutex, read_cfg_data}, lang, messages::send_msg, Context, Error};
 
 
-#[poise::command(
-  slash_command,
-  prefix_command,
-  rename = "reload_cfg",
-  category = "owner",
-  owners_only,
-  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
-)]
-/// Reloads the entire config file.
-pub async fn cmd(
-  ctx: Context<'_>
-) -> Result<(), Error>
-{
+pub async fn cmd(ctx: Context<'_>) -> Result<(), Error> {
   let r = read_cfg_data(ctx.data(), false).await;
   let d = get_toml_mutex(&ctx.data().cfg).await.unwrap();
 

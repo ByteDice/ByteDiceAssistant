@@ -36,10 +36,10 @@ pub async fn start(args: Args) -> PyResult<()> {
   let mut traceback: String = String::new();
   let mut is_error = false;
 
-  pyo3::prepare_freethreaded_python();
+  Python::initialize();
 
-  let _ = Python::with_gil(|py| -> Result<(), PyErr> {
-    let syspath = py.import("sys")?.getattr("path")?.downcast_into::<PyList>()?;
+  let _ = Python::attach(|py| -> Result<(), PyErr> {
+    let syspath = py.import("sys")?.getattr("path")?.cast_into::<PyList>()?;
     syspath.insert(0, path)?;
     let empty = CString::new("").unwrap();
 

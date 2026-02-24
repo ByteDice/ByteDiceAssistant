@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 
 use std::future::Future;
 use std::pin::Pin;
+use std::process;
 
 pub fn event_handler<'a>(
     ctx: &'a serenity::Context,
@@ -35,10 +36,33 @@ async fn on_ready(ctx: &serenity::Context, data_about_bot: &Ready, data: &Data) 
   );
 
   let m_data = get_toml_mutex(&data.cfg).await.unwrap();
-  let custom_activity = ActivityData::custom(m_data["general"]["status"].as_str().unwrap());
+  let status_str: String;
+
+  let status = m_data["general"]["status"].as_str().unwrap();
+  let status_c = m_data["general"]["statusCommitNumber"].as_bool().unwrap();
+  let status_ec = m_data["general"]["statusExperimentalCommit"].as_bool().unwrap();
+
+  if status_c {
+    let commit_num_r = process::Command::new("git")
+      .args(["rev-list", "--count", "HEAD"])
+      .output()
+      .unwrap();    
+
+    let commit_num = format!(
+      "({} #{})",
+      if status_ec { "Experimental" }
+      else { "Commit" },
+      String::from_utf8(commit_num_r.stdout).unwrap()
+    ).replace("\n", "");
+
+    status_str = [status, " ", commit_num.as_str().trim()].concat();
+  }
+  else { status_str = status.to_string(); }
   
+  let custom_activity = ActivityData::custom(status_str.clone());
   ctx.online();
   ctx.set_activity(Some(custom_activity));
+  rs_println!("Set bot status as: \"{}\"", status_str);
 }
 
 

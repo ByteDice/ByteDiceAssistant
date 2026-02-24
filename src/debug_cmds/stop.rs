@@ -4,21 +4,7 @@ use poise::serenity_prelude::OnlineStatus;
 
 use crate::{data, lang, messages::{edit_reply, send_msg}, websocket::send_cmd_json, Context, Error};
 
-
-#[poise::command(
-  slash_command,
-  prefix_command,
-  rename = "stop",
-  category = "owner",
-  owners_only,
-  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
-)]
-/// I have security measures, even in developer mode. You wont access this without being a bot "owner".
-pub async fn cmd(
-  ctx: Context<'_>,
-  #[description = "Type \"i want to stop the bot now\" to confirm."] confirmation: Option<String>,
-) -> Result<(), Error>
-{
+pub async fn cmd(ctx: Context<'_>, confirmation: Option<String>) -> Result<(), Error>{
   let stop_confirm = "i want to stop the bot now".replace(" ", "");
   let confirm_formatted = confirmation.unwrap_or_default().to_lowercase().replace(" ", "");
   let should_stop = ctx.data().args.dev || confirm_formatted == stop_confirm;

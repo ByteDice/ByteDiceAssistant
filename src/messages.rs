@@ -199,7 +199,7 @@ pub async fn http_edit_msg(
 }
 
 
-pub async fn send_dm(msg: String, args: Args, owners: Vec<u64>) {
+pub async fn send_dm(msg: String, args: Args, receivers: Vec<u64>) {
   let token: String =
     if !args.test { env::var("ASSISTANT_TOKEN")     .expect("Missing ASSISTANT_TOKEN env var!") }
     else          { env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!") };
@@ -208,7 +208,8 @@ pub async fn send_dm(msg: String, args: Args, owners: Vec<u64>) {
 
   let c_msg = CreateMessage::new().content(msg);
 
-  for uid in owners {
+  for uid in receivers {
+    if uid == 0 { continue; }
     let user = UserId::new(uid);
     let _ = user.dm(http.as_ref(), c_msg.clone()).await;
   }

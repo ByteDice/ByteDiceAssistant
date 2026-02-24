@@ -58,10 +58,11 @@ It is required to install all used Python modules. You can find those in [req.tx
 
 ### Required permissions:
 **These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.** (The permission integer is this part of the URL `&permissions=84992`)
-* Send Messages
-* Read Message History
-* View Channels
+* Create Invites
 * Embed Links
+* Read Message History
+* Send Messages
+* View Channels
 
 ### Configuration:
 You can find config files in the [cfg/](cfg/) folder. You can also find the default configs in the [data/defaults/cfg_default.toml](data/defaults/cfg_default.toml) file.\

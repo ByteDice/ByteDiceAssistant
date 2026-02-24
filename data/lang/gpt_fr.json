@@ -19,6 +19,8 @@
   "dc_msg_err_trace": "Erreur inconnue !\nTrace de l’erreur : {0}",
   "dc_msg_failed_shorturl_conversion": "Échec de la conversion en shortURL : format d’URL Reddit invalide.",
   "dc_msg_mandatory_response": "Message de réponse obligatoire, merci d’ignorer.",
+  "dc_msg_no_perms": "Permission manquante sur ce serveur : {0}",
+  "dc_msg_not_in_guild": "Je ne fais pas partie de ce serveur.",
   "dc_msg_owner_data_save_complete": "Sauvegarde des données... Terminé !\nFermeture...",
   "dc_msg_owner_data_save": "Sauvegarde des données...",
   "dc_msg_owner_shutdown_failed_confirmation": "Échec de l’arrêt : confirmation invalide.",
@@ -62,5 +64,6 @@
   "py_re_response_weekly_add": "Post ajouté avec succès aux soumissions hebdomadaires d'art ! Merci pour votre participation !",
   "py_re_response_weekly_exists": "Impossible d’ajouter ce post, il est déjà présent ! Merci pour votre participation !",
   "py_re_response_weekly_mod_add": "[ACTION MOD] Post ajouté avec succès aux soumissions hebdomadaires d’art !",
-  "py_re_response_weekly_mod_unremove": "[ACTION MOD] Post restauré avec succès dans les soumissions hebdomadaires d’art !"
+  "py_re_response_weekly_mod_unremove": "[ACTION MOD] Post restauré avec succès dans les soumissions hebdomadaires d’art !",
+  "dc_msg_success": "succès !"
 }

@@ -19,6 +19,8 @@
   "dc_msg_err_trace": "Unknown error!\nError trace: {0}",
   "dc_msg_failed_shorturl_conversion": "Couldn't convert to shortURL: Invalid Reddit URL format.",
   "dc_msg_mandatory_response": "Mandatory response message, please ignore.",
+  "dc_msg_no_perms": "Missing permission in that server: {0}",
+  "dc_msg_not_in_guild": "I am not a part of that guild.",
   "dc_msg_owner_data_save_complete": "Saving data... Done!\nShutting down...",
   "dc_msg_owner_data_save": "Saving data...",
   "dc_msg_owner_shutdown_failed_confirmation": "Failed to shut down: Invalid confirmation.",
@@ -62,5 +64,6 @@
   "py_re_response_weekly_add": "Successfully added your post to the weekly art submissions! Thank you for participating!",
   "py_re_response_weekly_exists": "Couldn't add this post to the submissions! Luckily, it's already there! Thank you for participating!",
   "py_re_response_weekly_mod_add": "[MOD ACTION] Successfully added this post to the weekly art submissions!",
-  "py_re_response_weekly_mod_unremove": "[MOD ACTION] Successfully un-removed this post from the weekly art submissions!"
+  "py_re_response_weekly_mod_unremove": "[MOD ACTION] Successfully un-removed this post from the weekly art submissions!",
+  "success": "Success!"
 }
