@@ -18,6 +18,7 @@ pub enum Subcommands {
   prefix_command,
   category = "owner",
   rename = "debug",
+  owners_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
 )]
 /// Various debug utilities
