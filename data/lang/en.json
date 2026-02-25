@@ -5,7 +5,7 @@
   "dc_btn_unremove": "Restore",
   "dc_btn_unvote": "Un-vote",
   "dc_btn_vote": "Vote",
-  "dc_msg_8-ball_answer": "## You shook a magic 8-ball...\n**Q:** {0}\n**A:** {1}",
+  "dc_msg_8-ball_answer": "**8-ball Question:** {0}\n**Answer:** {1}",
   "dc_msg_add_to_data": "Added your server to my data! Thanks for letting me steal it! (/s)",
   "dc_msg_bound_channel": "Successfully bound channel ID `{0}` as the \"where all collected Reddit data gets dumped\" channel!",
   "dc_msg_cmd_404": "No command \"{0}\" found!\nHint: Try `/help` without any arguments or `/help <category>`",

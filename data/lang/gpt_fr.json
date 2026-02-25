@@ -5,7 +5,7 @@
   "dc_btn_unremove": "Restaurer",
   "dc_btn_unvote": "Annuler le vote",
   "dc_btn_vote": "Voter",
-  "dc_msg_8-ball_answer": "## Vous avez secoué une boule magique 8...\n**Q :** {0}\n**R :** {1}",
+  "dc_msg_8-ball_answer": "**Question de la boule magique :** {0}\n**Réponse :** {1}",
   "dc_msg_add_to_data": "Serveur ajouté à mes données ! Merci de me laisser les voler ! (/s)",
   "dc_msg_bound_channel": "Canal avec l’identifiant `{0}` lié avec succès comme canal \"où toutes les données Reddit collectées sont envoyées\" !",
   "dc_msg_cmd_404": "Commande \"{0}\" introuvable !\nAstuce : Essayez `/help` sans arguments ou `/help <catégorie>`",
