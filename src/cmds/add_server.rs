@@ -5,7 +5,7 @@ use crate::{data::dc_add_server, lang, messages::send_msg, Context, Error};
   slash_command,
   prefix_command,
   rename = "add_server",
-  category = "admin",
+  category = "db",
   default_member_permissions = "ADMINISTRATOR",
   guild_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"

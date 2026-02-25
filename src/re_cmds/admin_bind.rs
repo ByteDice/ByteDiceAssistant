@@ -4,7 +4,7 @@ use crate::{data::dc_bind_bk, lang, messages::send_msg, Context, Error};
   slash_command,
   prefix_command,
   rename = "admin_re_bindchannel",
-  category = "admin",
+  category = "db",
   default_member_permissions = "ADMINISTRATOR",
   guild_only,
   required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"

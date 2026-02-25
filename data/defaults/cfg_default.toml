@@ -32,13 +32,12 @@ add_post = ["weekly_art", "weekly"]
 
 [commands]
 # Disabled selected command categories. All commands and their categories can be viewed in the README.
-# "admin" and "owner" categories are always enabled.
-# [REQUIRES RESTART]
 disabled_categories = [
   # "fun",
   # "help"
   # "re"
   # "debug"
+  # "db" 
 ]
 
 # The chance (between 0..1) for the `/8_ball` command to output a "quirky" answer.

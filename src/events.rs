@@ -1,15 +1,15 @@
 use crate::data::{get_mutex_data, get_toml_mutex, update_re_data};
+use crate::r#gen::set_status;
 use crate::messages::{make_post_embed, make_removed_embed, EmbedOptions};
 use crate::re_cmds::generic_fns::{is_bk_mod, is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
 use crate::websocket::send_cmd_json;
-use crate::{lang, rs_println, Data, Error, CFG_DATA_RE};
+use crate::{CFG_DATA_RE, Data, Error, lang, rs_println};
 
-use poise::serenity_prelude::{self as serenity, ActivityData, ChannelId, ComponentInteraction, Interaction, Member, MessageId, Ready};
+use poise::serenity_prelude::{self as serenity, ChannelId, ComponentInteraction, Interaction, Member, MessageId, Ready};
 use serde_json::{json, Value};
 
 use std::future::Future;
 use std::pin::Pin;
-use std::process;
 
 pub fn event_handler<'a>(
     ctx: &'a serenity::Context,
@@ -36,33 +36,8 @@ async fn on_ready(ctx: &serenity::Context, data_about_bot: &Ready, data: &Data) 
   );
 
   let m_data = get_toml_mutex(&data.cfg).await.unwrap();
-  let status_str: String;
 
-  let status = m_data["general"]["status"].as_str().unwrap();
-  let status_c = m_data["general"]["statusCommitNumber"].as_bool().unwrap();
-  let status_ec = m_data["general"]["statusExperimentalCommit"].as_bool().unwrap();
-
-  if status_c {
-    let commit_num_r = process::Command::new("git")
-      .args(["rev-list", "--count", "HEAD"])
-      .output()
-      .unwrap();    
-
-    let commit_num = format!(
-      "({} #{})",
-      if status_ec { "Experimental" }
-      else { "Commit" },
-      String::from_utf8(commit_num_r.stdout).unwrap()
-    ).replace("\n", "");
-
-    status_str = [status, " ", commit_num.as_str().trim()].concat();
-  }
-  else { status_str = status.to_string(); }
-  
-  let custom_activity = ActivityData::custom(status_str.clone());
-  ctx.online();
-  ctx.set_activity(Some(custom_activity));
-  rs_println!("Set bot status as: \"{}\"", status_str);
+  set_status(m_data, ctx).await;
 }
 
 

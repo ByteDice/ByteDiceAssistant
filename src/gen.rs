@@ -1,10 +1,12 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, process};
 
-use poise::serenity_prelude::UserId;
+use poise::serenity_prelude::{ActivityData, UserId};
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
+use toml::Value;
 
-use crate::{Args, Cmd, Data, cmds, data::{self, get_toml_mutex}, debug_cmds, events, re_cmds, rs_println};
+use crate::data::get_toml_mutex;
+use crate::{Args, Cmd, Data, cmds, data, debug_cmds, events, re_cmds, rs_println};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -93,14 +95,13 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     re_cmds::update::cmd(),
     re_cmds::vote::cmd(),
     re_cmds::shorturl::cmd(),
-    // [ADMIN / OWNER]
+    // OWNER
     cmds::embed::cmd(),
     cmds::send::cmd(),
-    cmds::add_server::cmd(),
-    // REDDIT [ADMIN / OWNER]
+    debug_cmds::main_cmd::cmd(),
+    // DATABASE
     re_cmds::admin_bind::cmd(),
-    // DEBUG
-    debug_cmds::main_cmd::cmd()
+    cmds::add_server::cmd(),
   ];
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 
@@ -114,4 +115,35 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
   cmds.retain(|cmd| !disabled.contains(&cmd.category.as_ref().unwrap().as_str()));
 
   return cmds;
+}
+
+
+pub async fn set_status(m_data: Value, ctx: &serenity::Context) {
+  let status_str: String;
+
+  let status = m_data["general"]["status"].as_str().unwrap();
+  let status_c = m_data["general"]["statusCommitNumber"].as_bool().unwrap();
+  let status_ec = m_data["general"]["statusExperimentalCommit"].as_bool().unwrap();
+
+  if status_c {
+    let commit_num_r = process::Command::new("git")
+      .args(["rev-list", "--count", "HEAD"])
+      .output()
+      .unwrap();    
+
+    let commit_num = format!(
+      "({} #{})",
+      if status_ec { "Experimental" }
+      else { "Commit" },
+      String::from_utf8(commit_num_r.stdout).unwrap()
+    ).replace("\n", "");
+
+    status_str = [status, " ", commit_num.as_str().trim()].concat();
+  }
+  else { status_str = status.to_string(); }
+  
+  let custom_activity = ActivityData::custom(status_str.clone());
+  ctx.online();
+  ctx.set_activity(Some(custom_activity));
+  rs_println!("Set bot status as: \"{}\"", status_str);
 }
