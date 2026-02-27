@@ -22,6 +22,7 @@ pub struct RPSPlayer {
   pub wwrps_channel: ChannelId,
   pub anonymous: bool
 }
+#[derive(Clone)]
 pub struct RPSGame {
   pub players: [Option<RPSPlayer>; 2],
 }
@@ -113,11 +114,17 @@ pub async fn cmd(
     if !full { return Ok(()); }
 
     let r_text = results_text(&game);
+    let game_clone = game.clone();
     game.clear();
 
-    for player in &game.players {
-      if let Some(p) = player
-        { http_send_msg(ctx.http(), p.wwrps_channel, r_text.clone()).await; }
+    let mut used_channels: Vec<ChannelId> = Vec::new();
+    
+    for player in &game_clone.players {
+      if let Some(p) = player {
+        if used_channels.contains(&p.wwrps_channel) { continue; }
+        used_channels.push(p.wwrps_channel);
+        http_send_msg(ctx.http(), p.wwrps_channel, r_text.clone()).await;
+      }
     }
   }
   
@@ -129,14 +136,15 @@ fn results_text(game: &MutexGuard<'_, RPSGame>) -> String {
   let winner = game.get_winner();
   let winner_text: String;
   
-  if let Some(w) = winner
-    { winner_text = if w == 0 { lang!("dc_msg_wwrps_p1_win") } else { lang!("dc_msg_wwrps_p2_win") }; }
-  else { winner_text = lang!("dc_msg_wwrps_draw"); }
-  
   let p1 = game.players[0].as_ref().unwrap();
   let p2 = game.players[1].as_ref().unwrap();
   let p1_n = if !p1.anonymous { p1.user.mention().to_string() } else { lang!("dc_msg_wwrps_anon") };
   let p2_n = if !p2.anonymous { p2.user.mention().to_string() } else { lang!("dc_msg_wwrps_anon") };
+  
+  if let Some(w) = winner {
+    winner_text = if w == 0 { lang!("dc_msg_wwrps_left_win") }
+      else { lang!("dc_msg_wwrps_right_win") }; }
+  else { winner_text = lang!("dc_msg_wwrps_draw"); }
 
   return lang!("dc_msg_wwrps_fight", p1.selection.clone(), p2.selection.clone(), winner_text, p1_n, p2_n);
 }
