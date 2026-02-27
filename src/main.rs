@@ -3,15 +3,14 @@
 #![allow(static_mut_refs)]
 
 mod cmds {
-  pub mod add_server;
   pub mod eight_ball;
   pub mod embed;
   pub mod help;
   pub mod send;
+  pub mod wwrps;
 }
 mod re_cmds {
   pub mod add;
-  pub mod admin_bind;
   pub mod approve;
   pub mod generic_fns;
   pub mod get;
@@ -30,6 +29,12 @@ mod debug_cmds {
   pub mod reload_cfg;
   pub mod view_guilds;
   pub mod whoami;
+}
+mod db_cmds {
+  pub mod add_server;
+  pub mod reddit_channel;
+  pub mod main_cmd;
+  pub mod wwrps_channel;
 }
 mod events;
 mod messages;
@@ -58,6 +63,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use websocket::send_cmd_json;
 
+use crate::cmds::wwrps::RPSGame;
 use crate::data::get_toml_mutex;
 use crate::schedule::Schedule;
 
@@ -91,6 +97,7 @@ type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
 struct Data {
   owners:       Vec<u64>,
   ball_prompts: [Vec<String>; 2],
+  rps_game:     Mutex<RPSGame>,
   reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
   cfg:          Mutex<Option<toml::Value>>,

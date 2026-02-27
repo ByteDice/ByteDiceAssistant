@@ -4,7 +4,8 @@ Cargo.lock
 **/*.rs.bk
 *.pdb
 **/__pycache__/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # program-created data
 **/reddit_data.json

@@ -3,10 +3,12 @@ use std::{collections::HashSet, process};
 use poise::serenity_prelude::{ActivityData, UserId};
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
+use tokio::sync::Mutex;
 use toml::Value;
 
+use crate::cmds::wwrps::RPSGame;
 use crate::data::get_toml_mutex;
-use crate::{Args, Cmd, Data, cmds, data, debug_cmds, events, re_cmds, rs_println};
+use crate::{Args, Cmd, Data, cmds, data, db_cmds, debug_cmds, events, re_cmds, rs_println};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -26,6 +28,7 @@ pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let data = Data {
     owners,
     ball_prompts: [ball_classic, ball_quirk],
+    rps_game:     Mutex::new(RPSGame::new()),
     bk_mods:      mods_vec_u64,
     reddit_data:  None.into(),
     discord_data: None.into(),
@@ -86,6 +89,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     // GENERIC
     cmds::help::cmd(),
     cmds::eight_ball::cmd(),
+    cmds::wwrps::cmd(),
     // REDDIT
     re_cmds::add::cmd(),
     re_cmds::approve::cmd(),
@@ -100,8 +104,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     cmds::send::cmd(),
     debug_cmds::main_cmd::cmd(),
     // DATABASE
-    re_cmds::admin_bind::cmd(),
-    cmds::add_server::cmd(),
+    db_cmds::main_cmd::cmd()
   ];
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 
