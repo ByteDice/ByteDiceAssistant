@@ -3,7 +3,6 @@
 #![allow(static_mut_refs)]
 
 mod cmds {
-  pub mod add_server;
   pub mod eight_ball;
   pub mod embed;
   pub mod help;
@@ -11,7 +10,6 @@ mod cmds {
 }
 mod re_cmds {
   pub mod add;
-  pub mod admin_bind;
   pub mod approve;
   pub mod generic_fns;
   pub mod get;
@@ -30,6 +28,12 @@ mod debug_cmds {
   pub mod reload_cfg;
   pub mod view_guilds;
   pub mod whoami;
+}
+mod db_cmds {
+  pub mod add_server;
+  pub mod reddit_channel;
+	pub mod main_cmd;
+	pub mod wwrps_channel;
 }
 mod events;
 mod messages;

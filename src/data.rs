@@ -20,6 +20,7 @@ static PRESET_PATH_CFG: &str = "./data/defaults/cfg_default.toml";
 static DATA_PATH_LANG:  &str = "./data/lang/";
 
 pub static DC_POSTS_CHANNEL_KEY: &str = "re_posts_channel";
+pub static DC_WWRPS_CHANNEL_KEY: &str = "wwrps_channel";
 
 
 pub async fn read_dc_data(data: &Data, wipe: bool) {
@@ -176,6 +177,25 @@ pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<
   let server = servers[&server_id.to_string()].as_object_mut().unwrap();
 
   server.insert(DC_POSTS_CHANNEL_KEY.to_string(), channel_id.into());
+
+  return Ok(());
+}
+
+
+pub async fn bind_wwrps(data: &Data, server_id: u64, channel_id: u64) -> Result<(), ()> {
+	let mut dc_data_lock = data.discord_data.lock().await;
+  let dc_data = dc_data_lock.as_mut().unwrap(); 
+
+  if dc_data.get("servers").is_none() { return Err(()); }
+
+  let servers = dc_data["servers"].as_object_mut().unwrap();
+
+  if !servers.contains_key(&server_id.to_string())
+		{ return Err(()); }
+
+  let server = servers[&server_id.to_string()].as_object_mut().unwrap();
+
+  server.insert(DC_WWRPS_CHANNEL_KEY.to_string(), channel_id.into());
 
   return Ok(());
 }

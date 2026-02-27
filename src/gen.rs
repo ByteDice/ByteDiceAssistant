@@ -6,7 +6,7 @@ use poise::serenity_prelude::Client;
 use toml::Value;
 
 use crate::data::get_toml_mutex;
-use crate::{Args, Cmd, Data, cmds, data, debug_cmds, events, re_cmds, rs_println};
+use crate::{Args, Cmd, Data, cmds, data, db_cmds, debug_cmds, events, re_cmds, rs_println};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -100,8 +100,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     cmds::send::cmd(),
     debug_cmds::main_cmd::cmd(),
     // DATABASE
-    re_cmds::admin_bind::cmd(),
-    cmds::add_server::cmd(),
+		db_cmds::main_cmd::cmd()
   ];
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 

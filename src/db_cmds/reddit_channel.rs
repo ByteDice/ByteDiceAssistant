@@ -1,15 +1,5 @@
 use crate::{data::dc_bind_bk, lang, messages::send_msg, Context, Error};
 
-#[poise::command(
-  slash_command,
-  prefix_command,
-  rename = "admin_re_bindchannel",
-  category = "db",
-  default_member_permissions = "ADMINISTRATOR",
-  guild_only,
-  required_bot_permissions = "SEND_MESSAGES | VIEW_CHANNEL"
-)]
-/// Sets the channel where the bot will dump all Reddit data upon using /re_updateDiscord.
 pub async fn cmd(
   ctx: Context<'_>
 ) -> Result<(), Error>
