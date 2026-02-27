@@ -34,9 +34,9 @@ add_post = ["weekly_art", "weekly"]
 # Disabled selected command categories. All commands and their categories can be viewed in the README.
 disabled_categories = [
   # "fun",
-  # "help"
-  # "re"
-  # "debug"
+  # "help",
+  # "re",
+  # "debug",
   # "db" 
 ]
 

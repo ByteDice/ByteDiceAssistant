@@ -97,7 +97,7 @@ type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
 struct Data {
   owners:       Vec<u64>,
   ball_prompts: [Vec<String>; 2],
-  rps_game:     RPSGame,
+  rps_game:     Mutex<RPSGame>,
   reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
   cfg:          Mutex<Option<toml::Value>>,

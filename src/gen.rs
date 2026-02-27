@@ -3,6 +3,7 @@ use std::{collections::HashSet, process};
 use poise::serenity_prelude::{ActivityData, UserId};
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
+use tokio::sync::Mutex;
 use toml::Value;
 
 use crate::cmds::wwrps::RPSGame;
@@ -27,7 +28,7 @@ pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let data = Data {
     owners,
     ball_prompts: [ball_classic, ball_quirk],
-    rps_game:     RPSGame::new(),
+    rps_game:     Mutex::new(RPSGame::new()),
     bk_mods:      mods_vec_u64,
     reddit_data:  None.into(),
     discord_data: None.into(),
@@ -88,6 +89,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     // GENERIC
     cmds::help::cmd(),
     cmds::eight_ball::cmd(),
+    cmds::wwrps::cmd(),
     // REDDIT
     re_cmds::add::cmd(),
     re_cmds::approve::cmd(),
