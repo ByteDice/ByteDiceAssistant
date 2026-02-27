@@ -7,7 +7,7 @@ mod cmds {
   pub mod embed;
   pub mod help;
   pub mod send;
-	pub mod wwrps;
+  pub mod wwrps;
 }
 mod re_cmds {
   pub mod add;
@@ -33,8 +33,8 @@ mod debug_cmds {
 mod db_cmds {
   pub mod add_server;
   pub mod reddit_channel;
-	pub mod main_cmd;
-	pub mod wwrps_channel;
+  pub mod main_cmd;
+  pub mod wwrps_channel;
 }
 mod events;
 mod messages;
@@ -97,7 +97,7 @@ type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
 struct Data {
   owners:       Vec<u64>,
   ball_prompts: [Vec<String>; 2],
-	rps_game:     RPSGame,
+  rps_game:     RPSGame,
   reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
   cfg:          Mutex<Option<toml::Value>>,

@@ -183,7 +183,7 @@ pub async fn dc_bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<
 
 
 pub async fn bind_wwrps(data: &Data, server_id: u64, channel_id: u64) -> Result<(), ()> {
-	let mut dc_data_lock = data.discord_data.lock().await;
+  let mut dc_data_lock = data.discord_data.lock().await;
   let dc_data = dc_data_lock.as_mut().unwrap(); 
 
   if dc_data.get("servers").is_none() { return Err(()); }
@@ -191,7 +191,7 @@ pub async fn bind_wwrps(data: &Data, server_id: u64, channel_id: u64) -> Result<
   let servers = dc_data["servers"].as_object_mut().unwrap();
 
   if !servers.contains_key(&server_id.to_string())
-		{ return Err(()); }
+    { return Err(()); }
 
   let server = servers[&server_id.to_string()].as_object_mut().unwrap();
 

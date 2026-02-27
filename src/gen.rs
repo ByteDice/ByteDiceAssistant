@@ -27,7 +27,7 @@ pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let data = Data {
     owners,
     ball_prompts: [ball_classic, ball_quirk],
-		rps_game:     RPSGame::new(),
+    rps_game:     RPSGame::new(),
     bk_mods:      mods_vec_u64,
     reddit_data:  None.into(),
     discord_data: None.into(),
@@ -102,7 +102,7 @@ async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
     cmds::send::cmd(),
     debug_cmds::main_cmd::cmd(),
     // DATABASE
-		db_cmds::main_cmd::cmd()
+    db_cmds::main_cmd::cmd()
   ];
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 
