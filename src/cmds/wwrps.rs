@@ -19,6 +19,7 @@ pub enum RPS {
 pub struct RPSPlayer {
   pub selection: RPS,
   pub user: User,
+  pub wwrps_channel: ChannelId,
   pub anonymous: bool
 }
 pub struct RPSGame {
@@ -103,7 +104,7 @@ pub async fn cmd(
   
   if !game.is_full_lobby() {
     let r = game.add_player(
-      RPSPlayer { selection, user: ctx.author().clone(), anonymous });
+      RPSPlayer { selection, user: ctx.author().clone(), wwrps_channel: ChannelId::new(c), anonymous });
     
     if let Err(_) = r
       { send_msg(ctx, lang!("dc_msg_wwrps_already_submitted"), true, true).await; return Ok(()); }
@@ -114,7 +115,10 @@ pub async fn cmd(
     let r_text = results_text(&game);
     game.clear();
 
-    http_send_msg(ctx.http(), ChannelId::new(c), r_text).await;
+    for player in &game.players {
+      if let Some(p) = player
+        { http_send_msg(ctx.http(), p.wwrps_channel, r_text.clone()).await; }
+    }
   }
   
   return Ok(());
