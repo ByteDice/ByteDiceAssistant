@@ -155,7 +155,7 @@ pub async fn dc_add_server(data: &Data, server_id: u64) -> Result<(), ()> {
   let servers = dc_data["servers"].as_object_mut().unwrap();
 
   if !servers.contains_key(&server_id.to_string()) {
-    servers.insert(server_id.to_string(), json!({ DC_POSTS_CHANNEL_KEY: 0 }));
+    servers.insert(server_id.to_string(), json!({}));
   }
 
   return Ok(());

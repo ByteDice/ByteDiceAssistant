@@ -7,6 +7,7 @@ mod cmds {
   pub mod embed;
   pub mod help;
   pub mod send;
+	pub mod wwrps;
 }
 mod re_cmds {
   pub mod add;
@@ -62,6 +63,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use websocket::send_cmd_json;
 
+use crate::cmds::wwrps::RPSGame;
 use crate::data::get_toml_mutex;
 use crate::schedule::Schedule;
 
@@ -95,6 +97,7 @@ type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
 struct Data {
   owners:       Vec<u64>,
   ball_prompts: [Vec<String>; 2],
+	rps_game:     RPSGame,
   reddit_data:  Mutex<Option<Value>>,
   discord_data: Mutex<Option<Value>>,
   cfg:          Mutex<Option<toml::Value>>,

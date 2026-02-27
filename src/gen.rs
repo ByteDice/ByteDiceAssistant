@@ -5,6 +5,7 @@ use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Client;
 use toml::Value;
 
+use crate::cmds::wwrps::RPSGame;
 use crate::data::get_toml_mutex;
 use crate::{Args, Cmd, Data, cmds, data, db_cmds, debug_cmds, events, re_cmds, rs_println};
 
@@ -26,6 +27,7 @@ pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
   let data = Data {
     owners,
     ball_prompts: [ball_classic, ball_quirk],
+		rps_game:     RPSGame::new(),
     bk_mods:      mods_vec_u64,
     reddit_data:  None.into(),
     discord_data: None.into(),
