@@ -3,7 +3,7 @@ use std::fmt::Display;
 use poise::serenity_prelude::{ChannelId, Mentionable, User};
 use tokio::sync::MutexGuard;
 
-use crate::{Context, Error, data::get_mutex_data, lang, messages::{http_send_msg, send_msg}};
+use crate::{Context, Error, db::generic::get_json_mutex, lang, messages::{http_send_msg, send_msg}};
 
 
 #[derive(poise::ChoiceParameter, PartialEq, Clone, Debug)]
@@ -151,7 +151,7 @@ fn results_text(game: &MutexGuard<'_, RPSGame>) -> String {
 
 
 async fn get_wwrps_channel(ctx: Context<'_>) -> Option<u64> {
-  let d = get_mutex_data(&ctx.data().discord_data).await.unwrap();
+  let d = get_json_mutex(&ctx.data().discord_data).await.unwrap();
   
   let is_guild = ctx.guild_channel().await.is_some();
   

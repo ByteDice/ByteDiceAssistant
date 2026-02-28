@@ -7,8 +7,10 @@ use tokio::sync::Mutex;
 use toml::Value;
 
 use crate::cmds::wwrps::RPSGame;
-use crate::data::get_toml_mutex;
-use crate::{Args, Cmd, Data, cmds, data, db_cmds, debug_cmds, events, re_cmds, rs_println};
+use crate::db::{cfg, discord, reddit};
+use crate::db::generic::get_toml_mutex;
+use crate::lang::Lang;
+use crate::{Args, Cmd, Data, cmds, db_cmds, debug_cmds, events, re_cmds, rs_println};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -33,12 +35,14 @@ pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
     reddit_data:  None.into(),
     discord_data: None.into(),
     cfg:          None.into(),
-    args:         args.clone()
+    args:         args.clone(),
+    lang_name:    "".to_string().into(),
+    lang:         Lang::new().into()
   };
 
-  data::read_dc_data (&data, args.clone().wipe).await;
-  data::read_re_data (&data, args.clone().wipe).await;
-  data::read_cfg_data(&data, args.clone().wipe).await;
+  discord::read_data(&data, args.clone().wipe).await;
+  reddit:: read_data(&data, args.clone().wipe).await;
+  cfg::    read_data(&data, args.clone().wipe).await;
 
   return data;
 }
@@ -57,10 +61,10 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
   rs_println!("Token: {}{}", token_peek, "*".repeat(token_end_len));
 
   let own: HashSet<UserId> = data.owners
-      .clone()
-      .into_iter()
-      .filter_map(|i| if i == 0 { None } else { Some(UserId::from(i))})
-      .collect();
+    .clone()
+    .into_iter()
+    .filter_map(|i| if i == 0 { None } else { Some(UserId::from(i))})
+    .collect();
 
   let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {

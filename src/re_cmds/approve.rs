@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket, Context, Error, CFG_DATA_RE};
+use crate::{Context, Error, db::{generic::get_json_mutex, reddit::{self, POSTS_KEY}}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -23,8 +23,8 @@ pub async fn cmd(
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());
 
-  data::update_re_data(ctx.data()).await;
-  let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
+  reddit::update_data(ctx.data()).await;
+  let reddit_data = get_json_mutex(&ctx.data().reddit_data).await?;
 
   approve_cmd(ctx, shorturl, &reddit_data, !disapprove.unwrap_or(false)).await;
   
@@ -33,7 +33,7 @@ pub async fn cmd(
 
 
 async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: bool) {
-  if let Some(post) = reddit_data.get(CFG_DATA_RE).unwrap().get(url) {
+  if let Some(post) = reddit_data.get(POSTS_KEY).unwrap().get(url) {
     if post["removed"]["removed"].as_bool().unwrap() {
       send_embed_for_removed(ctx, url, post).await;
       return;

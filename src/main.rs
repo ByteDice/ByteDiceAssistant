@@ -43,9 +43,10 @@ mod python;
 mod macros;
 #[allow(unknown_lints)]
 mod websocket;
-mod data;
+mod db;
 mod schedule;
 mod gen;
+mod lang;
 
 use std::process;
 use std::thread;
@@ -65,7 +66,8 @@ use tokio::sync::Mutex;
 use websocket::send_cmd_json;
 
 use crate::cmds::wwrps::RPSGame;
-use crate::data::get_toml_mutex;
+use crate::db::generic::get_toml_mutex;
+use crate::lang::Lang;
 use crate::schedule::Schedule;
 
 
@@ -104,21 +106,15 @@ struct Data {
   cfg:          Mutex<Option<toml::Value>>,
   bk_mods:      Vec<u64>,
   args:         Args,
+  lang_name:    Mutex<String>,
+  lang:         Mutex<Lang>
 }
-
-
-static CFG_DATA_RE: &str = "posts";
-
-pub static mut LANG_NAME: Option<String> = None;
-pub static mut LANG:      Option<serde_json::Value> = None;
-pub static mut NOPING:    bool = false;
 
 
 #[tokio::main]
 async fn main() {
   let args = <Args as clap::Parser>::parse();
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
-  unsafe { NOPING = !args.ping; }
 
   let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
   let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
@@ -129,27 +125,14 @@ async fn main() {
 
   rs_println!("Generating and/or fetching data and config...");
   let data = gen_data(args.clone(), own_vec_u64.clone()).await;
-
-  rs_println!("Fetching language file...");
-  let data_binding = get_toml_mutex(&data.cfg).await.unwrap();
-  let lang_cfg = data_binding["general"]["lang"].as_str().unwrap();
-  data::load_lang_data(lang_cfg.to_string());
+  
   rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", lang!("log_lang_load_success"));
 
-  if args.test             { println!("-----             USING TEST BOT            -----"); }
-  if args.dev              { println!("-----            DEV MODE ENABLED           -----"); }
-  if args.dev && args.wipe { println!("----- \"DON'T WORRY ABOUT IT\" MODE ENABLED -----"); }
-  if args.nosched          { println!("-----             NO SCHEDULES              -----"); }
-
   if args.py && !args.rs {
-    println!("-----           PYTHON ONLY MODE            -----");
-    rs_println!("ARGS: {}", args_str);
-    let _ = python::start(args).await;
+    let _ = python::start(args, *data.lang_name.lock().await).await;
     process::exit(0);
   }
   else if args.rs && ! args.py {
-    println!("-----            RUST ONLY MODE             -----");
-    rs_println!("ARGS: {}", args_str);
     start(args, data).await;
     process::exit(0);
   }
@@ -176,7 +159,7 @@ async fn main() {
 
   let python = thread::spawn(move || {
     rt_py.block_on(async {
-      if run_py { let _ = python::start(python_args).await; }
+      if run_py { let _ = python::start(python_args, *data.lang_name.lock().await).await; }
     });
   });
 
@@ -206,6 +189,6 @@ async fn start(args: Args, data: Data) {
 async fn read_reddit_inbox() {
   unsafe {
     if !websocket::HAS_CONNECTED { return; }
-    send_cmd_json("respond_mentions", None, !NOPING).await;
+    send_cmd_json("respond_mentions", None, false).await;
   }
 }

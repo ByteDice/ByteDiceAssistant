@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{data::{self, get_mutex_data, get_toml_mutex, DC_POSTS_CHANNEL_KEY}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{Context, Error, db::{discord::contains_server, generic::{get_json_mutex, get_toml_mutex}, keys::DC_POSTS_CHANNEL_KEY, reddit::{self, POSTS_KEY}}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json};
 
 #[poise::command(
   slash_command,
@@ -44,8 +44,8 @@ pub async fn cmd(
   let max_results_final = max_results.unwrap_or(max_results_pre as u16);
 
   send_cmd_json("add_new_posts", Some(json!([max_age_secs, max_results_final])), true).await;
-  data::update_re_data(ctx.data()).await;
-  let r_data = get_mutex_data(&ctx.data().reddit_data).await?;
+  reddit::update_data(ctx.data()).await;
+  let r_data = get_json_mutex(&ctx.data().reddit_data).await?;
 
   let c_id_u = get_c_id(ctx).await;
   
@@ -67,7 +67,7 @@ pub async fn cmd(
 
   // Adding new posts 
   p_text = update_progress(ctx, progress.clone(), p_text.clone(), lang!("dc_msg_update_add", "✅\n")).await;
-  let weekly_art = r_data[CFG_DATA_RE].as_object().unwrap();
+  let weekly_art = r_data[POSTS_KEY].as_object().unwrap();
   add_posts(ctx, weekly_art, &msgs_json, max_age_secs, max_results_final).await;
   
   // Stop if only_add
@@ -113,12 +113,12 @@ async fn update_progress(ctx: Context<'_>, p: ReplyHandle<'_>, t: String, added_
 
 
 async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
-  if !data::dc_contains_server(ctx.data(), ctx.guild_id().unwrap().into()).await {
+  if !contains_server(ctx.data(), ctx.guild_id().unwrap().into()).await {
     send_msg(ctx, lang!("dc_msg_data_server_404"), true, true).await;
     return None;
   }
 
-  let d = get_mutex_data(&ctx.data().discord_data).await.unwrap();
+  let d = get_json_mutex(&ctx.data().discord_data).await.unwrap();
   let c_id_u =
     d["servers"]
      [ctx.guild_id().unwrap().to_string()]
@@ -188,7 +188,7 @@ async fn msgs_to_json(msgs: Vec<Message>, reddit_data: &Value, max_age: u64) -> 
     if msg_json.is_err() { continue; }
 
     let u_json: Value = msg_json.unwrap();
-    let re_url = &reddit_data[CFG_DATA_RE][&url];
+    let re_url = &reddit_data[POSTS_KEY][&url];
 
     let json_trimmed = trim_post_json(re_url);
 

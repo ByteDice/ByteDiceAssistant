@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{data::{self, get_mutex_data}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod, send_embed_for_removed, to_shorturl}, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{Context, Error, db::{generic::get_json_mutex, reddit::{self, POSTS_KEY}}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod, send_embed_for_removed, to_shorturl}, websocket::send_cmd_json};
 
 #[poise::command(
   slash_command,
@@ -16,10 +16,10 @@ pub async fn cmd(
   #[description = "Wether to undo your vote or not"] un_vote: Option<bool>
 ) -> Result<(), Error>
 {
-  data::update_re_data(ctx.data()).await;
+  reddit::update_data(ctx.data()).await;
   let uid = ctx.author().id.get();
-  let re_data = get_mutex_data(&ctx.data().reddit_data).await?;
-  let post_data = re_data[CFG_DATA_RE].clone();
+  let re_data = get_json_mutex(&ctx.data().reddit_data).await?;
+  let post_data = re_data[POSTS_KEY].clone();
   let unw_vote = un_vote.unwrap_or(false);
 
   let shorturl_u = to_shorturl(&url);

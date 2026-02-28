@@ -1,9 +1,10 @@
 use serde_json::json;
 
-use crate::data::{get_mutex_data};
+use crate::db::generic::get_json_mutex;
+use crate::db::reddit::{self, POSTS_KEY};
 use crate::messages::send_msg;
 use crate::re_cmds::get::get_post_from_data;
-use crate::{data, websocket::send_cmd_json, Context, Error, CFG_DATA_RE};
+use crate::{websocket::send_cmd_json, Context, Error};
 use crate::re_cmds::generic_fns::{is_bk_mod_msg, send_embed_for_post, to_shorturl};
 use crate::lang;
 
@@ -41,10 +42,10 @@ pub async fn cmd(
     return Ok(());
   }
   
-  data::update_re_data(ctx.data()).await;
-  let reddit_data = get_mutex_data(&ctx.data().reddit_data).await?;
+  reddit::update_data(ctx.data()).await;
+  let reddit_data = get_json_mutex(&ctx.data().reddit_data).await?;
 
-  if let Some(bk_week) = reddit_data.get(CFG_DATA_RE) {
+  if let Some(bk_week) = reddit_data.get(POSTS_KEY) {
     if let Some(post) = bk_week.get(shorturl) {
       if post["removed"]["removed"].as_bool().unwrap()
            { send_msg(ctx, lang!("dc_msg_re_post_unremove_success", &shorturl), true, true).await; }

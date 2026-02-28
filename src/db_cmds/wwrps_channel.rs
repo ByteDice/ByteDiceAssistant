@@ -1,4 +1,4 @@
-use crate::{Context, Error, data::bind_wwrps, lang, messages::send_msg};
+use crate::{Context, Error, db::discord::bind_wwrps, lang, messages::send_msg};
 
 pub async fn cmd(
   ctx: Context<'_>

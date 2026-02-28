@@ -1,5 +1,5 @@
 use crate::messages::send_dm;
-use crate::{errln, lang, rs_println, Args, LANG_NAME};
+use crate::{errln, lang, rs_println, Args};
 
 use std::fs;
 use std::ffi::CString;
@@ -9,7 +9,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 
 
-pub async fn start(args: Args) -> PyResult<()> { 
+pub async fn start(args: Args, lang_name: String) -> PyResult<()> { 
   rs_println!("Running Python program...");
 
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
@@ -27,7 +27,7 @@ pub async fn start(args: Args) -> PyResult<()> {
     app_path = CString::new(
       format!("args = {}\nlang_name = \"{}\"\n{}",
         py_args,
-        LANG_NAME.clone().unwrap(),
+        lang_name.clone(),
         code
       )
     ).unwrap();

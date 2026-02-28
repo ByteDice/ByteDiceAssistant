@@ -1,6 +1,6 @@
 use rand::{seq::IteratorRandom, Rng};
 
-use crate::{data::get_toml_mutex, lang, messages::send_msg, Context, Error};
+use crate::{db::generic::get_toml_mutex, lang, messages::send_msg, Context, Error};
 
 
 #[poise::command(
