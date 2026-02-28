@@ -1,4 +1,4 @@
-use crate::{Context, Error, debug_cmds::{guild_invite, leave_guild, ping, stop, view_guilds, whoami}};
+use crate::{Context, Error, debug_cmds::{guild_invite, leave_guild, ping, save, stop, view_guilds, whoami}};
 
 
 #[derive(poise::ChoiceParameter, PartialEq)]
@@ -7,6 +7,7 @@ pub enum Subcommands {
   LeaveGuild,
   Ping,
   //ReloadCfg,
+  Save,
   Stop,
   ViewGuilds,
   WhoAmI
@@ -35,7 +36,8 @@ pub async fn cmd(
     Subcommands::GuildInvite => guild_invite::cmd(ctx, u64_arg_u).await?,
     Subcommands::LeaveGuild  => leave_guild::cmd(ctx, u64_arg_u).await?,
     Subcommands::Ping        => ping::cmd(ctx).await?,
-    //Subcommands::ReloadCfg   => reload_cfg::cmd(ctx).await?,
+    //Subcommands::ReloadCfg => reload_cfg::cmd(ctx).await?,
+    Subcommands::Save        => save::cmd(ctx).await?,
     Subcommands::Stop        => stop::cmd(ctx, string_arg).await?,
     Subcommands::ViewGuilds  => view_guilds::cmd(ctx).await?,
     Subcommands::WhoAmI      => whoami::cmd(ctx).await?,
