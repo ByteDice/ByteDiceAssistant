@@ -2,47 +2,14 @@
 #![allow(clippy::needless_return)]
 #![allow(static_mut_refs)]
 
-mod cmds {
-  pub mod eight_ball;
-  pub mod embed;
-  pub mod help;
-  pub mod send;
-  pub mod wwrps;
-}
-mod re_cmds {
-  pub mod add;
-  pub mod approve;
-  pub mod generic_fns;
-  pub mod get;
-  pub mod remove;
-  pub mod shorturl;
-  pub mod top;
-  pub mod update;
-  pub mod vote;
-}
-mod debug_cmds {
-  pub mod guild_invite;
-  pub mod leave_guild;
-  pub mod main_cmd;
-  pub mod ping;
-  pub mod reload_cfg;
-  pub mod save;
-  pub mod stop;
-  pub mod view_guilds;
-  pub mod whoami;
-}
-mod db_cmds {
-  pub mod add_server;
-  pub mod reddit_channel;
-  pub mod main_cmd;
-  pub mod wwrps_channel;
-}
+
 mod events;
 mod messages;
 mod python;
 mod macros;
 #[allow(unknown_lints)]
 mod websocket;
+mod cmds;
 mod db;
 mod schedule;
 mod gen;
@@ -65,7 +32,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use websocket::send_cmd_json;
 
-use crate::cmds::wwrps::RPSGame;
+use crate::cmds::generic::wwrps::RPSGame;
 use crate::db::generic::get_toml_mutex;
 use crate::lang::Lang;
 use crate::schedule::Schedule;

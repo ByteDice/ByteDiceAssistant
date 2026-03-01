@@ -2,7 +2,7 @@ use crate::db::generic::{get_json_mutex, get_toml_mutex};
 use crate::db::reddit::update_data;
 use crate::r#gen::set_status;
 use crate::messages::{make_post_embed, make_removed_embed, EmbedOptions};
-use crate::re_cmds::generic_fns::{is_bk_mod, is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
+use crate::cmds::reddit::generic_fns::{is_bk_mod, is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
 use crate::websocket::send_cmd_json;
 use crate::{Data, Error, lang, rs_println};
 use crate::db::reddit::POSTS_KEY;

@@ -6,11 +6,11 @@ use poise::serenity_prelude::Client;
 use tokio::sync::Mutex;
 use toml::Value;
 
-use crate::cmds::wwrps::RPSGame;
+use crate::cmds::generic::wwrps::RPSGame;
 use crate::db::{cfg, discord, reddit};
 use crate::db::generic::get_toml_mutex;
 use crate::lang::Lang;
-use crate::{Args, Cmd, Data, cmds, db_cmds, debug_cmds, events, re_cmds, rs_println};
+use crate::{Args, Cmd, Data, cmds, events, rs_println};
 
 
 pub async fn gen_data(args: Args, owners: Vec<u64>) -> Data {
@@ -91,24 +91,24 @@ pub async fn gen_bot(data: Data, args: Args) -> Client {
 async fn make_cmd_vec(data: &Data) -> Vec<Cmd> {
   let mut cmds = vec![
     // GENERIC
-    cmds::help::cmd(),
-    cmds::eight_ball::cmd(),
-    cmds::wwrps::cmd(),
+    cmds::generic::help::cmd(),
+    cmds::generic::eight_ball::cmd(),
+    cmds::generic::wwrps::cmd(),
     // REDDIT
-    re_cmds::add::cmd(),
-    re_cmds::approve::cmd(),
-    re_cmds::get::cmd(),
-    re_cmds::remove::cmd(),
-    re_cmds::top::cmd(),
-    re_cmds::update::cmd(),
-    re_cmds::vote::cmd(),
-    re_cmds::shorturl::cmd(),
+    cmds::reddit::add::cmd(),
+    cmds::reddit::approve::cmd(),
+    cmds::reddit::get::cmd(),
+    cmds::reddit::remove::cmd(),
+    cmds::reddit::top::cmd(),
+    cmds::reddit::update::cmd(),
+    cmds::reddit::vote::cmd(),
+    cmds::reddit::shorturl::cmd(),
     // OWNER
-    cmds::embed::cmd(),
-    cmds::send::cmd(),
-    debug_cmds::main_cmd::cmd(),
+    cmds::generic::embed::cmd(),
+    cmds::generic::send::cmd(),
+    cmds::debug::main_cmd::cmd(),
     // DATABASE
-    db_cmds::main_cmd::cmd()
+    cmds::db::main_cmd::cmd()
   ];
   let cfg = get_toml_mutex(&data.cfg).await.unwrap();
 
