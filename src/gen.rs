@@ -6,9 +6,9 @@ use poise::serenity_prelude::Client;
 use tokio::sync::Mutex;
 use toml::Value;
 
-use crate::cmds::generic::wwrps::RPSGame;
 use crate::db::{cfg, discord, reddit};
 use crate::db::generic::get_toml_mutex;
+use crate::games::wwrps::RPSGame;
 use crate::lang::Lang;
 use crate::{Args, Cmd, Data, cmds, events, rs_println};
 

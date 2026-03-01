@@ -11,9 +11,11 @@ mod macros;
 mod websocket;
 mod cmds;
 mod db;
+mod games;
 mod schedule;
 mod gen;
 mod lang;
+
 
 use std::process;
 use std::thread;
@@ -21,61 +23,22 @@ use std::time::Duration;
 use std::vec;
 use std::error::Error as StdErr;
 
-use clap::Parser;
 use r#gen::gen_bot;
 use r#gen::gen_data;
 use poise::Command;
 use schedule::run_schedules;
-use serde::Serialize;
-use serde_json::Value;
 use tokio::runtime::Runtime;
-use tokio::sync::Mutex;
 use websocket::send_cmd_json;
 
-use crate::cmds::generic::wwrps::RPSGame;
+use crate::db::bot_data::Data;
+use crate::db::terminal_args::Args;
 use crate::db::generic::get_toml_mutex;
-use crate::lang::Lang;
 use crate::schedule::Schedule;
-
-
-#[derive(Parser, Serialize, Clone)]
-struct Args {
-  #[arg(short = 'p', long, default_value = "2920", help = "Sets the port number, e.g 2200.")]
-  port: u16,
-  #[arg(long, help = "Runs only the Python part of the program.")]
-  py: bool,
-  #[arg(long, help = "Runs only the Rust part of the program.")]
-  rs: bool,
-  #[arg(short = 'd', long, help = "Enables dev mode. Dev mode shows more debug info and turns off certain security measures.")]
-  dev: bool,
-  #[arg(short = 'w', long, help = "Wipes all data before running the program.")]
-  wipe: bool,
-  #[arg(short = 't', long, help = "Makes the program use the ASSISTANT_TOKEN_TEST env var instead of ASSISTANT_TOKEN. This env var should hold the token of a non-production bot.")]
-  test: bool,
-  #[arg(long, help = "Adds annoying prints when the websockets send a ping. Why though?")]
-  ping: bool,
-  #[arg(long, help = "Makes the program not use the schedule system.")]
-  nosched: bool
-}
 
 
 type Error       = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 type Cmd         = Command<Data, Box<dyn StdErr + Send + Sync>>;
-
-
-struct Data {
-  owners:       Vec<u64>,
-  ball_prompts: [Vec<String>; 2],
-  rps_game:     Mutex<RPSGame>,
-  reddit_data:  Mutex<Option<Value>>,
-  discord_data: Mutex<Option<Value>>,
-  cfg:          Mutex<Option<toml::Value>>,
-  bk_mods:      Vec<u64>,
-  args:         Args,
-  lang_name:    Mutex<String>,
-  lang:         Mutex<Lang>
-}
 
 
 #[tokio::main]
