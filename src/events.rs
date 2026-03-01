@@ -1,4 +1,3 @@
-use crate::db::generic::{get_json_mutex, get_toml_mutex};
 use crate::db::reddit::update_data;
 use crate::r#gen::set_status;
 use crate::messages::{make_post_embed, make_removed_embed, EmbedOptions};
@@ -41,9 +40,7 @@ async fn on_ready(ctx: &serenity::Context, data_about_bot: &Ready, data: &Data) 
     data_about_bot.user.id
   );
 
-  let m_data = get_toml_mutex(&data.cfg).await.unwrap();
-
-  set_status(m_data, ctx).await;
+  set_status(data.cfg.clone(), ctx).await;
 }
 
 
@@ -88,9 +85,9 @@ async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, co
   let c_id = component.channel_id;
   let m_id = component.message.id;
 
-  update_data(data).await;
-  let new_data = &get_json_mutex(&data.reddit_data)
-    .await.unwrap()[POSTS_KEY][&url];
+  update_data().await;
+  let new_data = &data.reddit_data
+    .lock().await[POSTS_KEY][&url];
 
   update_embed(ctx, &url, new_data, &c_id, &m_id).await;
 
@@ -123,9 +120,9 @@ async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, com
   let c_id = component.channel_id;
   let m_id = component.message.id;
   
-  update_data(data).await;
-  let new_data = &get_json_mutex(&data.reddit_data)
-    .await.unwrap()[POSTS_KEY][&url];
+  update_data().await;
+  let new_data = &data.reddit_data
+    .lock().await[POSTS_KEY][&url];
 
   update_embed(ctx, &url, new_data, &c_id, &m_id).await;
 
@@ -144,16 +141,17 @@ async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, com
 
 async fn vote_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, vote: bool) -> Result<(), Error> {
   let uid: u64 = c_member.user.id.into();
-  let is_mod = is_bk_mod(data.bk_mods.clone(), uid);
+  let is_mod = is_bk_mod(data.env_vars.reddit_mod_discord_ids.clone(), uid);
 
   let r = send_cmd_json("set_vote_post", Some(json!([&url, uid, is_mod, true, !vote])), true).await.unwrap();
 
   let c_id = component.channel_id;
   let m_id = component.message.id;
 
-  update_data(data).await;
-  let new_data = &get_json_mutex(&data.reddit_data)
-    .await.unwrap()[POSTS_KEY][&url];
+  update_data().await;
+  let new_data = &data.reddit_data
+    .lock().await[POSTS_KEY][&url];
+
   update_embed(ctx, &url, new_data, &c_id, &m_id).await;
 
   if r["value"].as_bool().unwrap() {

@@ -1,4 +1,4 @@
-use crate::{lang, messages::send_msg, re_cmds::generic_fns::to_shorturl, Context, Error};
+use crate::{lang, messages::send_msg, cmds::reddit::generic_fns::to_shorturl, Context, Error};
 
 
 #[poise::command(

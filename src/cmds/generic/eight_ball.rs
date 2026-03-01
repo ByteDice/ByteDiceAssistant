@@ -1,6 +1,6 @@
 use rand::{seq::IteratorRandom, Rng};
 
-use crate::{db::generic::get_toml_mutex, lang, messages::send_msg, Context, Error};
+use crate::{lang, messages::send_msg, Context, Error};
 
 
 #[poise::command(
@@ -16,7 +16,9 @@ pub async fn cmd(
   #[description = "Question to ask."] question: String
 ) -> Result<(), Error>
 {
-  let quirky_chance = get_toml_mutex(&ctx.data().cfg).await.unwrap()["commands"]["eight_ball_quirky_chance"].as_float().unwrap();
+  let quirky_chance = &ctx.data().cfg
+    ["commands"]["eight_ball_quirky_chance"]
+    .as_float().unwrap();
   let is_quirky = rand::rng().random_bool(quirky_chance.clamp(0.0, 1.0));
   let list = &ctx.data().ball_prompts[if is_quirky { 1 } else { 0 }];
   let rand_item = list.iter().choose(&mut rand::rng());

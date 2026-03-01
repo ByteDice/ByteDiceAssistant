@@ -8,7 +8,7 @@ static DATA_PATH:    &str = "./data/db/dc_data.json";
 static PRESET_PATH:  &str = "./data/defaults/dc_data_preset.json";
 
 
-pub async fn read_data(data: &Data, wipe: bool) {
+pub async fn read_data(wipe: bool) -> Value {
   if !Path::new(DATA_PATH).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
@@ -19,8 +19,7 @@ pub async fn read_data(data: &Data, wipe: bool) {
 
   let str_data = fs::read_to_string(DATA_PATH).unwrap();
   let json_data = serde_json::from_str(&str_data).unwrap();
-  let mut dc_data = data.discord_data.lock().await;
-  *dc_data = json_data;
+  return json_data;
 }
 
 
@@ -51,17 +50,15 @@ pub async fn write_data(data: &Data) {
     .unwrap();
 
 
-  let mut dc_data_lock = data.discord_data.lock().await;
-  let dc_data = dc_data_lock.as_mut().unwrap(); 
-  let json_str = serde_json::to_string_pretty(dc_data).unwrap();
+  let dc_data = data.discord_data.lock().await;
+  let json_str = serde_json::to_string_pretty(&dc_data.clone()).unwrap();
   
   file.write_all(json_str.as_bytes()).unwrap();
 }
 
 
 pub async fn add_server(data: &Data, server_id: u64) -> Result<(), ()> {
-  let mut dc_data_lock = data.discord_data.lock().await;
-  let dc_data = dc_data_lock.as_mut().unwrap(); 
+  let mut dc_data = data.discord_data.lock().await;
 
   if dc_data.get("servers").is_none() { return Err(()); }
 
@@ -76,8 +73,7 @@ pub async fn add_server(data: &Data, server_id: u64) -> Result<(), ()> {
 
 
 pub async fn bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<(), ()> {
-  let mut dc_data_lock = data.discord_data.lock().await;
-  let dc_data = dc_data_lock.as_mut().unwrap(); 
+  let mut dc_data = data.discord_data.lock().await;
 
   if dc_data.get("servers").is_none() { return Err(()); }
 
@@ -96,8 +92,7 @@ pub async fn bind_bk(data: &Data, server_id: u64, channel_id: u64) -> Result<(),
 
 
 pub async fn bind_wwrps(data: &Data, server_id: u64, channel_id: u64) -> Result<(), ()> {
-  let mut dc_data_lock = data.discord_data.lock().await;
-  let dc_data = dc_data_lock.as_mut().unwrap(); 
+  let mut dc_data = data.discord_data.lock().await;
 
   if dc_data.get("servers").is_none() { return Err(()); }
 
@@ -115,8 +110,7 @@ pub async fn bind_wwrps(data: &Data, server_id: u64, channel_id: u64) -> Result<
 
 
 pub async fn contains_server(data: &Data, server_id: u64) -> bool {
-  let dc_data_lock = data.discord_data.lock().await;
-  let dc_data = dc_data_lock.as_ref().unwrap();
+  let dc_data = data.discord_data.lock().await;
 
   if dc_data.get("servers").is_none() { return false; }
 

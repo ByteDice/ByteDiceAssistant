@@ -2,7 +2,7 @@ use std::{fs, io::Write, path::Path};
 
 use serde_json::Value;
 
-use crate::{Data, rs_println, rs_warnln, websocket::send_cmd_json};
+use crate::{rs_println, rs_warnln, websocket::send_cmd_json};
 
 
 static DATA_PATH:    &str = "./data/db/re_data.json";
@@ -11,7 +11,7 @@ static PRESET_PATH:  &str = "./data/defaults/re_data_preset.json";
 pub static POSTS_KEY: &str = "posts";
 
 
-pub async fn read_data(data: &Data, wipe: bool) {
+pub async fn read_data(wipe: bool) -> Value {
   if !Path::new(DATA_PATH).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
@@ -21,9 +21,8 @@ pub async fn read_data(data: &Data, wipe: bool) {
   }
 
   let str_data = fs::read_to_string(DATA_PATH).unwrap();
-  let json_data: Option<Value> = serde_json::from_str(&str_data).unwrap();
-  let mut re_data = data.reddit_data.lock().await;
-  *re_data = json_data;
+  let json_data: Value = serde_json::from_str(&str_data).unwrap();
+  return json_data;
 }
 
 
@@ -45,9 +44,9 @@ fn generate_data() {
 }
 
 
-pub async fn update_data(data: &Data) {
+pub async fn update_data() {
   send_cmd_json("update_data_file", None, true).await;
-  read_data(data, false).await;
+  read_data(false).await;
 }
 
 

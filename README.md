@@ -5,7 +5,6 @@ An automation tool primarily made for myself (Byte Dice) but publicly available 
 
 > [!CAUTION]
 > This tool is not intended for public use outside of the official *Byte Dice Assistant* bots. Expect issues if you host this yourself.\
-> This tool is only designed to run on Windows (10 and 11) and XUbuntu (24.04 and above) and may not work on any other OS.
 
 > [!NOTE]
 > This bot <ins>never modifies any Reddit content</ins>. All it does and will ever do is read/scrape.
@@ -16,6 +15,21 @@ An automation tool primarily made for myself (Byte Dice) but publicly available 
 **ByteDiceAssistant © 2025 by Byte Dice is licensed under CC BY-NC-SA 4.0.**\
 **You can learn more about copyright by reading the full [license](/LICENSE.txt).**
 
+## Environment variables:
+(Any Reddit stuff can be disabled.)
+
+| **Name**               | **Description**                                                                                                                                                                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ASSISTANT_TOKEN`      | The Discord bot token. (Create a Discord bot [here](https://discord.com/developers/docs/intro)!)                                                                                                                                                        |
+| `ASSISTANT_TOKEN_TEST` | (Optional) A testing Discord bot token. This is only needed when the program is run with `-t` or `--test`.                                                                                                                                              |
+| `ASSISTANT_R_ID`       | The id for the Reddit bot/account. (Create a Reddit bot [here](https://www.reddit.com/prefs/apps)!)                                                                                                                                                     |
+| `ASSISTANT_R_TOKEN`    | The token for the Reddit bot/account.                                                                                                                                                                                                                   |
+| `ASSISTANT_R_NAME`     | The username of the Reddit bot/account.                                                                                                                                                                                                                 |
+| `ASSISTANT_R_PASS`     | The password for the Reddit bot/account.                                                                                                                                                                                                                |
+| `ASSISTANT_OWNERS`     | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
+| `ASSISTANT_BK_MODS`    | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/re_*` commands.                                                                                                                                                |
+
+<!--
 ## Commands
 
 | Name                   | Category | Description                                                                                                                                                         |
@@ -43,18 +57,6 @@ An automation tool primarily made for myself (Byte Dice) but publicly available 
 
 This program uses Rust (v1.82.0) and Python (v3.11.4), you can likely use other versions if they are compatible.\
 It is required to install all used Python modules. You can find those in [req.txt](/req.txt). Installation instructions are in the *How to start the program* section.
-
-### Environment variables:
-| **Name**               | **Description**                                                                                                                                                                                                                                         |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ASSISTANT_TOKEN`      | The Discord bot token. (Create a Discord bot [here](https://discord.com/developers/docs/intro)!)                                                                                                                                                        |
-| `ASSISTANT_TOKEN_TEST` | (Optional) A testing Discord bot token. This is only needed when the program is run with `-t` or `--test`.                                                                                                                                              |
-| `ASSISTANT_R_ID`       | The id for the Reddit bot/account. (Create a Reddit bot [here](https://www.reddit.com/prefs/apps)!)                                                                                                                                                     |
-| `ASSISTANT_R_TOKEN`    | The token for the Reddit bot/account.                                                                                                                                                                                                                   |
-| `ASSISTANT_R_NAME`     | The username of the Reddit bot/account.                                                                                                                                                                                                                 |
-| `ASSISTANT_R_PASS`     | The password for the Reddit bot/account.                                                                                                                                                                                                                |
-| `ASSISTANT_OWNERS`     | (OPTIONAL) A list of Discord user IDs that "own" the bot. Separate each ID with a single comma and **no** spaces. This will allow the specified user IDs to run root commands such as `/stop`, it will also DM these users when *certain* errors occur. |
-| `ASSISTANT_BK_MODS`    | (OPTIONAL) Same format as `ASSISTANT_OWNERS` but for people who are allowed to use the `/re_*` commands.                                                                                                                                                |
 
 ### Required permissions:
 **These are automatically set if you use the [official invite link](https://discord.com/oauth2/authorize?client_id=1212127255795335208&permissions=84992&integration_type=0&scope=bot) or an invite link with the permissions integer set to `84992`.** (The permission integer is this part of the URL `&permissions=84992`)
@@ -89,3 +91,4 @@ You can find config files in the [cfg/](cfg/) folder. You can also find the defa
 * Run `$ cd path/to/extracted/folder`.
 * Run `$ cargo run`. You can view a list of options by running `$ cargo run -- --help` or `$ cargo run -- -h`.
   * If you only want to run the Python code, you can either run `$ cargo run -- --py`, or `$ python ./src/python/main.py`. The second option is recommended for better performance.
+-->

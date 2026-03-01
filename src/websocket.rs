@@ -8,7 +8,8 @@ use futures::StreamExt;
 use std::sync::Arc;
 use serde_json::{Value, json};
 
-use crate::messages::send_dm;
+use crate::db::bot_data::Data;
+use crate::messages::send_dm_min;
 use crate::{lang, rs_println};
 use crate::Args;
 
@@ -103,17 +104,25 @@ async fn receive_response() -> Option<Value> {
 }
 
 
-pub async fn start(args: Args, owners: Vec<u64>) {
+pub async fn start(data: &Data) {
   rs_println!("Running local websocket...");
-  let ip = format!("127.0.0.1:{}", args.port);
+  let ip = format!("127.0.0.1:{}", data.args.port);
   let listener = TcpListener::bind(&ip).await.unwrap();
   rs_println!("WebSocket server running on ws://{}", ip);
 
-  tokio::spawn(handle_connections(listener, args, owners));
+  tokio::spawn(handle_connections(
+    listener,
+    data.env_vars.token.clone(),
+    data.env_vars.bot_owners.clone()
+  ));
 }
 
 
-async fn handle_connections(listener: TcpListener, args: Args, owners: Vec<u64>) {
+async fn handle_connections(
+  listener: TcpListener,
+  token: String,
+  bot_owners: Vec<u64>
+) {
   while let Ok((stream, _)) = listener.accept().await {
     let ws_stream = accept_async(stream).await.unwrap();
     let (sender, receiver) = ws_stream.split();
@@ -124,14 +133,17 @@ async fn handle_connections(listener: TcpListener, args: Args, owners: Vec<u64>)
     set_sender(sender_arc.clone()).await;
     set_receiver(receiver_arc.clone()).await;
 
-    while let Some(Ok(msg)) = receiver_arc.lock().await.as_mut().unwrap().next().await {
-      handle_message(msg, args.clone(), owners.clone()).await;
-    }
+    while let Some(Ok(msg)) = receiver_arc.lock().await.as_mut().unwrap().next().await
+      { handle_message(msg, token.clone(), bot_owners.clone()).await; }
   }
 }
 
 
-async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners: Vec<u64>) {
+async fn handle_message(
+  msg: tungstenite::protocol::Message,
+  token: String,
+  bot_owners: Vec<u64>
+) {
   match msg {
     tungstenite::Message::Text(text) => {
       rs_println!("Received from Python: {}", text);
@@ -139,7 +151,11 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
       if let Some(stripped) = text.strip_prefix("json:") {
         let t_json: Value = serde_json::from_str(stripped).unwrap();
         if t_json.get("error").is_some() {
-          send_dm(lang!("dc_msg_dm_python_err_socket"), args, owners).await;
+          send_dm_min(
+            lang!("dc_msg_dm_python_err_socket"),
+            token,
+            bot_owners
+          ).await;
         }
       }
 
@@ -150,16 +166,7 @@ async fn handle_message(msg: tungstenite::protocol::Message, args: Args, owners:
           HAS_CONNECTED = true;
         }
       }
-    }
-    tungstenite::Message::Binary(bytes) => {
-      if args.dev && args.ping {
-        rs_println!("[Binary] from Python: {:?}", bytes);
-      }
-    }
-    _ => {
-      if args.dev && args.ping {
-        rs_println!("Received from Python: [UNKNOWN / OTHER]");
-      }
-    }
+    },
+    _ => {}
   }
 }

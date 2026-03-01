@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{Context, Error, db::{generic::get_json_mutex, reddit}, lang, messages::send_msg, re_cmds::{generic_fns::{is_bk_mod_msg, send_embed_for_removed, to_shorturl}, get::get_post_from_data}, websocket::send_cmd_json};
+use crate::{Context, Error, db::reddit, lang, messages::send_msg, cmds::reddit::{generic_fns::{is_bk_mod_msg, send_embed_for_removed, to_shorturl}, get::get_post_from_data}, websocket::send_cmd_json};
 
 #[poise::command(
   slash_command,
@@ -36,8 +36,8 @@ pub async fn cmd(
     send_msg(ctx, lang!("dc_msg_re_post_404"), true, true).await;
   }
 
-  reddit::update_data(ctx.data()).await;
-  let reddit_data = get_json_mutex(&ctx.data().reddit_data).await?;
+  reddit::update_data().await;
+  let reddit_data = &ctx.data().reddit_data.lock().await;
 
   if let Some(post) = get_post_from_data(ctx, &reddit_data, shorturl).await? {
     if post["removed"]["removed"].as_bool().unwrap() {

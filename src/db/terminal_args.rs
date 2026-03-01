@@ -28,3 +28,17 @@ pub struct Args {
   #[arg(long, help = "Makes the program not use the schedule system.")]
   pub nosched: bool
 }
+
+
+impl Args {
+  pub fn new() -> Self
+    { return <Args as clap::Parser>::parse(); }
+}
+
+
+impl ToString for Args {
+  fn to_string(&self) -> String {
+    return serde_json::to_string(self)
+      .unwrap_or("[FAILED TO CONVERT TO STRING]".to_string());
+  }
+}

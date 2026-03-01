@@ -1,15 +1,13 @@
 use std::{fs, io::Write, path::Path};
 
-use serde_json::{Value, json};
-
-use crate::{Data, rs_println, websocket::send_cmd_json};
+use crate::rs_println;
 
 
 static DATA_PATH:   &str = "./cfg/cfg.toml";
 static PRESET_PATH: &str = "./data/defaults/cfg_default.toml";
 
 
-pub async fn read_data(data: &Data, wipe: bool) -> Option<Value> {
+pub async fn read_data(wipe: bool) -> toml::Value {
   if !Path::new(DATA_PATH).exists() || wipe {
     rs_println!(
       "{} creating new from preset...",
@@ -20,16 +18,14 @@ pub async fn read_data(data: &Data, wipe: bool) -> Option<Value> {
 
   let str_data = fs::read_to_string(DATA_PATH).unwrap();
   let json_data: toml::Value = str_data.parse().unwrap();
-  let mut cfg_data = data.cfg.lock().await;
-  *cfg_data = Some(json_data.clone());
 
-  let r = send_cmd_json(
+  /*let r = send_cmd_json(
     "update_cfg",
     Some(json!([toml::to_string(&json_data).unwrap()])), 
     true
-  ).await;
+  ).await;*/
 
-  return r;
+  return json_data;
 }
 
 

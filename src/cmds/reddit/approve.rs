@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{Context, Error, db::{generic::get_json_mutex, reddit::{self, POSTS_KEY}}, lang, messages::send_msg, re_cmds::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket};
+use crate::{Context, Error, db::{reddit::POSTS_KEY}, lang, messages::send_msg, cmds::reddit::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -23,8 +23,7 @@ pub async fn cmd(
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());
 
-  reddit::update_data(ctx.data()).await;
-  let reddit_data = get_json_mutex(&ctx.data().reddit_data).await?;
+  let reddit_data = &ctx.data().reddit_data.lock().await;
 
   approve_cmd(ctx, shorturl, &reddit_data, !disapprove.unwrap_or(false)).await;
   

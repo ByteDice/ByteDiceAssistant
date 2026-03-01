@@ -1,7 +1,7 @@
-use std::env;
 use std::io::{Read, Write};
 
-use crate::{lang, Args, Context};
+use crate::db::bot_data::Data;
+use crate::{lang, Context};
 
 use base64::engine::general_purpose;
 use base64::Engine;
@@ -199,16 +199,26 @@ pub async fn http_edit_msg(
 }
 
 
-pub async fn send_dm(msg: String, args: Args, receivers: Vec<u64>) {
-  let token: String =
-    if !args.test { env::var("ASSISTANT_TOKEN")     .expect("Missing ASSISTANT_TOKEN env var!") }
-    else          { env::var("ASSISTANT_TOKEN_TEST").expect("Missing ASSISTANT_TOKEN_TEST env var!") };
+pub async fn send_dm(msg: String, data: &Data) {
+  let http = Http::new(&data.env_vars.token);
 
+  let c_msg = CreateMessage::new().content(msg);
+
+  for uid in data.env_vars.bot_owners.clone() {
+    if uid == 0 { continue; }
+    let user = UserId::new(uid);
+    let _ = user.dm(http.as_ref(), c_msg.clone()).await;
+  }
+}
+
+
+
+pub async fn send_dm_min(msg: String, token: String, bot_owners: Vec<u64>) {
   let http = Http::new(&token);
 
   let c_msg = CreateMessage::new().content(msg);
 
-  for uid in receivers {
+  for uid in bot_owners {
     if uid == 0 { continue; }
     let user = UserId::new(uid);
     let _ = user.dm(http.as_ref(), c_msg.clone()).await;
@@ -265,9 +275,11 @@ pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> Embe
 
   let desc = lang!(
     "dc_msg_embed_re_removed",
-    if !post_data["removed"]["by"].is_null() { post_data["removed"]["by"].as_str().unwrap() }
+    if !post_data["removed"]["by"].is_null()
+      { post_data["removed"]["by"].as_str().unwrap() }
       else { &none },
-    if !post_data["removed"]["reason"].is_null() { post_data["removed"]["reason"].as_str().unwrap() }
+    if !post_data["removed"]["reason"].is_null()
+      { post_data["removed"]["reason"].as_str().unwrap() }
       else { &none }
   );
 

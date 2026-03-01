@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use poise::{serenity_prelude::{ChannelId, EditMessage, GetMessages, Http, Message, MessageId, UserId}, ReplyHandle};
 use serde_json::{json, Map, Value};
 
-use crate::{Context, Error, db::{discord::contains_server, generic::{get_json_mutex, get_toml_mutex}, keys::DC_POSTS_CHANNEL_KEY, reddit::{self, POSTS_KEY}}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, re_cmds::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json};
+use crate::{Context, Error, db::{discord::contains_server, keys::DC_POSTS_CHANNEL_KEY, reddit::{self, POSTS_KEY}}, lang, messages::{edit_reply, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg, trim_post_json}, cmds::reddit::generic_fns::embed_to_json, rs_println, websocket::send_cmd_json};
 
 #[poise::command(
   slash_command,
@@ -39,13 +39,12 @@ pub async fn cmd(
   let max_age_u = max_age.unwrap_or(8);
   let max_age_secs = max_age_u as u64 * (60 * 60 * 24);
 
-  let max_results_toml = &get_toml_mutex(&ctx.data().cfg).await.unwrap();
-  let max_results_pre = max_results_toml["reddit"]["fetch_limit"].as_integer().unwrap();
+  let max_results_pre = ctx.data().cfg["reddit"]["fetch_limit"].as_integer().unwrap();
   let max_results_final = max_results.unwrap_or(max_results_pre as u16);
 
   send_cmd_json("add_new_posts", Some(json!([max_age_secs, max_results_final])), true).await;
-  reddit::update_data(ctx.data()).await;
-  let r_data = get_json_mutex(&ctx.data().reddit_data).await?;
+  reddit::update_data().await;
+  let r_data = &ctx.data().reddit_data.lock().await;
 
   let c_id_u = get_c_id(ctx).await;
   
@@ -118,7 +117,7 @@ async fn get_c_id(ctx: Context<'_>) -> Option<ChannelId> {
     return None;
   }
 
-  let d = get_json_mutex(&ctx.data().discord_data).await.unwrap();
+  let d = &ctx.data().discord_data.lock().await;
   let c_id_u =
     d["servers"]
      [ctx.guild_id().unwrap().to_string()]

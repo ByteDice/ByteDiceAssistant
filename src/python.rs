@@ -1,5 +1,7 @@
-use crate::messages::send_dm;
-use crate::{errln, lang, rs_println, Args};
+use crate::db::env_vars::AssistantEnv;
+use crate::db::terminal_args::Args;
+use crate::messages::send_dm_min;
+use crate::{errln, lang, rs_println};
 
 use std::fs;
 use std::ffi::CString;
@@ -9,7 +11,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 
 
-pub async fn start(args: Args, lang_name: String) -> PyResult<()> { 
+pub async fn start(args: Args, lang_name: String, env_vars: AssistantEnv) -> PyResult<()> { 
   rs_println!("Running Python program...");
 
   let args_str = serde_json::to_string(&args).expect("Error serializing args to JSON");
@@ -23,15 +25,12 @@ pub async fn start(args: Args, lang_name: String) -> PyResult<()> {
   let py_args = args_str.replace(":true", ":True").replace(":false", ":False");
   let app_path: CString;
   
-  unsafe {
-    app_path = CString::new(
-      format!("args = {}\nlang_name = \"{}\"\n{}",
-        py_args,
-        lang_name.clone(),
-        code
-      )
-    ).unwrap();
-  }
+  app_path = CString::new(format!(
+    "args = {}\nlang_name = \"{}\"\n{}",
+    py_args,
+    lang_name,
+    code
+  )).unwrap();
   
   let mut traceback: String = String::new();
   let mut is_error = false;
@@ -57,19 +56,11 @@ pub async fn start(args: Args, lang_name: String) -> PyResult<()> {
   });
 
   if is_error {
-    let own_env = std::env::var("ASSISTANT_OWNERS").unwrap_or("0".to_string());
-    let own_vec_str: Vec<String> = own_env.split(",").map(String::from).collect();
-    let own_vec_u64: Vec<u64> = own_vec_str
-      .iter()
-      .map(|s| s.parse::<u64>().expect("Failed to parse ASSISTANT_OWNERS. Invalid syntax."))
-      .collect();
-
-    send_dm(
-      lang!("dc_msg_dm_python_err", format!("{}", traceback)),
-      args, 
-      own_vec_u64
+    send_dm_min(
+      lang!("dc_msg_dm_python_err", traceback),
+      env_vars.token.clone(),
+      env_vars.bot_owners.clone()
     ).await;
-
     errln!("pyO3: {}", traceback);
   }
 

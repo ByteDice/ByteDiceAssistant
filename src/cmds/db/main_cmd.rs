@@ -1,4 +1,4 @@
-use crate::{Context, Error, db_cmds::{add_server, reddit_channel, wwrps_channel}};
+use crate::{Context, Error, cmds::db::{add_server, reddit_channel, wwrps_channel}};
 
 
 #[derive(poise::ChoiceParameter, PartialEq)]

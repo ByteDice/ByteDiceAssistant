@@ -1,11 +1,10 @@
 use serde_json::json;
 
-use crate::db::generic::get_json_mutex;
 use crate::db::reddit::{self, POSTS_KEY};
 use crate::messages::send_msg;
-use crate::re_cmds::get::get_post_from_data;
+use crate::cmds::reddit::get::get_post_from_data;
 use crate::{websocket::send_cmd_json, Context, Error};
-use crate::re_cmds::generic_fns::{is_bk_mod_msg, send_embed_for_post, to_shorturl};
+use crate::cmds::reddit::generic_fns::{is_bk_mod_msg, send_embed_for_post, to_shorturl};
 use crate::lang;
 
 #[poise::command(
@@ -42,8 +41,8 @@ pub async fn cmd(
     return Ok(());
   }
   
-  reddit::update_data(ctx.data()).await;
-  let reddit_data = get_json_mutex(&ctx.data().reddit_data).await?;
+  reddit::update_data().await;
+  let reddit_data = &ctx.data().reddit_data.lock().await;
 
   if let Some(bk_week) = reddit_data.get(POSTS_KEY) {
     if let Some(post) = bk_week.get(shorturl) {

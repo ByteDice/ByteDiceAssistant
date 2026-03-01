@@ -1,7 +1,7 @@
 use poise::serenity_prelude::{ChannelId, Mentionable};
 use tokio::sync::MutexGuard;
 
-use crate::{Context, Error, db::generic::get_json_mutex, games::wwrps::{RPS, RPSGame, RPSPlayer}, lang, messages::{http_send_msg, send_msg}};
+use crate::{Context, Error, games::wwrps::{RPS, RPSGame, RPSPlayer}, lang, messages::{http_send_msg, send_msg}};
 
 
 #[poise::command(
@@ -75,7 +75,7 @@ fn results_text(game: &MutexGuard<'_, RPSGame>) -> String {
 
 
 async fn get_wwrps_channel(ctx: Context<'_>) -> Option<u64> {
-  let d = get_json_mutex(&ctx.data().discord_data).await.unwrap();
+  let d = &ctx.data().discord_data.lock().await;
   
   let is_guild = ctx.guild_channel().await.is_some();
   

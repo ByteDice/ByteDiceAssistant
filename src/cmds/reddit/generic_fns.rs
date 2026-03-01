@@ -2,7 +2,7 @@ use poise::serenity_prelude::{self as serenity, ChannelId, ComponentInteraction,
 use regex::Regex;
 use serde_json::Value;
 
-use crate::{Context, Data, Error, db::generic::get_toml_mutex, lang, messages::{EmbedOptions, JSON_TEXT_END, JSON_TEXT_START, decode_and_decompress_json, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg}};
+use crate::{Context, Data, Error, lang, messages::{EmbedOptions, JSON_TEXT_END, JSON_TEXT_START, decode_and_decompress_json, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg}};
 
 pub fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
   return mod_list.contains(&uid);
@@ -10,7 +10,7 @@ pub fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
 
 
 pub async fn is_bk_mod_msg(ctx: Context<'_>) -> bool {
-  if is_bk_mod(ctx.data().bk_mods.clone(), ctx.author().id.get()) { return true; }
+  if is_bk_mod(ctx.data().env_vars.reddit_mod_discord_ids.clone(), ctx.author().id.get()) { return true; }
 
   let sr = get_readable_subreddits(ctx.data()).await.unwrap();
   send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), true, true).await;
@@ -19,7 +19,7 @@ pub async fn is_bk_mod_msg(ctx: Context<'_>) -> bool {
 
 
 pub async fn is_bk_mod_serenity(ctx: &serenity::Context, data: &Data, author: &Member, component: &ComponentInteraction) -> bool {
-  if is_bk_mod(data.bk_mods.clone(), author.user.id.get()) { return true; }
+  if is_bk_mod(data.env_vars.reddit_mod_discord_ids.clone(), author.user.id.get()) { return true; }
 
   let sr = get_readable_subreddits(data).await.unwrap();
   serenity_send_msg(ctx, component, lang!("dc_msg_re_permdeny_not_re_mod", sr), true).await;
@@ -70,8 +70,7 @@ pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
 
 
 pub async fn get_readable_subreddits(data: &Data) -> Result<String, Error> {
-  let d = get_toml_mutex(&data.cfg).await.unwrap();
-  let sr = d["reddit"]["subreddits"].as_array().unwrap();
+  let sr = data.cfg["reddit"]["subreddits"].as_array().unwrap();
   let sr_str: Vec<&str> = sr
     .iter()
     .map(|v| v.as_str().unwrap())

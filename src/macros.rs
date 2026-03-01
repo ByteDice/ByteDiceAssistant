@@ -66,7 +66,7 @@ macro_rules! warnln {
 macro_rules! lang {
   ($key:expr) => {
     {
-      use $crate::{LANG, errln};
+      /*use $crate::{LANG, errln};
       let value = unsafe {
         LANG
           .as_ref()
@@ -76,11 +76,13 @@ macro_rules! lang {
 
       if value.is_none() { errln!("Key not found in LANG JSON: \"{}\"", $key); }
 
-      value.unwrap().as_str().expect("LANG JSON value is not a string!").to_string()
+      value.unwrap().as_str().expect("LANG JSON value is not a string!").to_string()*/
+      
+      "hello".to_string()
     }
   };
   ($key:expr, $($arg:expr),*) => {{
-    use $crate::{LANG, errln};
+    /*use $crate::{LANG, errln};
     use formatx::formatx;
 
     let value = unsafe {
@@ -93,6 +95,7 @@ macro_rules! lang {
     if value.is_none() { errln!("Key not found in LANG JSON: \"{}\"", $key); }
 
     let format_str = value.unwrap().as_str().expect("LANG JSON value is not a string!");
-    formatx!(format_str, $($arg),*).unwrap()
+    formatx!(format_str, $($arg),*).unwrap()*/
+    "hello".to_string()
   }};
 }
