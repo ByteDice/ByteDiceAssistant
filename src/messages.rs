@@ -1,6 +1,5 @@
 use std::io::{Read, Write};
 
-use crate::db::bot_data::Data;
 use crate::Context;
 use crate::lang::Lang;
 
@@ -11,7 +10,7 @@ use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use poise::serenity_prelude::json::Value;
 use poise::{serenity_prelude::CreateMessage, CreateReply, ReplyHandle};
-use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, EditMessage, Http, Message, ReactionType, Timestamp, UserId};
+use poise::serenity_prelude::{ChannelId, Color, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedAuthor, Http, Message, ReactionType, Timestamp, UserId};
 use serde_json::json;
 
 
@@ -88,7 +87,6 @@ pub async fn send_msg(
 }
 
 
-#[allow(dead_code)]
 pub async fn http_send_msg(
   http: &Http,
   c_id: ChannelId,
@@ -136,8 +134,7 @@ pub async fn send_embed(
 }
 
 
-#[allow(dead_code)]
-pub async fn http_send_embed(
+/* pub async fn http_send_embed(
   http: &Http,
   c_id: ChannelId,
   options: EmbedOptions
@@ -153,7 +150,7 @@ pub async fn http_send_embed(
 
   let msg = c_id.send_message(http, r).await;
   return msg.ok();
-}
+} */
 
 
 pub fn embed_from_options(options: EmbedOptions) -> CreateEmbed {
@@ -190,17 +187,16 @@ pub async fn edit_reply(
 }
 
 
-#[allow(dead_code)]
-pub async fn http_edit_msg(
+/* pub async fn http_edit_msg(
   http: &Http,
   mut msg: Message,
   new_msg: EditMessage
 ) {
   let _ = msg.edit(http, new_msg).await;
-}
+} */
 
 
-pub async fn send_dm(msg: String, data: &Data) {
+/*pub async fn send_dm(msg: String, data: &Data) {
   let http = Http::new(&data.env_vars.token);
 
   let c_msg = CreateMessage::new().content(msg);
@@ -210,7 +206,7 @@ pub async fn send_dm(msg: String, data: &Data) {
     let user = UserId::new(uid);
     let _ = user.dm(http.as_ref(), c_msg.clone()).await;
   }
-}
+}*/
 
 
 

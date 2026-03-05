@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::{Context, Error, db::{reddit::{self, POSTS_KEY}}, lang, messages::send_msg, cmds::reddit::generic_fns::{send_embed_for_post, to_shorturl}, rs_println};
+use crate::{Context, Error, db::{reddit::{self, POSTS_KEY}}, messages::send_msg, cmds::reddit::generic_fns::{send_embed_for_post, to_shorturl}, rs_println};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -42,11 +42,11 @@ pub async fn get_post_from_data(ctx: Context<'_>, reddit_data: &Value, url: &str
       return Ok(Some(post.clone()));
     }
     else {
-      send_msg(ctx, lang!("dc_msg_re_post_404", url), true, true).await;
+      send_msg(ctx, ctx.data().lang.get("dc.re.post_404", &[url.to_string()]), true, true).await;
     }
   }
   else {
-    send_msg(ctx, lang!("dc_msg_re_data_corrupted", url), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("cd.re.post_corrupted", &[url.to_string()]), true, true).await;
     rs_println!("{}", serde_json::to_string_pretty(reddit_data)?);
   }
   return Ok(None);

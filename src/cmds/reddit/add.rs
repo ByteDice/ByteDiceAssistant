@@ -5,7 +5,6 @@ use crate::messages::send_msg;
 use crate::cmds::reddit::get::get_post_from_data;
 use crate::{websocket::send_cmd_json, Context, Error};
 use crate::cmds::reddit::generic_fns::{is_bk_mod_msg, send_embed_for_post, to_shorturl};
-use crate::lang;
 
 #[poise::command(
   slash_command,
@@ -25,6 +24,7 @@ pub async fn cmd(
 
   let shorturl_u = to_shorturl(&url);
   let shorturl = &shorturl_u.unwrap_or(url.clone());
+  let short_s = shorturl.to_string();
 
   let a = approve.unwrap_or(false);
   let r = send_cmd_json("add_post_url", Some(json!([&shorturl, a, true])), true).await.unwrap();
@@ -47,12 +47,12 @@ pub async fn cmd(
   if let Some(bk_week) = reddit_data.get(POSTS_KEY) {
     if let Some(post) = bk_week.get(shorturl) {
       if post["removed"]["removed"].as_bool().unwrap()
-           { send_msg(ctx, lang!("dc_msg_re_post_unremove_success", &shorturl), true, true).await; }
-      else { send_msg(ctx, lang!("dc_msg_re_post_update_success", &shorturl), true, true).await; }
+           { send_msg(ctx, ctx.data().lang.get("dc.re.remove.unremove", &[short_s]), true, true).await; }
+      else { send_msg(ctx, ctx.data().lang.get("dc.re.update_post", &[short_s]), true, true).await; }
     }
-    else { send_msg(ctx, lang!("dc_msg_re_post_add_success", &shorturl), true, true).await; }
+    else { send_msg(ctx, ctx.data().lang.get("dc.re.add.success", &[short_s]), true, true).await; }
 
-    if a { send_msg(ctx, lang!("dc_msg_re_also_approved"), true, true).await; }
+    if a { send_msg(ctx, ctx.data().lang.get("dc.re.add.approved", &[]), true, true).await; }
   }
 
   if let Some(post) = get_post_from_data(ctx, &reddit_data, shorturl).await? {

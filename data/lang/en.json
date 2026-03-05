@@ -13,6 +13,10 @@
         "vote": "Vote",
         "unvote": "Un-vote"
       },
+      "add": {
+        "success": "Added post with URL \"<{0}>\"!",
+        "approved": "Also approved it!"
+      },
       "approve": {
         "success": "Successfully approved the post!",
         "disapprove": "Successfully disapproved the post!",
@@ -27,19 +31,39 @@
         "removed": "Successfully removed vote!",
         "mod": "Successfully voted (as moderator vote)!",
         "post_removed": "Couldn't [vote / un-vote] the post because the post has been removed!",
-        "remove_hasnt_voted": "Couldn't remove your vote: You haven't voted on this post yet!"
+        "remove_hasnt_voted": "Couldn't remove your vote: You haven't voted on this post yet!",
+        "already": "Couldn't cast a vote: You have already voted on this post!",
+        "error": "Failed to [vote / un-vote]: Unknown internal error."
+      },
+      "update": {
+        "fetch": "\nFetching new posts & updating data file...",
+        "read": "✅\nReading messages in <#{1}>...",
+        "parse": "✅\nParsing messages to JSON...",
+        "add": "✅\nAdding new posts...",
+        "rm_dupe": "✅\nRemoving duplicate posts...",
+        "rm": "✅\nRemoving removed posts...",
+        "rm_old": "✅\nRemoving old posts (threshold: {1}d)...",
+        "editing": "✅\nEditing updated posts...",
+        "done": "✅\n## Done!"
       },
       "embed": {
         "post": "Spoilers and vote length anonymizer for fair review!\n## Post Data:\n**Subreddit:** {0}\n**Post upvotes:** ||`{1:>6}`||\n**Moderator votes:** ||`{2:>6}`||\n**Media type:** `{3}`\n## Listing Data:\n**Added by:** human: {4} | bot: {5}\n**Approved:** {6}",
         "post_removed": "## Removed by `{0}`\n**Reason:** {1}"
       },
-      "help_404": "Reddit help file not found, someone likely deleted it.\n    Hint: You can find the official help text at https://github.com/ByteDice/ByteDiceAssistant in `re_help.md`.\n**CAUTION:** The official help file may contain incorrect information if you're not using the official bot by Byte Dice."
+      "update_post": "Updated post with URL \"<{0}>\"!",
+      "help_404": "Reddit help file not found, someone likely deleted it.\n-# Hint: You can find the official help text at https://github.com/ByteDice/ByteDiceAssistant in `re_help.md`.\n**CAUTION:** The official help file may contain incorrect information if you're not using the official bot by Byte Dice.",
+      "post_404": "Post URL \"<{0}>\" not found: Post doesn't exist in the data!\n-# Hint: Run the command `/re_addpost [URL]` in a Discord channel or `u/ByteDiceAssistant add_post` in a Reddit post.",
+      "not_mod": "Permission denied: You are not a moderator of the subreddit(s) {0}",
+      "post_corrupted": "Post URL \"<{0}>\" not found: Post data is corrupted!\n-# Full details: Could not find key \"posts\" in data file \"re_data.json\"",
+      "shorturl": "ShortURL: <{0}>",
+      "shorturl_fail": "Couldn't convert to shortURL: Invalid Reddit URL format."
     },
     "db": {
       "added_server": "Added your server to my database. Thanks for letting me steal it! (/s)",
       "corrupted_data": "Couldn't add your server to the database! The database is corrupted!",
       "server_404": "This server is not in the data!\n-# Hint: Run the command `/database AddServer` inside of a Discord server (requires administrator permission).",
       "wwrps_404": "Could not find `wwrps_channel` in data!\n-# Hint: Run `/database WWRPSChannel` in a channel (requires administrator permission).",
+      "bk_404": "Could not find `re_posts_channel` in data!\n-# Hint: Run `/database RedditChannel` in a (preferably read-only) channel (requires administrator permission).",
       "channel_bind": "Successfully added channel ID `{0}` to the database!",
       "not_in_guild": "I am not a part of that guild.",
       "saving_progress": "Saving data...",
@@ -61,5 +85,6 @@
     "whoami": "**Bot \"owner\":** {0}\n**BK moderator:** {1}",
     "mandatory_response": "Mandatory response message, please ignore.",
     "cmd_404": "No command \"{0}\" found!\nHint: Try `/help` without any arguments or `/help <category>`"
-  }
+  },
+  "lang_load": "Successfully loaded the english language file!"
 }

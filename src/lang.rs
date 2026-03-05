@@ -19,11 +19,6 @@ impl From<Value> for Lang {
 
 
 impl Lang {
-  pub fn new() -> Self {
-    return Lang { data: Value::Null };
-  }
-
-
   pub fn from_file(filepath: PathBuf) -> Result<Self, Error> {
     if !filepath.exists() { return Err(Error::from("LANG filepath not found!")); }
 

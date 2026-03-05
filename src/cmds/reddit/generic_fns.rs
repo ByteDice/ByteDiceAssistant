@@ -2,7 +2,7 @@ use poise::serenity_prelude::{self as serenity, ChannelId, ComponentInteraction,
 use regex::Regex;
 use serde_json::Value;
 
-use crate::{Context, Data, Error, lang, messages::{EmbedOptions, JSON_TEXT_END, JSON_TEXT_START, decode_and_decompress_json, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg}};
+use crate::{Context, Data, Error, messages::{EmbedOptions, JSON_TEXT_END, JSON_TEXT_START, decode_and_decompress_json, embed_from_options, make_post_embed, make_removed_embed, send_embed, send_msg}};
 
 pub fn is_bk_mod(mod_list: Vec<u64>, uid: u64) -> bool {
   return mod_list.contains(&uid);
@@ -13,7 +13,7 @@ pub async fn is_bk_mod_msg(ctx: Context<'_>) -> bool {
   if is_bk_mod(ctx.data().env_vars.reddit_mod_discord_ids.clone(), ctx.author().id.get()) { return true; }
 
   let sr = get_readable_subreddits(ctx.data()).await.unwrap();
-  send_msg(ctx, lang!("dc_msg_re_permdeny_not_re_mod", sr), true, true).await;
+  send_msg(ctx, ctx.data().lang.get("dc.re.not_mod", &[sr]), true, true).await;
   return false
 }
 
@@ -22,7 +22,7 @@ pub async fn is_bk_mod_serenity(ctx: &serenity::Context, data: &Data, author: &M
   if is_bk_mod(data.env_vars.reddit_mod_discord_ids.clone(), author.user.id.get()) { return true; }
 
   let sr = get_readable_subreddits(data).await.unwrap();
-  serenity_send_msg(ctx, component, lang!("dc_msg_re_permdeny_not_re_mod", sr), true).await;
+  serenity_send_msg(ctx, component, data.lang.get("dc.re.not_mod", &[sr]), true).await;
   return true
 }
 
@@ -55,7 +55,7 @@ pub fn to_shorturl(url: &str) -> Result<String, &str> {
 
 
 pub async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Result<(), Error> {
-  send_embed(ctx, make_post_embed(&post, url, true), true).await;
+  send_embed(ctx, make_post_embed(&ctx.data().lang, &post, url, true), true).await;
   return Ok(());
 }
 
@@ -63,7 +63,7 @@ pub async fn send_embed_for_post(ctx: Context<'_>, post: Value, url: &str) -> Re
 pub async fn send_embed_for_removed(ctx: Context<'_>, url: &str, post: &Value) {
   send_embed(
     ctx, 
-    make_removed_embed(post, url, true),
+    make_removed_embed(&ctx.data().lang, post, url, true),
     true
   ).await;
 }

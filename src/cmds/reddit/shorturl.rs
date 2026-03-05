@@ -1,4 +1,4 @@
-use crate::{lang, messages::send_msg, cmds::reddit::generic_fns::to_shorturl, Context, Error};
+use crate::{messages::send_msg, cmds::reddit::generic_fns::to_shorturl, Context, Error};
 
 
 #[poise::command(
@@ -17,10 +17,10 @@ pub async fn cmd(
   let shorturl = to_shorturl(&url);
 
   if shorturl.is_ok() {
-    send_msg(ctx, lang!("dc_msg_shorturl", shorturl.unwrap()), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.shorturl", &[shorturl.unwrap()]), true, true).await;
   }
   else {
-    send_msg(ctx, lang!("dc_msg_failed_shorturl_conversion"), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.shorturl_fail", &[]), true, true).await;
   }
 
   return Ok(());

@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{Context, Error, db::reddit::{self, POSTS_KEY}, lang, messages::send_msg, cmds::reddit::generic_fns::{is_bk_mod, send_embed_for_removed, to_shorturl}, websocket::send_cmd_json};
+use crate::{Context, Error, db::reddit::{self, POSTS_KEY}, messages::send_msg, cmds::reddit::generic_fns::{is_bk_mod, send_embed_for_removed, to_shorturl}, websocket::send_cmd_json};
 
 #[poise::command(
   slash_command,
@@ -26,7 +26,7 @@ pub async fn cmd(
   let shorturl = &shorturl_u.unwrap_or(url.clone());
   
   if post_data.get(shorturl).is_none() {
-    send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.post_404", &[]), false, false).await;
     return Ok(());
   }
   if post_data[&shorturl]["removed"]["removed"].as_bool().unwrap() {
@@ -42,11 +42,11 @@ pub async fn cmd(
   let voters = if is_mod { mod_voters } else { voters_dc };
 
   if voters.contains(&json!(uid)) && !unw_vote {
-    send_msg(ctx, lang!("dc_msg_re_already_voted"), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.vote.already", &[]), true, true).await;
     return Ok(());
   }
   else if !voters.contains(&json!(uid)) && unw_vote {
-    send_msg(ctx, lang!("dc_msg_re_vote_remove_havent"), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.vote.remove_hasnt_voted", &[]), true, true).await;
     return Ok(());
   }
 
@@ -54,13 +54,13 @@ pub async fn cmd(
   let unw_r = r["value"].as_bool().unwrap();
 
   if unw_r && !unw_vote && is_mod
-    { send_msg(ctx, lang!("dc_msg_re_vote_mod_success"), true, true).await; }
+    { send_msg(ctx, ctx.data().lang.get("dc.re.vote.mod", &[]), true, true).await; }
   else if unw_r && !unw_vote && !is_mod
-    { send_msg(ctx, lang!("dc_msg_re_vote_success"), true, true).await; }
+    { send_msg(ctx, ctx.data().lang.get("dc.re.vote.success", &[]), true, true).await; }
   else if unw_r && unw_vote
-    { send_msg(ctx, lang!("dc_msg_re_vote_remove_success"), true, true).await; }
+    { send_msg(ctx, ctx.data().lang.get("dc.re.vote.remove", &[]), true, true).await; }
   else
-    { send_msg(ctx, lang!("dc_msg_re_vote_err"), true, true).await; }
+    { send_msg(ctx, ctx.data().lang.get("dc.re.vote.error", &[]), true, true).await; }
 
   return Ok(());
 }

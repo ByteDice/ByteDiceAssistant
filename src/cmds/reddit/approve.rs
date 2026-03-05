@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{Context, Error, db::{reddit::POSTS_KEY}, lang, messages::send_msg, cmds::reddit::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket};
+use crate::{Context, Error, db::{reddit::POSTS_KEY}, messages::send_msg, cmds::reddit::generic_fns::{is_bk_mod_msg, to_shorturl}, websocket};
 
 use super::generic_fns::send_embed_for_removed;
 
@@ -41,17 +41,14 @@ async fn approve_cmd(ctx: Context<'_>, url: &str, reddit_data: &Value, approve: 
     let r = websocket::send_cmd_json("set_approve_post", Some(json!([approve, &url])), true).await.unwrap();
     if r["value"].as_bool().unwrap() {
       if approve {
-        send_msg(ctx, lang!("dc_msg_re_post_approve_success"), true, true).await;
+        send_msg(ctx, ctx.data().lang.get("dc.re.approve.success", &[]), true, true).await;
       }
       else {
-        send_msg(ctx, lang!("dc_msg_re_post_disapprove_success"), true, true).await;
+        send_msg(ctx, ctx.data().lang.get("dc.re.approve.disapprove", &[]), true, true).await;
       }
-    }
-    else {
-      send_msg(ctx, lang!("dc_msg_err_trace", "`re_cmds -> approve.rs -> cmd() -> unwrap websocket result error`"), true, true).await;
     }
   }
   else {
-    send_msg(ctx, lang!("dc_msg_re_post_404"), false, false).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.post_404", &[]), false, false).await;
   }
 }

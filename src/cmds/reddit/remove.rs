@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{Context, Error, db::reddit, lang, messages::send_msg, cmds::reddit::{generic_fns::{is_bk_mod_msg, send_embed_for_removed, to_shorturl}, get::get_post_from_data}, websocket::send_cmd_json};
+use crate::{Context, Error, db::reddit, messages::send_msg, cmds::reddit::{generic_fns::{is_bk_mod_msg, send_embed_for_removed, to_shorturl}, get::get_post_from_data}, websocket::send_cmd_json};
 
 #[poise::command(
   slash_command,
@@ -27,13 +27,13 @@ pub async fn cmd(
   if r["value"].as_bool().unwrap() {
     send_msg(
       ctx,
-      lang!("dc_msg_re_post_remove_success", &shorturl),
+      ctx.data().lang.get("dc.re.remove.success", &[shorturl.to_string()]),
       true,
       true
     ).await;
   }
   else {
-    send_msg(ctx, lang!("dc_msg_re_post_404"), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.re.post_404", &[]), true, true).await;
   }
 
   reddit::update_data().await;
