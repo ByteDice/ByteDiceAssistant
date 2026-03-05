@@ -1,6 +1,6 @@
 use poise::serenity_prelude::{CreateInvite, GuildId};
 
-use crate::{Context, Error, lang, messages::send_msg};
+use crate::{Context, Error, messages::send_msg};
 
 
 pub async fn cmd(ctx: Context<'_>, guild_id: u64) -> Result<(), Error> {
@@ -8,7 +8,7 @@ pub async fn cmd(ctx: Context<'_>, guild_id: u64) -> Result<(), Error> {
   let guild = id.to_partial_guild(ctx.http()).await?;
 
   if !ctx.serenity_context().cache.guilds().contains(&id) {
-    send_msg(ctx, lang!("dc_msg_not_in_guild"), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.db.not_in_guild", &[]), true, true).await;
     return Ok(());
   }
 
@@ -22,7 +22,12 @@ pub async fn cmd(ctx: Context<'_>, guild_id: u64) -> Result<(), Error> {
     let perms = guild.user_permissions_in(&channel, bot_member);
 
     if !perms.create_instant_invite() {
-      send_msg(ctx, lang!("dc_msg_no_perms", "CreateInvite"), true, true).await;
+      send_msg(
+        ctx,
+        ctx.data().lang.get("dc.no_perms_external", &["CreateInvite".to_string()]),
+        true,
+        true
+      ).await;
       return Ok(());
     }
     

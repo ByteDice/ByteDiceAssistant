@@ -1,6 +1,7 @@
 {
   "generic": {
-    "none": "None"
+    "none": "None",
+    "success": "Success!"
   },
   "dc": {
     "re": {
@@ -37,7 +38,14 @@
       "added_server": "Added your server to my database. Thanks for letting me steal it! (/s)",
       "corrupted_data": "Couldn't add your server to the database! The database is corrupted!",
       "server_404": "This server is not in the data!\n-# Hint: Run the command `/database AddServer` inside of a Discord server (requires administrator permission).",
-      "channel_bind": "Successfully added channel ID `{0}` to the database!"
-    }
+      "channel_bind": "Successfully added channel ID `{0}` to the database!",
+      "not_in_guild": "I am not a part of that guild.",
+      "saving_progress": "Saving data...",
+      "saving_done": "Saving data... Done!"
+    },
+    "no_perms_external": "Missing permission in that server: {0}",
+    "shutdown": "Shutting down...",
+    "shutdown_bad_confirm": "Failed to shut down: Invalid confirmation.",
+    "whoami": "**Bot \"owner\":** {0}\n**BK moderator:** {1}"
   }
 }
