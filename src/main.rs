@@ -69,7 +69,7 @@ async fn main() {
 
   if !run_py { rs_println!("[IMPORTANT] You have disabled the \"re\" commands in the CFG. The app will not run the Python code and the websockets to save resources!"); }
 
-  if !data.args.nosched { start_schedules(data.args.test); }
+  if !data.args.nosched { start_schedules(data.args.test).await; }
   
   let python = start_py(
     data.args.clone(),
