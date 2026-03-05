@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{collections::HashSet, process};
 
 use poise::serenity_prelude::{ActivityData, UserId};
@@ -24,14 +25,19 @@ pub async fn gen_data(args: Args, env_vars: AssistantEnv) -> Data {
   let dc_data = discord::read_data(args.clone().wipe).await;
   let cf_data = cfg::    read_data(args.clone().wipe).await;
 
+  let cf_bind = cf_data.clone();
+  let lang_name = cf_bind["general"]["lang"].as_str().unwrap();
+  let lang_path = ["./data/lang/", lang_name, ".json"].concat();
+  let lang_pathbuf = PathBuf::from(lang_path);
+  
   return Data {
     args:         args.clone(),
     ball_prompts: [ball_classic, ball_quirk],
     cfg:          cf_data,
     discord_data: dc_data.into(),
     env_vars:     env_vars,
-    lang_name:    "".to_string().into(),
-    lang:         Lang::new().into(),
+    lang_name:    lang_name.to_string(),
+    lang:         Lang::from_file(lang_pathbuf).unwrap(),
     reddit_data:  re_data.into(),
     rps_game:     Mutex::new(RPSGame::new())
   };

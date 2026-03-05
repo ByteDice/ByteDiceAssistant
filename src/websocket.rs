@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use crate::db::bot_data::Data;
 use crate::messages::send_dm_min;
-use crate::{lang, rs_println};
+use crate::rs_println;
 use crate::Args;
 
 type Sender = Arc<Mutex<Option<futures::stream::SplitSink<tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>, tungstenite::Message>>>>;
@@ -142,7 +142,7 @@ async fn handle_connections(
 async fn handle_message(
   msg: tungstenite::protocol::Message,
   token: String,
-  bot_owners: Vec<u64>
+  bot_owners: Vec<u64>,
 ) {
   match msg {
     tungstenite::Message::Text(text) => {
@@ -152,7 +152,7 @@ async fn handle_message(
         let t_json: Value = serde_json::from_str(stripped).unwrap();
         if t_json.get("error").is_some() {
           send_dm_min(
-            lang!("dc_msg_dm_python_err_socket"),
+            "Unknown internal Python error occurred: Websocket response error".to_string(),
             token,
             bot_owners
           ).await;

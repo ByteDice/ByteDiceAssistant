@@ -48,7 +48,7 @@ async fn main() {
   rs_println!("Generating and/or fetching data and config...");
   let data = gen_data(args, env_vars).await;
   
-  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", lang!("log_lang_load_success"));
+  rs_println!("[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {}", data.lang.get("log_lang_load_success", &[]));
 
   // We start this here cuz we have all the data that we need
   if data.args.py && !data.args.rs {

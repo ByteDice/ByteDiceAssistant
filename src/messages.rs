@@ -1,7 +1,8 @@
 use std::io::{Read, Write};
 
 use crate::db::bot_data::Data;
-use crate::{lang, Context};
+use crate::Context;
+use crate::lang::Lang;
 
 use base64::engine::general_purpose;
 use base64::Engine;
@@ -36,7 +37,7 @@ pub struct EmbedOptions {
 impl Default for EmbedOptions {
   fn default() -> Self {
     return EmbedOptions {
-      desc: lang!("dc_msg_embed_default_embed_desc"),
+      desc: "Default english embed description.".to_string(),
       title: None,
       col: None,
       url: None,
@@ -226,19 +227,19 @@ pub async fn send_dm_min(msg: String, token: String, bot_owners: Vec<u64>) {
 }
 
 
-pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+pub fn make_post_embed(lang: &Lang, post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
   let media_type = &post_data["post_data"]["media_type"];
 
-  let desc_str = lang!(
-    "dc_msg_embed_re_post",
-    post_data["post_data"]["subreddit"].as_str().unwrap(),
-    post_data["post_data"]["upvotes"].as_i64().unwrap(),
-    post_data["votes"]["mod_voters"].as_array().unwrap().len(),
+  let desc_str = lang.get(
+    "dc.re.embed.post",
+    &[post_data["post_data"]["subreddit"].as_str().unwrap(),
+    post_data["post_data"]["upvotes"].as_i64().unwrap().to_string().as_str(),
+    post_data["votes"]["mod_voters"].as_array().unwrap().len().to_string().as_str(),
     if !media_type.is_null() { media_type.as_str().unwrap() } else { "None" },
 
     if post_data["added"]   ["by_human"].as_bool().unwrap() { "✅" } else { "❌" },
     if post_data["added"]   ["by_bot"].as_bool().unwrap()   { "✅" } else { "❌" },
-    if post_data["approved"]["by_human"].as_bool().unwrap() { "✅" } else { "❌" }
+    if post_data["approved"]["by_human"].as_bool().unwrap() { "✅" } else { "❌" }].map(String::from)
   );
 
   let trimmed = desc_str
@@ -248,7 +249,7 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
     .join("\n");
 
   let media_urls = post_data["post_data"]["media_urls"].as_array().unwrap();
-  let action_row = make_post_components();
+  let action_row = make_post_components(lang);
 
   let json_encoded = trim_compress_and_encode_json(post_data);
 
@@ -268,25 +269,25 @@ pub fn make_post_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOp
 }
 
 
-pub fn make_removed_embed(post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
-  let action_row = make_removed_components();
+pub fn make_removed_embed(lang: &Lang, post_data: &Value, url: &str, ephemeral: bool) -> EmbedOptions {
+  let action_row = make_removed_components(lang);
 
-  let none = lang!("none");
+  let none = lang.get("generic.none", &[]);
 
-  let desc = lang!(
-    "dc_msg_embed_re_removed",
-    if !post_data["removed"]["by"].is_null()
+  let desc = lang.get(
+    "dc.re.embed.post_removed",
+    &[if !post_data["removed"]["by"].is_null()
       { post_data["removed"]["by"].as_str().unwrap() }
       else { &none },
     if !post_data["removed"]["reason"].is_null()
       { post_data["removed"]["reason"].as_str().unwrap() }
-      else { &none }
+      else { &none }].map(String::from)
   );
 
   let json_encoded = trim_compress_and_encode_json(post_data);
 
   return EmbedOptions { 
-    title: Some(lang!("dc_msg_removed_square_brackets", post_data["post_data"]["title"].clone())),
+    title: Some(lang.get("dc_msg_removed_square_brackets", &[post_data["post_data"]["title"].clone().to_string()])),
     desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, json_encoded, JSON_TEXT_END),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),
@@ -341,19 +342,19 @@ pub fn decode_and_decompress_json(t: String) -> Result<Value, serde_json::Error>
 }
 
 
-fn make_post_components() -> CreateActionRow {
+fn make_post_components(lang: &Lang) -> CreateActionRow {
   return CreateActionRow::Buttons(vec![
-    CreateButton::new("vote_btn")     .label(lang!("dc_btn_vote"))     .emoji(ReactionType::Unicode("⬆️".to_string())),
-    CreateButton::new("unvote_btn")   .label(lang!("dc_btn_unvote")),
-    CreateButton::new("approve_btn")  .label(lang!("dc_btn_approve"))    .emoji(ReactionType::Unicode("✅".to_string())),
-    CreateButton::new("unapprove_btn").label(lang!("dc_btn_unapprove")) .emoji(ReactionType::Unicode("❌".to_string())),
-    CreateButton::new("remove_btn")   .label(lang!("dc_btn_remove"))     .emoji(ReactionType::Unicode("🗑️".to_string()))
+    CreateButton::new("vote_btn")     .label(lang.get("dc.re.buttons.vote", &[])).emoji(ReactionType::Unicode("⬆️".to_string())),
+    CreateButton::new("unvote_btn")   .label(lang.get("dc.re.buttons.unvote", &[])),
+    CreateButton::new("approve_btn")  .label(lang.get("dc.re.buttons.approve", &[])).emoji(ReactionType::Unicode("✅".to_string())),
+    CreateButton::new("unapprove_btn").label(lang.get("dc.re.buttons.disapprove", &[])).emoji(ReactionType::Unicode("❌".to_string())),
+    CreateButton::new("remove_btn")   .label(lang.get("dc.re.buttons.remove", &[])).emoji(ReactionType::Unicode("🗑️".to_string()))
   ]);
 }
 
 
-fn make_removed_components() -> CreateActionRow {
+fn make_removed_components(lang: &Lang) -> CreateActionRow {
   return CreateActionRow::Buttons(vec![
-    CreateButton::new("unremove_btn").label(lang!("dc_btn_unremove")).emoji(ReactionType::Unicode("↩️".to_string()))
+    CreateButton::new("unremove_btn").label(lang.get("dc.re.buttons.unremove", &[])).emoji(ReactionType::Unicode("↩️".to_string()))
   ]);
 }

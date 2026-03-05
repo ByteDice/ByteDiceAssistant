@@ -1,7 +1,7 @@
 use crate::db::env_vars::AssistantEnv;
 use crate::db::terminal_args::Args;
 use crate::messages::send_dm_min;
-use crate::{errln, lang, rs_println};
+use crate::{errln, rs_println};
 
 use std::fs;
 use std::ffi::CString;
@@ -57,7 +57,7 @@ pub async fn start(args: Args, lang_name: String, env_vars: AssistantEnv) -> PyR
 
   if is_error {
     send_dm_min(
-      lang!("dc_msg_dm_python_err", traceback),
+      format!("Unknown internal Python Error:\n```\n{0}\n```", traceback),
       env_vars.token.clone(),
       env_vars.bot_owners.clone()
     ).await;

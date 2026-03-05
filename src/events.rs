@@ -1,9 +1,10 @@
 use crate::db::reddit::update_data;
 use crate::r#gen::set_status;
+use crate::lang::Lang;
 use crate::messages::{make_post_embed, make_removed_embed, EmbedOptions};
 use crate::cmds::reddit::generic_fns::{is_bk_mod, is_bk_mod_serenity, serenity_edit_msg_embed, serenity_send_msg};
 use crate::websocket::send_cmd_json;
-use crate::{Data, Error, lang, rs_println};
+use crate::{Data, Error, rs_println};
 use crate::db::reddit::POSTS_KEY;
 
 use poise::serenity_prelude::{self as serenity, ChannelId, ComponentInteraction, Interaction, Member, MessageId, Ready};
@@ -67,11 +68,11 @@ async fn handle_buttons(ctx: &serenity::Context, data: &Data, interaction: &Inte
 }
 
 
-async fn update_embed(ctx: &serenity::Context, url: &str, new_data: &Value, c_id: &ChannelId, m_id: &MessageId) {
+async fn update_embed(ctx: &serenity::Context, lang: &Lang, url: &str, new_data: &Value, c_id: &ChannelId, m_id: &MessageId) {
   let remove = new_data["removed"]["removed"].as_bool().unwrap();
   let e: EmbedOptions =
-    if remove { make_removed_embed(new_data, url, true) }
-    else      { make_post_embed   (new_data, url, true) };
+    if remove { make_removed_embed(lang, new_data, url, true) }
+    else      { make_post_embed   (lang, new_data, url, true) };
   
   serenity_edit_msg_embed(ctx, c_id, m_id, e).await;
 }
@@ -89,19 +90,14 @@ async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, co
   let new_data = &data.reddit_data
     .lock().await[POSTS_KEY][&url];
 
-  update_embed(ctx, &url, new_data, &c_id, &m_id).await;
+  update_embed(ctx, &data.lang, &url, new_data, &c_id, &m_id).await;
 
   if r["value"].as_bool().unwrap() {
-    if approve {
-      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_approve_success"), true).await;
-    }
-    else {
-      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_disapprove_success"), true).await;
-    }
+    if approve
+      { serenity_send_msg(ctx, component, data.lang.get("dc.re.approve.disapprove", &[]), true).await; }
+    else { serenity_send_msg(ctx, component, data.lang.get("dc.re.approve.success", &[]), true).await; }
   }
-  else {
-    serenity_send_msg(ctx, component, lang!("dc_msg_re_post_approve_remove"), true).await;
-  }
+  else { serenity_send_msg(ctx, component, data.lang.get("dc.re.approve.post_removed", &[]), true).await; }
 
   return Ok(());
 }
@@ -110,12 +106,9 @@ async fn approve_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, co
 async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, component: &ComponentInteraction, url: String, remove: bool) -> Result<(), Error> {
   if !is_bk_mod_serenity(ctx, data, c_member, component).await { return Ok(()); }
 
-  let r: Value = if remove {
-    send_cmd_json("remove_post_url", Some(json!([&url, &c_member.user.name, None::<String>])), true).await.unwrap()
-  }
-  else {
-    send_cmd_json("add_post_url", Some(json!([&url, false, true])), true).await.unwrap()
-  };
+  let r: Value =
+    if remove { send_cmd_json("remove_post_url", Some(json!([&url, &c_member.user.name, None::<String>])), true).await.unwrap() }
+  else { send_cmd_json("add_post_url", Some(json!([&url, false, true])), true).await.unwrap() };
 
   let c_id = component.channel_id;
   let m_id = component.message.id;
@@ -124,15 +117,11 @@ async fn remove_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, com
   let new_data = &data.reddit_data
     .lock().await[POSTS_KEY][&url];
 
-  update_embed(ctx, &url, new_data, &c_id, &m_id).await;
+  update_embed(ctx, &data.lang, &url, new_data, &c_id, &m_id).await;
 
   if r["value"].as_bool().unwrap() {
-    if remove {
-      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_remove_success", &url), true).await;
-    }
-    else {
-      serenity_send_msg(ctx, component, lang!("dc_msg_re_post_unremove_success", &url), true).await;
-    }
+    if remove { serenity_send_msg(ctx, component, data.lang.get("dc.re.remove.success", &[url]), true).await; }
+    else { serenity_send_msg(ctx, component, data.lang.get("dc.re.remove.unremove", &[url]), true).await; }
   }
 
   return Ok(());
@@ -152,22 +141,22 @@ async fn vote_btn(ctx: &serenity::Context, data: &Data, c_member: &Member, compo
   let new_data = &data.reddit_data
     .lock().await[POSTS_KEY][&url];
 
-  update_embed(ctx, &url, new_data, &c_id, &m_id).await;
+  update_embed(ctx, &data.lang, &url, new_data, &c_id, &m_id).await;
 
   if r["value"].as_bool().unwrap() {
     if vote {
-      if is_mod { serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_mod_success"), true).await; }
-      else      { serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_success"),     true).await; }
+      if is_mod { serenity_send_msg(ctx, component, data.lang.get("dc.re.vote.mod", &[]), true).await; }
+      else { serenity_send_msg(ctx, component, data.lang.get("dc.re.vote.success", &[]), true).await; }
     }
     else {
-      serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_success"), true).await;
+      serenity_send_msg(ctx, component, data.lang.get("dc.re.vote.removed", &[]), true).await;
     }
   }
   else if new_data["removed"]["removed"].as_bool().unwrap() {
-    serenity_send_msg(ctx, component, lang!("dc_msg_re_post_vote_removed_post"), true).await;
+    serenity_send_msg(ctx, component, data.lang.get("dc.re.vote.post_removed", &[]), true).await;
   }
   else if !vote {
-    serenity_send_msg(ctx, component, lang!("dc_msg_re_vote_remove_havent"), true).await;
+    serenity_send_msg(ctx, component, data.lang.get("dc.re.vote.remove_hasnt_voted", &[]), true).await;
   }
 
   return Ok(());
