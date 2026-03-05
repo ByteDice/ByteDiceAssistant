@@ -1,6 +1,6 @@
 use rand::{seq::IteratorRandom, Rng};
 
-use crate::{lang, messages::send_msg, Context, Error};
+use crate::{messages::send_msg, Context, Error};
 
 
 #[poise::command(
@@ -25,7 +25,7 @@ pub async fn cmd(
 
   send_msg(
     ctx,
-    lang!("dc_msg_8-ball_answer", question, rand_item.unwrap()),
+    ctx.data().lang.get("dc.8_ball", &[question, rand_item.unwrap().to_string()]),
     false,
     true
   ).await;

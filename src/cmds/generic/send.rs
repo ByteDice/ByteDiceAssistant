@@ -1,4 +1,4 @@
-use crate::{lang, messages::send_msg, Context, Error};
+use crate::{messages::send_msg, Context, Error};
 
 
 #[poise::command(
@@ -16,6 +16,6 @@ pub async fn cmd(
 ) -> Result<(), Error>
 {
   send_msg(ctx, msg.replace("\\n", "\n"), false, false).await;
-  send_msg(ctx, lang!("dc_msg_mandatory_response"), true, true).await;
+  send_msg(ctx, ctx.data().lang.get("dc.mandatory_response", &[]), true, true).await;
   return Ok(());
 }

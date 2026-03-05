@@ -32,20 +32,34 @@
       "embed": {
         "post": "Spoilers and vote length anonymizer for fair review!\n## Post Data:\n**Subreddit:** {0}\n**Post upvotes:** ||`{1:>6}`||\n**Moderator votes:** ||`{2:>6}`||\n**Media type:** `{3}`\n## Listing Data:\n**Added by:** human: {4} | bot: {5}\n**Approved:** {6}",
         "post_removed": "## Removed by `{0}`\n**Reason:** {1}"
-      }
+      },
+      "help_404": "Reddit help file not found, someone likely deleted it.\n    Hint: You can find the official help text at https://github.com/ByteDice/ByteDiceAssistant in `re_help.md`.\n**CAUTION:** The official help file may contain incorrect information if you're not using the official bot by Byte Dice."
     },
     "db": {
       "added_server": "Added your server to my database. Thanks for letting me steal it! (/s)",
       "corrupted_data": "Couldn't add your server to the database! The database is corrupted!",
       "server_404": "This server is not in the data!\n-# Hint: Run the command `/database AddServer` inside of a Discord server (requires administrator permission).",
+      "wwrps_404": "Could not find `wwrps_channel` in data!\n-# Hint: Run `/database WWRPSChannel` in a channel (requires administrator permission).",
       "channel_bind": "Successfully added channel ID `{0}` to the database!",
       "not_in_guild": "I am not a part of that guild.",
       "saving_progress": "Saving data...",
       "saving_done": "Saving data... Done!"
     },
+    "wwrps": {
+      "submitting": "Submitting your RPS... Please wait for another contestant to compete against you.",
+      "already_submitted": "You can't compete against yourself! Please wait until another player has submitted their RPS.",
+      "anon": "[Anonymous]",
+      "draw": "DRAW",
+      "match": "### {0} (P1) vs {1} (P2)...\n## {2}\n**P1:** {3}\n**P2:** {4}",
+      "p1_win": "P1 WINS",
+      "p2_win": "P2 WINS"
+    },
+    "8_ball": "**8-ball Question:** {0}\n**Answer:** {1}",
     "no_perms_external": "Missing permission in that server: {0}",
     "shutdown": "Shutting down...",
     "shutdown_bad_confirm": "Failed to shut down: Invalid confirmation.",
-    "whoami": "**Bot \"owner\":** {0}\n**BK moderator:** {1}"
+    "whoami": "**Bot \"owner\":** {0}\n**BK moderator:** {1}",
+    "mandatory_response": "Mandatory response message, please ignore.",
+    "cmd_404": "No command \"{0}\" found!\nHint: Try `/help` without any arguments or `/help <category>`"
   }
 }

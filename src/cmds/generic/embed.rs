@@ -1,6 +1,6 @@
 use poise::serenity_prelude::Timestamp;
 
-use crate::{lang, messages::{send_embed, send_msg, Author, EmbedOptions}, Context, Error};
+use crate::{messages::{send_embed, send_msg, Author, EmbedOptions}, Context, Error};
 
 #[allow(clippy::too_many_arguments)]
 #[poise::command(
@@ -46,7 +46,7 @@ pub async fn cmd(
   ).await;
 
   if !reply_unwrap {
-    send_msg(ctx, lang!("dc_msg_mandatory_response"), true, true).await;
+    send_msg(ctx, ctx.data().lang.get("dc.mandatory_response", &[]), true, true).await;
   }
 
   return Ok(());

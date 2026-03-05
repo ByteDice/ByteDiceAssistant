@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use tokio::fs;
 
-use crate::{lang, messages::send_msg, Context, Cmd, Error};
+use crate::{messages::send_msg, Context, Cmd, Error};
 
 
 #[derive(poise::ChoiceParameter, PartialEq)]
@@ -82,7 +82,7 @@ async fn send_single_help(ctx: Context<'_>, mut cmd_name: String) {
   if cmd.is_none() {
     send_msg(
       ctx,
-      lang!("dc_msg_cmd_404", cmd_name),
+      ctx.data().lang.get("dc.cmd_404", &[cmd_name]),
       true,
       true
     ).await;
@@ -108,7 +108,7 @@ async fn send_category_help(ctx: Context<'_>, category: HelpOptions) {
 
 async fn send_bk_week_help_re(ctx: Context<'_>) {
   let t: String = fs::read_to_string("./bk_week_help_re.md").await
-    .unwrap_or(lang!("dc_msg_re_help_removed"));
+    .unwrap_or(ctx.data().lang.get("dc.re.help_404", &[]));
 
   send_msg(ctx, t, true, true).await;
 }

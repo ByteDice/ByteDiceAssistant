@@ -1,7 +1,7 @@
 use poise::serenity_prelude::{ChannelId, Mentionable};
 use tokio::sync::MutexGuard;
 
-use crate::{Context, Error, games::wwrps::{RPS, RPSGame, RPSPlayer}, lang, messages::{http_send_msg, send_msg}};
+use crate::{Context, Error, games::wwrps::{RPS, RPSGame, RPSPlayer}, lang::Lang, messages::{http_send_msg, send_msg}};
 
 
 #[poise::command(
@@ -20,10 +20,10 @@ pub async fn cmd(
 {
   let c_o = get_wwrps_channel(ctx).await;
   
-  if c_o.is_none() { send_msg(ctx, lang!("dc_msg_wwrps_not_in_data"), true, true).await; return Ok(()); }
+  if c_o.is_none() { send_msg(ctx, ctx.data().lang.get("dc.db.wwrps_404", &[]), true, true).await; return Ok(()); }
   let c = c_o.unwrap();
 
-  send_msg(ctx, lang!("dc_msg_wwrps_submitting"), true, true).await;
+  send_msg(ctx, ctx.data().lang.get("dc.wwrps.submitting", &[]), true, true).await;
 
   let mut game = ctx.data().rps_game.lock().await;
   
@@ -32,12 +32,12 @@ pub async fn cmd(
       RPSPlayer { selection, user: ctx.author().clone(), wwrps_channel: ChannelId::new(c), anonymous });
     
     if let Err(_) = r
-      { send_msg(ctx, lang!("dc_msg_wwrps_already_submitted"), true, true).await; return Ok(()); }
+      { send_msg(ctx, ctx.data().lang.get("dc.wwrps.already_submitted", &[]), true, true).await; return Ok(()); }
 
     let full = r.unwrap();
     if !full { return Ok(()); }
 
-    let r_text = results_text(&game);
+    let r_text = results_text(&game, &ctx.data().lang);
     let game_clone = game.clone();
     game.clear();
 
@@ -56,21 +56,29 @@ pub async fn cmd(
 }
 
 
-fn results_text(game: &MutexGuard<'_, RPSGame>) -> String {
+fn results_text(game: &MutexGuard<'_, RPSGame>, lang: &Lang) -> String {
   let winner = game.get_winner();
   let winner_text: String;
   
   let p1 = game.players[0].as_ref().unwrap();
   let p2 = game.players[1].as_ref().unwrap();
-  let p1_n = if !p1.anonymous { p1.user.mention().to_string() } else { lang!("dc_msg_wwrps_anon") };
-  let p2_n = if !p2.anonymous { p2.user.mention().to_string() } else { lang!("dc_msg_wwrps_anon") };
+  let p1_n = if !p1.anonymous { p1.user.mention().to_string() } else { lang.get("dc.wwrps.anon", &[]) };
+  let p2_n = if !p2.anonymous { p2.user.mention().to_string() } else { lang.get("dc.wwrps.anon", &[]) };
   
   if let Some(w) = winner {
-    winner_text = if w == 0 { lang!("dc_msg_wwrps_left_win") }
-      else { lang!("dc_msg_wwrps_right_win") }; }
-  else { winner_text = lang!("dc_msg_wwrps_draw"); }
+    winner_text = if w == 0 { lang.get("dc.wwrps.p1_win", &[]) }
+      else { lang.get("dc.wwrps.p2_win", &[]) }; }
+  else { winner_text = lang.get("dc.wwrps.draw", &[]); }
 
-  return lang!("dc_msg_wwrps_fight", p1.selection.clone(), p2.selection.clone(), winner_text, p1_n, p2_n);
+  return lang.get(
+    "dc.wwrps.match",
+    &[
+      p1.selection.to_string(),
+      p2.selection.to_string(),
+      winner_text,
+      p1_n,
+      p2_n
+    ]);
 }
 
 
