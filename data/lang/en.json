@@ -32,6 +32,12 @@
         "post": "Spoilers and vote length anonymizer for fair review!\n## Post Data:\n**Subreddit:** {0}\n**Post upvotes:** ||`{1:>6}`||\n**Moderator votes:** ||`{2:>6}`||\n**Media type:** `{3}`\n## Listing Data:\n**Added by:** human: {4} | bot: {5}\n**Approved:** {6}",
         "post_removed": "## Removed by `{0}`\n**Reason:** {1}"
       }
+    },
+    "db": {
+      "added_server": "Added your server to my database. Thanks for letting me steal it! (/s)",
+      "corrupted_data": "Couldn't add your server to the database! The database is corrupted!",
+      "server_404": "This server is not in the data!\n-# Hint: Run the command `/database AddServer` inside of a Discord server (requires administrator permission).",
+      "channel_bind": "Successfully added channel ID `{0}` to the database!"
     }
   }
 }

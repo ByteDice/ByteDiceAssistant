@@ -1,4 +1,4 @@
-use crate::{db::discord::add_server, lang, messages::send_msg, Context, Error};
+use crate::{db::discord::add_server, messages::send_msg, Context, Error};
 
 
 pub async fn cmd(
@@ -7,12 +7,9 @@ pub async fn cmd(
 {
   let r = add_server(ctx.data(), ctx.guild_id().unwrap().into()).await;
 
-  if r.is_ok() {
-    send_msg(ctx, lang!("dc_msg_add_to_data"), true, true).await;
-  }
-  else {
-    send_msg(ctx, lang!("dc_msg_corrupted_data"), true, true).await;
-  }
+  if r.is_ok()
+    { send_msg(ctx, ctx.data().lang.get("dc.db.added_server", &[]), true, true).await; }
+  else { send_msg(ctx, ctx.data().lang.get("dc.db.corrupted_data", &[]), true, true).await; }
 
   return Ok(());
 }
