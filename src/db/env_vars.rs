@@ -8,7 +8,7 @@ pub struct AssistantEnv {
 
 impl AssistantEnv {
   pub fn new(test: bool) -> Self {
-    let token_name = if test { "ASSISTANT_TOKEN" }
+    let token_name = if !test { "ASSISTANT_TOKEN" }
       else { "ASSISTANT_TOKEN_TEST" };
 
     return AssistantEnv {

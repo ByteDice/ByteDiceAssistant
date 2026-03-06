@@ -68,8 +68,9 @@ async fn main() {
   let run_py = !cfg_arr.iter().any(|val| val.as_str() == Some("re"));
 
   if !run_py { rs_println!("[IMPORTANT] You have disabled the \"re\" commands in the CFG. The app will not run the Python code and the websockets to save resources!"); }
-
-  if !data.args.nosched { start_schedules(data.args.test).await; }
+  
+  let nosched = data.args.nosched;
+  let test = data.args.test;
   
   let python = start_py(
     data.args.clone(),
@@ -78,6 +79,8 @@ async fn main() {
     run_py
   );
   let rust = start_rs(data, run_py);
+  
+  if !nosched { start_schedules(test).await; }
 
   rust.join().unwrap();
   python.join().unwrap();

@@ -1,4 +1,5 @@
 pub mod guild_invite;
+pub mod lang;
 pub mod leave_guild;
 pub mod main_cmd;
 pub mod ping;

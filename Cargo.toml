@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 base64 = "0.22.1"
 clap = { version = "4.5.28", features = ["derive"] }
-dynfmt = "0.1.5"
+dynfmt = { version = "0.1.5", features = ["curly"] }
 flate2 = "1.1.2"
 futures = "0.3.31"
 poise = "0.6.1"
