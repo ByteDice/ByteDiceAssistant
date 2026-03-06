@@ -69,18 +69,18 @@ async def bk_week_add(mention: models.Comment, bot: botPy.Bot):
   bd = bot.data[botPy.RE_DATA_POSTS]
 
   if short_url not in bd:
-    if not is_mod: r = lang("py_re_response_weekly_add")
-    if is_mod: r = lang("py_re_response_weekly_mod_add")
+    if not is_mod: r = lang("re.add")
+    if is_mod: r = lang("re.mod_add")
   else:
     if bd[short_url]["removed"]["removed"] and is_mod:
-      r = lang("py_re_response_weekly_mod_unremove")
+      r = lang("re.mod_unremove")
     elif not bd[short_url]["removed"]["removed"]:
-      r = lang("py_re_response_weekly_exists")
+      r = lang("re.exists")
 
   await posts.add_post_url(bot, short_url)
 
   if r != "":
-    await mention.reply(r + "\n\n" + lang("py_re_response_suffix"))
+    await mention.reply(r + "\n\n" + lang("re.suffix"))
     if bot.args["dev"]: py_print("Responded to mention.")
   elif bot.args["dev"]: py_print("Response is empty.")
   await mention.mark_read()

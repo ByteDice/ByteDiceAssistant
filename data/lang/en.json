@@ -48,7 +48,8 @@
       },
       "embed": {
         "post": "Spoilers and vote length anonymizer for fair review!\n## Post Data:\n**Subreddit:** {0}\n**Post upvotes:** ||`{1:>6}`||\n**Moderator votes:** ||`{2:>6}`||\n**Media type:** `{3}`\n## Listing Data:\n**Added by:** human: {4} | bot: {5}\n**Approved:** {6}",
-        "post_removed": "## Removed by `{0}`\n**Reason:** {1}"
+        "post_removed": "## Removed by `{0}`\n**Reason:** {1}",
+        "removed_square_brackets": "[REMOVED] {0}"
       },
       "update_post": "Updated post with URL \"<{0}>\"!",
       "help_404": "Reddit help file not found, someone likely deleted it.\n-# Hint: You can find the official help text at https://github.com/ByteDice/ByteDiceAssistant in `re_help.md`.\n**CAUTION:** The official help file may contain incorrect information if you're not using the official bot by Byte Dice.",
@@ -85,6 +86,13 @@
     "whoami": "**Bot \"owner\":** {0}\n**BK moderator:** {1}",
     "mandatory_response": "Mandatory response message, please ignore.",
     "cmd_404": "No command \"{0}\" found!\nHint: Try `/help` without any arguments or `/help <category>`"
+  },
+  "re": {
+    "suffix": "^(I am not an AI, I am just a bot. This action was performed automatically by the way. You can report bugs and view my source code [here](https://github.com/ByteDice/ByteDiceAssistant)!)",
+    "add": "Successfully added your post to the weekly art submissions! Thank you for participating!",
+    "exists": "Couldn't add this post to the submissions! Luckily, it's already there! Thank you for participating!",
+    "mod_add": "[MOD ACTION] Successfully added this post to the weekly art submissions!",
+    "mod_unremove": "[MOD ACTION] Successfully un-removed this post from the weekly art submissions!"
   },
   "lang_load": "Successfully loaded the english language file!"
 }

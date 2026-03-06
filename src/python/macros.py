@@ -28,11 +28,22 @@ def py_error(*args: str):
 
 
 def lang(k: str) -> str:
-  if G_LANG == {}:
-    py_error("Language must be initialized before use!")
-  t = G_LANG.get(k)
-  if t is None: py_error(f"Key not found in language \"{G_LANG_NAME}\": {k}")
-  return str(t)
+  return lang_from_arr(k.split("."))
+
+
+def lang_from_arr(path: list[str]) -> str:
+  if G_LANG == {}: py_error("Language must be initialized before use!")
+  
+  str_path = ".".join(path)
+  search = G_LANG
+  
+  for i in path:
+    r = search.get(i) # type: ignore
+    if r is None: return str_path
+    elif r is str: return str(r)
+    else: search = r # type: ignore
+    
+  return str_path
 
 
 def init_lang(lang_name: str):

@@ -283,7 +283,7 @@ pub fn make_removed_embed(lang: &Lang, post_data: &Value, url: &str, ephemeral: 
   let json_encoded = trim_compress_and_encode_json(post_data);
 
   return EmbedOptions { 
-    title: Some(lang.get("dc_msg_removed_square_brackets", &[post_data["post_data"]["title"].clone().to_string()])),
+    title: Some(lang.get("dc.re.embed.removed_square_brackets", &[post_data["post_data"]["title"].clone().to_string()])),
     desc: format!("{}\n\n{}{}{}", desc, JSON_TEXT_START, json_encoded, JSON_TEXT_END),
     col: Some(REMOVED_DC_COL),
     url: Some(url.to_string()),

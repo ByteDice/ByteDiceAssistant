@@ -19,7 +19,7 @@ async def main():
     await bot.set_args(args) # type: ignore
     py_print("Fetching language file...")
     init_lang(lang_name) # type: ignore
-    py_print(f"[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {lang('log_lang_load_success')}")
+    py_print(f"[IMPORTANT] The below message is a test message, it should be written in the language you've selected\nTest message: {lang('lang_load')}")
   except NameError:
     py_print("No command args or language name found from Rust. Don't worry though, we have backup in place.")
     init_lang("en")
