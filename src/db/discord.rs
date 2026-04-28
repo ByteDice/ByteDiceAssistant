@@ -27,8 +27,12 @@ fn generate_data() {
   let preset_str = fs::read_to_string(PRESET_PATH).unwrap();
   let mut preset_json: Value = serde_json::from_str(&preset_str).unwrap();
 
+  // remove the examples
   if let Some(servers) = preset_json["servers"].as_object_mut() {
-    servers.remove("SERVER ID");
+    servers.remove("SERVER_ID");
+  }
+  if let Some(users) = preset_json["users"].as_object_mut() {
+    users.remove("USER_ID");
   }
 
   let json_str = serde_json::to_string_pretty(&preset_json).unwrap();

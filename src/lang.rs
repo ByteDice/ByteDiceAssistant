@@ -8,8 +8,8 @@ use crate::{Error, rs_warnln};
 
 #[derive(Debug)]
 enum LangErrorType {
-  Fallback,
-  ShortIndex,
+  InvalidArguments,
+  NotAnEndpoint,
   KeyNotFound
 }
 
@@ -57,7 +57,7 @@ impl Lang {
       else { search = r; }
     }
 
-    rs_warnln!("LANG warning ({:?})! ({})", LangErrorType::ShortIndex, str_path);
+    rs_warnln!("LANG warning ({:?})! ({})", LangErrorType::NotAnEndpoint, str_path);
     return str_path;
   }
 
@@ -68,7 +68,7 @@ impl Lang {
     if let Ok(ok) = cow
       { return ok.to_string(); }
     else {
-      rs_warnln!("LANG warning ({:?})! ({})", LangErrorType::Fallback, fallback);
+      rs_warnln!("LANG warning ({:?})! ({})", LangErrorType::InvalidArguments, fallback);
       return fallback;
     }
   }

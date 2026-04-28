@@ -9,7 +9,7 @@ use toml::Value;
 
 use crate::db::env_vars::AssistantEnv;
 use crate::db::{cfg, discord, reddit};
-use crate::games::wwrps::RPSGame;
+use crate::games::wwrps::game::RPSGame;
 use crate::lang::Lang;
 use crate::{Args, Cmd, Data, cmds, events, rs_println};
 

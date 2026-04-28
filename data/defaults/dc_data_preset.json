@@ -1,9 +1,14 @@
 {
   "servers": {
-    "SERVER ID": {
+    "SERVER_ID": {
       "re_posts_channel": 0,
       "re_disabled": false,
       "wwrps_channel": 0
+    }
+  },
+  "users": {
+    "USER_ID": {
+      "wwrps_elo": 0
     }
   }
 }

@@ -1,7 +1,7 @@
 use serde_json::Value;
 use tokio::sync::Mutex;
 
-use crate::{db::{env_vars::AssistantEnv, terminal_args::Args}, games::wwrps::RPSGame, lang::Lang};
+use crate::{db::{env_vars::AssistantEnv, terminal_args::Args}, games::wwrps::game::RPSGame, lang::Lang};
 
 
 pub struct Data {
